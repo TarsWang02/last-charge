@@ -1,0 +1,462 @@
+--- 
++++ 
+@@ -256,6 +256,38 @@
+ 	ci.draw_texture(tex, Vector2(-floorf(s.x / 2.0), 0.0 if vflip else -s.y), tint)
+ 	ci.draw_set_transform(Vector2.ZERO)
+ 
++
++## Art frames only: all timing and state transitions remain owned by gameplay.
++static var _frame_cache := {}
++static func frame(name: String, action: String, clock: float, fps: float, rows: Array = []) -> Texture2D:
++	var key := name + "_" + action
++	if not _frame_cache.has(key):
++		var sequence: Array[Texture2D] = []
++		var index := 0
++		while ResourceLoader.exists("res://assets/pixel/%s_%s_%d.png" % [name, action, index]):
++			sequence.append(load("res://assets/pixel/%s_%s_%d.png" % [name, action, index]))
++			index += 1
++		_frame_cache[key] = sequence
++	var frames: Array = _frame_cache[key]
++	return px(name, rows) if frames.is_empty() else frames[int(maxf(clock, 0.0) * fps) % frames.size()]
++
++static func stamp(ci: CanvasItem, name: String, position: Vector2, tint := Color.WHITE) -> void:
++	ci.draw_texture(px(name, []), position.round(), tint)
++
++## Crop partial edge tiles instead of stretching them. Collision rectangles are untouched.
++static func tiles(ci: CanvasItem, rect: Rect2, name: String) -> void:
++	var texture := px(name, [])
++	var size := texture.get_size()
++	for y in range(0, ceili(rect.size.y), int(size.y)):
++		for x in range(0, ceili(rect.size.x), int(size.x)):
++			var extent := Vector2(minf(size.x, rect.size.x-x), minf(size.y, rect.size.y-y))
++			ci.draw_texture_rect_region(texture, Rect2(rect.position+Vector2(x,y), extent), Rect2(Vector2.ZERO, extent))
++
++static func parallax(ci: CanvasItem, name: String, left: float, speed: float, y: float) -> void:
++	var offset := floorf(fposmod(left * speed, W))
++	stamp(ci, name, Vector2(left-offset, y))
++	stamp(ci, name, Vector2(left-offset+W, y))
++
+ # ---------------------------------------------------------------- state
+ var active := false        ## the robot is in the game
+ var frozen := false        ## continue screen / the ending: nothing moves
+@@ -528,78 +560,40 @@
+ 	return out
+ 
+ func _draw() -> void:
+-	var cl := cam.position.x - W / 2.0
+-	# sky, stars (slow parallax), the far castle of the daydream with one warm window
+-	draw_rect(Rect2(cl - 4, 0, W + 8, H), Color(0.04, 0.05, 0.16))
+-	draw_rect(Rect2(cl - 4, 120, W + 8, 120), Color(0.07, 0.09, 0.24))
+-	for i in 46:
+-		var sx := fposmod(i * 73.0 - cl * 0.1, W)
+-		if int(_t * 2.0 + i) % 7 != 0:
+-			draw_rect(Rect2(cl + sx, fmod(i * 41.0, 110.0), 1, 1), Color(0.7, 0.75, 1.0))
+-	var c := Color(0.12, 0.13, 0.3)
+-	var bx := cl + 232.0 - cl * 0.12
+-	draw_rect(Rect2(bx, 120, 56, 88), c)
+-	for x in [-4, 16, 36, 52]:
+-		draw_rect(Rect2(bx + x, 104, 10, 20), c)
+-	draw_rect(Rect2(bx + 22, 132, 4, 6), Color(1.0, 0.75, 0.35))
+-	for x in range(-4, W + 4, 4):  # hills (half-speed parallax)
+-		var wx := x + cl * 0.5
+-		var h := 18.0 + sin(wx * 0.03) * 8.0 + sin(wx * 0.011) * 6.0
+-		draw_rect(Rect2(cl + x, 208 - h, 4, h), Color(0.08, 0.16, 0.2))
+-	# the princess's tower behind the arena
+-	draw_rect(Rect2(1556, 30, 44, 130), Color(0.1, 0.1, 0.2))
+-	for x in [1556, 1572, 1588]:
+-		draw_rect(Rect2(x, 20, 10, 12), Color(0.1, 0.1, 0.2))
+-	draw_rect(Rect2(1570, 70, 8, 12), Color(1.0, 0.75, 0.35))
+-	# solids
+-	for s in _solids:
+-		var r: Rect2 = s[0]
+-		match s[1]:
++	var cl := floorf(cam.position.x - W / 2.0)
++	stamp(self, "bg_sky", Vector2(cl, 0))
++	parallax(self, "bg_stars", cl, .10, 0)
++	parallax(self, "bg_castle_far", cl, .12, 0)
++	parallax(self, "bg_hills", cl, .50, 168)
++	stamp(self, "bg_princess_tower", Vector2(1556,20))
++	for solid in _solids:
++		var rect: Rect2 = solid[0]
++		match solid[1]:
+ 			"grass":
+-				draw_rect(r, Color(0.35, 0.22, 0.14))
+-				for x in range(int(r.position.x) + 3, int(r.end.x), 9):
+-					draw_rect(Rect2(x, r.position.y + 7 + (x % 5), 2, 1), Color(0.45, 0.3, 0.2))
+-				draw_rect(Rect2(r.position, Vector2(r.size.x, 3)), Color(0.3, 0.6, 0.3))
+-				for x in range(int(r.position.x), int(r.end.x), 3):
+-					draw_rect(Rect2(x, r.position.y - (1 if x % 2 == 0 else 0), 1, 1), Color(0.4, 0.7, 0.35))
+-			"rock":
+-				draw_rect(r, Color(0.16, 0.15, 0.2))
+-				draw_rect(Rect2(r.position.x, r.end.y - 3, r.size.x, 3), Color(0.24, 0.22, 0.3))
++				tiles(self, rect, "tile_dirt")
++				tiles(self, Rect2(rect.position,Vector2(rect.size.x,minf(16,rect.size.y))), "tile_grass")
++			"rock": tiles(self, rect, "tile_rock")
+ 			"stone", "tower":
+-				draw_rect(r, Color(0.32, 0.31, 0.38))
+-				for y in range(int(r.position.y), int(r.end.y), 8):
+-					draw_line(Vector2(r.position.x, y), Vector2(r.end.x, y), Color(0.24, 0.23, 0.3))
+-					var off := 0 if (y / 8) % 2 == 0 else 8
+-					for x in range(int(r.position.x) + off, int(r.end.x), 16):
+-						draw_line(Vector2(x, y), Vector2(x, y + 8), Color(0.24, 0.23, 0.3))
+-				if s[1] == "tower":
+-					for x in range(int(r.position.x), int(r.end.x), 8):
+-						draw_rect(Rect2(x, r.position.y - 4, 5, 4), Color(0.32, 0.31, 0.38))
+-			"gate":
+-				draw_rect(r, Color(0.25, 0.18, 0.12))
+-				for x in range(int(r.position.x) + 1, int(r.end.x), 3):
+-					draw_line(Vector2(x, r.position.y), Vector2(x, r.end.y), Color(0.45, 0.4, 0.35))
+-	draw_rect(Rect2(_platform.position, Vector2(26, 8)), Color(0.5, 0.4, 0.25))
+-	draw_rect(Rect2(_platform.position, Vector2(26, 2)), Color(0.7, 0.6, 0.4))
+-	# the princess on her ledge (waves when the dragon is gone; turns to you at the end)
++				tiles(self, rect, "tile_stone")
++				if solid[1]=="tower":tiles(self,Rect2(rect.position-Vector2(0,8),Vector2(rect.size.x,8)),"tile_tower_top")
++			"gate":stamp(self,"tile_gate",rect.position)
++	stamp(self,"platform",_platform.position)
+ 	var pf := PRINCESS.position + Vector2(PRINCESS.size.x / 2.0, PRINCESS.size.y)
+ 	if boss_beaten:
+-		draw_rect(PRINCESS.grow(4), Color(1.0, 0.7, 0.3, 0.12 + 0.08 * sin(_t * 4.0)))
+-	blit(self, px("princess", PRINCESS_ART), pf + Vector2(0, -1 if boss_beaten and int(_t * 3.0) % 2 == 0 else 0))
+-	if _rescue_t >= 0.0:
++		draw_rect(PRINCESS.grow(4), Color(1.0,.75,.35,.12+.08*sin(_t*4.0)))
++	var action := "rescued" if _rescue_t>=0 else ("wave" if boss_beaten else "wait")
++	blit(self,frame("princess",action,_t,3.0,PRINCESS_ART),pf)
++	if _rescue_t >= 0:
+ 		for i in 3:
+-			var hp_ := pf + Vector2(-6 + i * 6, -26 - fmod(_rescue_t * 14.0 + i * 5.0, 18.0))
+-			draw_rect(Rect2(hp_, Vector2(2, 2)), Color(1, 0.5, 0.6))
+-			draw_rect(Rect2(hp_ + Vector2(3, 0), Vector2(2, 2)), Color(1, 0.5, 0.6))
+-			draw_rect(Rect2(hp_ + Vector2(1, 2), Vector2(3, 2)), Color(1, 0.5, 0.6))
+-	for p in _puffs:
+-		var k: float = p[1] / 0.35
++			var hp_ := pf + Vector2(-6+i*6,-26-fmod(_rescue_t*14+i*5,18))
++			stamp(self,"heart",hp_)
++	for puff in _puffs:
++		var k: float = puff[1] / .35
+ 		for i in 6:
+ 			var a := i * TAU / 6.0
+-			var col: Color = p[2]
+-			col.a = 1.0 - k
+-			draw_rect(Rect2(p[0] + Vector2(cos(a), sin(a)) * (3.0 + 10.0 * k), Vector2(2, 2)), col)
+-
++			var col: Color = puff[2]
++			col.a = 1.0-k
++			draw_rect(Rect2(puff[0]+Vector2(cos(a),sin(a))*(3.0+10.0*k),Vector2(2,2)),col)
+ 
+ # ======================================================================= the robot
+ class PixelBot extends CharacterBody2D:
+@@ -681,24 +675,25 @@
+ 		queue_redraw()
+ 
+ 	func _draw() -> void:
+-		if invuln > 0.0 and int(invuln * 20.0) % 2 == 0:
+-			return  # flicker while invulnerable
++		if invuln>0 and int(invuln*20.0)%2==0:return
+ 		var f := float(facing)
+-		var bob := -1.0 if is_on_floor() and absf(velocity.x) > 5.0 and int(_walk / 4.0) % 2 == 0 else 0.0
+-		TvGame.blit(self, TvGame.px("bot", BOT), Vector2(0, bob), f < 0)
+-		if _swing > 0.0:  # the claw shoots out, with a swipe arc
+-			var steel := Color(0.42, 0.42, 0.48)
+-			var reach := 4.0 + 10.0 * sin(clampf(1.0 - _swing / 0.2, 0.0, 1.0) * PI)
+-			var hx := 5.0 * f
+-			draw_rect(Rect2(minf(hx, hx + reach * f), -7 + bob, absf(reach * f), 2), steel)
+-			var tip := Vector2(hx + reach * f, -6 + bob)
+-			draw_rect(Rect2(tip + Vector2(0 if f > 0 else -3, -3), Vector2(3, 2)), steel)
+-			draw_rect(Rect2(tip + Vector2(0 if f > 0 else -3, 1), Vector2(3, 2)), steel)
+-			if _swing > 0.08:
++		var action := "idle"
++		if invuln>0:action="hurt"
++		elif not is_on_floor():action="jump" if velocity.y<0 else "fall"
++		elif absf(velocity.x)>5:action="walk"
++		var bob := -1.0 if is_on_floor() and absf(velocity.x)>5 and int(_walk/4.0)%2==0 else 0.0
++		var clock := _walk/32.0 if action=="walk" else Time.get_ticks_msec()/1000.0
++		TvGame.blit(self,TvGame.frame("bot",action,clock,8.0 if action=="walk" else 3.0,BOT),Vector2(0,bob),f<0)
++		if _swing>0:
++			draw_set_transform(Vector2(2*f,-9+bob),0,Vector2(f,1))
++			draw_texture(TvGame.frame("bot_claw","attack",.2-_swing,15),Vector2.ZERO)
++			draw_set_transform(Vector2.ZERO)
++			if _swing>.08:
++				var reach := 4.0+10.0*sin(clampf(1.0-_swing/.2,0,1)*PI)
++				var tip := Vector2((5+reach)*f,-6+bob)
+ 				for i in 5:
+-					var a := -1.0 + i * 0.5
+-					draw_rect(Rect2(tip + Vector2(cos(a) * 7.0 * f, sin(a) * 7.0), Vector2(1, 1)), Color(1, 1, 0.85))
+-
++					var a := -1.0+i*.5
++					draw_rect(Rect2(tip+Vector2(cos(a)*7*f,sin(a)*7),Vector2.ONE),Color(1,1,.85))
+ 
+ # ======================================================================= level pieces
+ class Crumble extends StaticBody2D:
+@@ -739,17 +734,11 @@
+ 		queue_redraw()
+ 	func _draw() -> void:
+ 		var o := Vector2.ZERO
+-		if state == 1:
+-			o.x = 1.0 if int(_t * 30.0) % 2 == 0 else -1.0
+-		elif state == 2:
+-			if _t > 0.6:
+-				return
+-			o.y = _t * _t * 300.0
+-		draw_rect(Rect2(o, SIZE), Color(0.45, 0.32, 0.2))
+-		draw_rect(Rect2(o, Vector2(SIZE.x, 2)), Color(0.6, 0.45, 0.28))
+-		draw_rect(Rect2(o + Vector2(6, 2), Vector2(1, 4)), Color(0.3, 0.2, 0.12))
+-		draw_rect(Rect2(o + Vector2(13, 2), Vector2(1, 4)), Color(0.3, 0.2, 0.12))
+-
++		if state==1:o.x=1.0 if int(_t*30.0)%2==0 else -1.0
++		elif state==2:
++			if _t>.6:return
++			o.y=_t*_t*300.0
++		TvGame.stamp(self,"plank_shake" if state==1 else "plank",o)
+ 
+ # ======================================================================= enemies
+ class PixelThing extends Node2D:
+@@ -786,7 +775,8 @@
+ 			position.x = clampf(position.x, a, b)
+ 		queue_redraw()
+ 	func _draw() -> void:
+-		TvGame.blit(self, TvGame.px("slime", SLIME), Vector2(0, 0 if int(_t * 6.0) % 2 == 0 else 1), _dir < 0)
++		TvGame.blit(self,TvGame.frame("slime","crawl",_t,6.0,SLIME),Vector2.ZERO,_dir<0)
++
+ 
+ class Bat extends PixelThing:
+ 	## Flaps between a and b, bobbing up and down.
+@@ -809,7 +799,8 @@
+ 		position.y = _y0 + sin(_t * 2.4) * 22.0
+ 		queue_redraw()
+ 	func _draw() -> void:
+-		TvGame.blit(self, TvGame.px("bat", BAT), Vector2.ZERO, false, Color.WHITE, int(_t * 10.0) % 2 == 0)
++		TvGame.blit(self,TvGame.frame("bat","flap",_t,10.0,BAT),Vector2.ZERO,_dir<0)
++
+ 
+ class Shooter extends PixelThing:
+ 	## A little cannon: spits a slow orb at the robot every couple of seconds (its eye glows first).
+@@ -829,8 +820,10 @@
+ 			game._spawn(Orb.new(), from, {"vel": aim * 62.0})
+ 		queue_redraw()
+ 	func _draw() -> void:
+-		TvGame.blit(self, TvGame.px("turret", TURRET), Vector2.ZERO, false,
+-			Color(1.6, 1.3, 1.0) if _cd < 0.45 and int(_cd * 20.0) % 2 == 0 else Color.WHITE)
++		var charge := _cd<.45
++		TvGame.blit(self,TvGame.frame("turret","charge" if charge else "idle",0,1,TURRET),Vector2.ZERO,false,
++			Color(1.6,1.3,1.0) if charge and int(_cd*20.0)%2==0 else Color.WHITE)
++
+ 
+ class Battery extends PixelThing:
+ 	## A pixel battery: touch it for +5% real charge. Bobs gently.
+@@ -845,7 +838,8 @@
+ 		_t += delta
+ 		queue_redraw()
+ 	func _draw() -> void:
+-		TvGame.blit(self, TvGame.px("battery", BATTERY), Vector2(0, roundf(sin(_t * 3.0) * 1.5)))
++		TvGame.blit(self,TvGame.frame("battery","shine",_t,3.0,BATTERY),Vector2(0,roundf(sin(_t*3.0)*1.5)))
++
+ 
+ class Orb extends PixelThing:
+ 	var vel := Vector2(-62, 0)
+@@ -864,8 +858,8 @@
+ 			queue_free()
+ 		queue_redraw()
+ 	func _draw() -> void:
+-		draw_rect(Rect2(-3, -6, 6, 6), Color(1.0, 0.45, 0.2))
+-		draw_rect(Rect2(-2, -5, 2, 2), Color(1.0, 0.9, 0.5))
++		TvGame.blit(self,TvGame.frame("orb","pulse",Time.get_ticks_msec()/1000.0,8),Vector2.ZERO)
++
+ 
+ class Spikes extends PixelThing:
+ 	## The floor under the battlements. Touch = like falling into a pit (handled by the game).
+@@ -874,8 +868,8 @@
+ 	func harm_rects() -> Array:
+ 		return []
+ 	func _draw() -> void:
+-		for x in range(int(-size.x / 2.0), int(size.x / 2.0), 6):
+-			draw_colored_polygon(PackedVector2Array([Vector2(x, 0), Vector2(x + 3, -size.y), Vector2(x + 6, 0)]), Color(0.7, 0.7, 0.75))
++		for x in range(int(-size.x/2),int(size.x/2),6):TvGame.stamp(self,"spikes",Vector2(x,-size.y))
++
+ 
+ class Knight extends PixelThing:
+ 	## A shield knight. Walks its patch facing the robot; claw hits on the shield bounce off. When the
+@@ -942,20 +936,17 @@
+ 					_cool = 0.6
+ 		queue_redraw()
+ 	func _draw() -> void:
+-		var tint := Color(3, 3, 3) if _flash > 0.0 else Color.WHITE
+-		var o := Vector2(0, 2 if state == RECOVER else 0)  # slumps while open
+-		TvGame.blit(self, TvGame.px("knight", KNIGHT), o, face > 0, tint)
+-		var steel := Color(0.85, 0.87, 0.95)
++		var tint := Color(3,3,3) if _flash>0 else Color.WHITE
++		var action: String = ["walk","windup","thrust","recover"][state]
++		TvGame.blit(self,TvGame.frame("knight",action,_st,8.0,KNIGHT),Vector2.ZERO,face>0,tint)
+ 		match state:
+-			WINDUP:  # sword raised high, flashing
+-				var c := Color(1, 1, 1) if int(_st * 14.0) % 2 == 0 else steel
+-				draw_rect(Rect2(Vector2(-face * 2.0 - 1.0, -26), Vector2(2, 12)), c)
++			WINDUP:
++				var c := Color(1,1,1) if int(_st*14.0)%2==0 else Color.WHITE
++				draw_set_transform(Vector2(-face*2,-26),PI/2)
++				draw_texture(TvGame.px("knight_sword",[]),Vector2.ZERO,c)
++				draw_set_transform(Vector2.ZERO)
+ 			THRUST:
+-				draw_rect(Rect2(Vector2(face * 6.0 if face > 0 else -22.0, -11), Vector2(16, 2)), steel)
+-			RECOVER:
+-				draw_rect(Rect2(Vector2(face * 6.0 if face > 0 else -14.0, -4), Vector2(8, 2)), steel)  # sword down
+-			_:
+-				draw_rect(Rect2(Vector2(-face * 6.0 - 1.0, -16), Vector2(2, 10)), steel)
++				TvGame.blit(self,TvGame.px("knight_sword",[]),Vector2(face*14,-8),face>0)
+ 
+ 
+ class Fireball extends PixelThing:
+@@ -980,11 +971,7 @@
+ 			queue_free()
+ 		queue_redraw()
+ 	func _draw() -> void:
+-		var fl := 1.0 if int(Time.get_ticks_msec() / 80) % 2 == 0 else 0.0
+-		draw_rect(Rect2(-4, -8, 8, 8), Color(1.0, 0.4, 0.1))
+-		draw_rect(Rect2(-3, -9, 6, 1), Color(1.0, 0.6, 0.2))
+-		draw_rect(Rect2(-2, -6 - fl, 4, 4), Color(1.0, 0.85, 0.3))
+-
++		TvGame.blit(self,TvGame.frame("fireball","roll",Time.get_ticks_msec()/1000.0,12),Vector2.ZERO)
+ 
+ # ======================================================================= the dragon
+ class Dragon extends Node2D:
+@@ -1155,53 +1142,38 @@
+ 		queue_redraw()
+ 
+ 	func _draw() -> void:
+-		if state == GONE or (state == DYING and int(_st * 14.0) % 2 == 0):
+-			return
+-		var tint := Color(3, 3, 3) if _flash > 0.0 else Color.WHITE
+-		if phase2 and _flash <= 0.0:
+-			tint = Color(1.15, 0.95, 0.95)
+-		var red: Color = PAL["R"] * tint
+-		var belly: Color = PAL["Y"] * tint
+-		var out: Color = PAL["k"]
+-		# tail: a chain of shrinking segments from the body to the tip (flashing while it winds up)
+-		var tc := red
+-		if state == TAIL_WARN and int(_st * 12.0) % 2 == 0:
+-			tc = Color(1, 0.9, 0.9)
++		if state==GONE or (state==DYING and int(_st*14.0)%2==0):return
++		var tint := Color(3,3,3) if _flash>0 else Color.WHITE
++		if phase2 and _flash<=0:tint=Color(1.15,.95,.95)
++		var tail_tint := tint
++		if state==TAIL_WARN and int(_st*12.0)%2==0:tail_tint=Color(1,.9,.9)
+ 		for i in 9:
+-			var u := i / 8.0
+-			var mid := TAIL_BASE.lerp(tail_tip, u) + Vector2(0, -sin(u * PI) * (10.0 if state != TAIL else 2.0))
+-			var r := lerpf(6.0, 2.0, u)
+-			draw_rect(Rect2(mid - Vector2(r + 1, r + 1), Vector2(r * 2 + 2, r * 2 + 2)), out)
+-			draw_rect(Rect2(mid - Vector2(r, r), Vector2(r * 2, r * 2)), tc)
+-		draw_colored_polygon(PackedVector2Array([tail_tip + Vector2(-2, -3), tail_tip + Vector2(6, 0), tail_tip + Vector2(-2, 3)]), belly)
+-		# wing (beats), body
+-		var up := int(_t * (6.0 if phase2 else 4.0)) % 2 == 0
+-		TvGame.blit(self, TvGame.px("dragon_wing", DRAGON_WING), FOOT + Vector2(12, -20 if up else -8), false, tint, not up)
+-		TvGame.blit(self, TvGame.px("dragon_body", DRAGON_BODY), FOOT, false, tint)
+-		# neck: outlined segments with a pale belly stripe
++			var u := i/8.0
++			var mid := TAIL_BASE.lerp(tail_tip,u)+Vector2(0,-sin(u*PI)*(10.0 if state!=TAIL else 2.0))
++			var diameter := roundf(lerpf(12,4,u))
++			# Tail segments intentionally shrink, as required by the articulated boss design.
++			draw_texture_rect(TvGame.px("dragon_tail",[]),Rect2(mid-Vector2.ONE*diameter/2,Vector2.ONE*diameter),false,tail_tint)
++		TvGame.stamp(self,"dragon_tail_tip",tail_tip-Vector2(2,4),tail_tint)
++		var up := int(_t*(6.0 if phase2 else 4.0))%2==0
++		TvGame.blit(self,TvGame.px("dragon_wing" if up else "dragon_wing_down",DRAGON_WING),FOOT+Vector2(12,-20 if up else -8),false,tint)
++		TvGame.blit(self,TvGame.px("dragon_body",DRAGON_BODY),FOOT,false,tint)
+ 		for i in 8:
+-			var p := SHOULDER.lerp(head + Vector2(6, 2), i / 7.0)
+-			draw_rect(Rect2(p - Vector2(5, 5), Vector2(10, 10)), out)
+-			draw_rect(Rect2(p - Vector2(4, 4), Vector2(8, 8)), red)
+-			draw_rect(Rect2(p + Vector2(-4, 1), Vector2(5, 3)), belly)
+-		# where the head will come down
+-		if state == LUNGE_WARN:
+-			draw_rect(Rect2(_to.x - 11, 205, 22, 3), Color(0.95, 0.2, 0.15, 0.45 + 0.45 * sin(_st * 30.0)))
+-		# head
+-		var open := state in [FIRE_WARN, FIRE, ROAR]
+-		TvGame.blit(self, TvGame.px("dragon_head_open" if open else "dragon_head", DRAGON_HEAD_OPEN if open else DRAGON_HEAD),
+-			head + Vector2(0, 7), false, tint)
++			var p := SHOULDER.lerp(head+Vector2(6,2),i/7.0)
++			TvGame.blit(self,TvGame.px("dragon_neck",[]),p+Vector2(0,5),false,tint)
++		if state==LUNGE_WARN:
++			draw_rect(Rect2(_to.x-11,205,22,3),Color(.95,.2,.15,.45+.45*sin(_st*30.0)))
++		var open := state in [FIRE_WARN,FIRE,ROAR]
++		var name := "dragon_head_dazed" if state==DAZED else ("dragon_head_open" if open else "dragon_head")
++		TvGame.blit(self,TvGame.px(name,DRAGON_HEAD_OPEN if open else DRAGON_HEAD),head+Vector2(0,7),false,tint)
+ 		var hr := head_rect()
+-		if state == FIRE_WARN and int(_st * 12.0) % 2 == 0:  # the mouth glows before it spits
+-			draw_rect(Rect2(hr.position + Vector2(1, 10), Vector2(7, 2)), Color(1, 0.95, 0.5))
+-		if state == LUNGE_WARN and int(_st * 12.0) % 2 == 0:  # the eye flashes before a lunge
+-			draw_rect(Rect2(hr.position + Vector2(13, 5), Vector2(3, 2)), Color(1, 1, 1))
+-		if state == DAZED:  # dazed: stars spin over the head, eye shut
+-			draw_rect(Rect2(hr.position + Vector2(12, 5), Vector2(4, 2)), out)
++		if state==FIRE_WARN and int(_st*12.0)%2==0:
++			draw_rect(Rect2(hr.position+Vector2(1,10),Vector2(7,2)),Color(1,.95,.5))
++		if state==LUNGE_WARN and int(_st*12.0)%2==0:
++			draw_rect(Rect2(hr.position+Vector2(13,5),Vector2(3,2)),Color(1,1,1))
++		if state==DAZED:
+ 			for i in 3:
+-				var a := _t * 5.0 + i * TAU / 3.0
+-				draw_rect(Rect2(hr.get_center() + Vector2(cos(a) * 10.0, -12 + sin(a) * 3.0), Vector2(2, 2)), Color(1, 1, 0.6))
+-
++				var a := _t*5+i*TAU/3
++				draw_rect(Rect2(hr.get_center()+Vector2(cos(a)*10,-12+sin(a)*3),Vector2(2,2)),Color(1,1,.6))
+ 
+ # ======================================================================= HUD (screen space)
+ class Hud extends Node2D:
+@@ -1212,17 +1184,12 @@
+ 		var ch := 1.0
+ 		if Game.player:
+ 			ch = Game.player.charge
+-		draw_rect(Rect2(18, 16, 34, 12), Color(0.85, 0.85, 0.85))  # inset: the tube's rim darkens the corners
+-		draw_rect(Rect2(19, 17, 32, 10), Color(0.05, 0.05, 0.1))
+-		draw_rect(Rect2(52, 19, 2, 6), Color(0.85, 0.85, 0.85))
+-		var cells := ceili(ch * 5.0 - 0.001)
+-		for i in 5:
+-			draw_rect(Rect2(21 + i * 6, 19, 4, 6), Color(0.3, 1.0, 0.95) if i < cells else Color(0.12, 0.2, 0.22))
++		TvGame.stamp(self,"hud_battery",Vector2(18,16))
++		var cells := ceili(ch*5.0-.001)
++		for i in 5:TvGame.stamp(self,"hud_cell_on" if i<cells else "hud_cell_off",Vector2(21+i*6,19))
+ 		if game.boss_started and not game.boss_beaten:
+ 			for i in 6:
+-				var x := W - 28 - i * 9
+-				draw_rect(Rect2(x - 1, 17, 8, 8), Color(0.1, 0.03, 0.03))
+-				draw_rect(Rect2(x, 18, 6, 6), Color(0.9, 0.2, 0.15) if i < game.dragon.hp else Color(0.25, 0.1, 0.1))
++				TvGame.stamp(self,"hud_boss_pip_on" if i<game.dragon.hp else "hud_boss_pip_off",Vector2(W-28-i*9,18))
+ 		# key prompts above the robot
+ 		var hs: Array = game.hints() if game.active and not game.frozen else []
+ 		if not hs.is_empty():
+@@ -1248,32 +1215,17 @@
+ 		if game._cont_t >= 0.0:  # insert coin: a cyan cell drops out of the robot's battery into the slot
+ 			var k := clampf(game._cont_t / 1.0, 0.0, 1.0)
+ 			draw_rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.75))
+-			draw_rect(Rect2(140, 150, 40, 30), Color(0.3, 0.3, 0.35))
+-			draw_rect(Rect2(152, 150, 16, 3), Color(0.05, 0.05, 0.05))
++			TvGame.stamp(self,"coin_slot",Vector2(140,150))
+ 			if k < 1.0:
+-				draw_rect(Rect2(156, lerpf(70.0, 150.0, k * k), 8, 10), Color(0.3, 1.0, 0.95))
++				TvGame.stamp(self,"coin_cell",Vector2(156,lerpf(70,150,k*k)))
+ 			elif int(game._cont_t * 10.0) % 2 == 0:
+ 				draw_rect(Rect2(150, 140, 20, 6), Color(1.0, 0.85, 0.4))
+ 
+ 	func _cap_w(label: String) -> float:
+-		return 9.0 if label == "mouse" else label.length() * 4.0 + 5.0
++		return 9.0 if label=="mouse" else (25.0 if label=="SPACE" else 13.0)
+ 
+ 	func _cap(label: String, pos: Vector2, lit: bool) -> void:
+-		var w := _cap_w(label)
+-		draw_rect(Rect2(pos + Vector2(0, 1), Vector2(w, 10)), Color(0.1, 0.1, 0.15))      # key side
+-		draw_rect(Rect2(pos, Vector2(w, 9)), Color(0.95, 0.88, 0.6) if lit else Color(0.75, 0.7, 0.5))
+-		draw_rect(Rect2(pos + Vector2(1, 1), Vector2(w - 2, 7)), Color(0.2, 0.18, 0.25))
+-		var x := pos.x + 3.0
+-		for ch in label:
+-			var g: Array = GLYPHS[ch]
+-			for y in 5:
+-				for i in 3:
+-					if g[y][i] == "k":
+-						draw_rect(Rect2(x + i, pos.y + 2 + y, 1, 1), Color(1, 1, 1))
+-			x += 4.0
++		TvGame.stamp(self,"key_"+label,pos,Color.WHITE if lit else Color(.78,.78,.78))
+ 
+ 	func _mouse(pos: Vector2, lit: bool) -> void:
+-		draw_rect(Rect2(pos, Vector2(9, 13)), Color(0.75, 0.75, 0.8))
+-		draw_rect(Rect2(pos + Vector2(1, 1), Vector2(7, 11)), Color(0.2, 0.18, 0.25))
+-		draw_rect(Rect2(pos + Vector2(1, 1), Vector2(3, 5)), Color(1.0, 0.85, 0.4) if lit else Color(0.5, 0.45, 0.3))  # left button
+-		draw_rect(Rect2(pos + Vector2(4, 1), Vector2(1, 5)), Color(0.75, 0.75, 0.8))
++		TvGame.stamp(self,"key_mouse",pos,Color.WHITE if lit else Color(.78,.78,.78))

@@ -79,10 +79,12 @@ static func install(room: Node3D) -> void:
         _add(coin, "coin", Vector3(0, -0.0015, 0))
     var shell := room.get_node("Shell")
     shell.get_node("Floor").material = _surface(FLOOR_TEX, 0.8)
-    for key in ["WallN", "WallS", "WallW", "WallE", "BedroomWallN", "BedroomWallS", "DoorLintel"]:
+    for key in ["WallN", "WallNHigh", "WallNWest", "WallNEast", "WallS", "WallSHigh", "WallSWest", "WallSBedLow", "WallSBedHigh", "WallSMid", "WallSEast", "WallW", "WallE", "BedroomWallN", "BedroomWallS", "DoorLintel"]:
         shell.get_node(key).material = _surface(WALL_TEX, 0.8)
-    # Retain the old blue emissive panel as the night sky behind the wood frame.
-    _add(shell.get_node("WindowBedroomN"), "window_north", Vector3(0, -0.5, 0.036))
+    # The wall has a real opening now: keep the wood frame, drop its opaque panes (the clear glass is the shell's).
+    var north_window := _add(shell.get_node("WindowBedroomN"), "window_north", Vector3(0, -0.5, 0.036))
+    for pane in north_window.find_children("GlassPane*", "", true, false):
+        pane.visible = false
     var bed := room.get_node("Bedroom")
     _hide(bed.get_node("BedFrame"), invisible)
     _hide(bed.get_node("Headboard"), invisible)

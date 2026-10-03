@@ -1,4 +1,4 @@
-> 最新入库：Tripo 床品、老人、娃娃头已替换自制版本；少年尚未找到新文件，继续使用当前自制版本。桌面 17 个项目 GLB 已校验归档并删除副本，详情见 art_production_20261003/tripo_batch4/REPORT.md。最新体验包为 build/win/JamTest_bedroom_tripo.exe。
+> 最新入库：Tripo 床品、老人、娃娃头已替换自制版本；少年新文件也已收到并接入，四组 Tripo 均已完成。桌面 18 个项目 GLB 已校验归档并删除副本，详情见 art_production_20261003/tripo_batch4/REPORT.md。最新体验包为 build/win/JamTest_bedroom_tripo.exe。
 
 # 卧室模型替换进度
 

@@ -13,7 +13,10 @@ extends AnimatableBody3D
 var _a := 0.0
 
 func _ready() -> void:
-	sync_to_physics = false  # moved with move_and_collide below, which also carries a rider
+	# Moved by setting its transform each physics frame (not move_and_collide: that sweep would bump into
+	# the robot riding on top and make the train stutter). The physics server derives the carriage's
+	# velocity from the transform change, so a robot standing on it is still carried along.
+	sync_to_physics = false
 	_a = phase
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
@@ -32,12 +35,11 @@ func _ready() -> void:
 	mi.position.y = size.y / 2.0
 	add_child(mi)
 	global_position = _target()
-	rotation.y = -_a
+	rotation.y = -_a - PI / 2.0
 
 func _physics_process(delta: float) -> void:
 	_a = fmod(_a + speed * delta, TAU)
-	move_and_collide(_target() - global_position)
-	rotation.y = -_a  # carriage faces along the track
+	global_transform = Transform3D(Basis(Vector3.UP, -_a - PI / 2.0), _target())  # faces along the track
 
 func _target() -> Vector3:
 	return center + Vector3(cos(_a), 0, sin(_a)) * radius

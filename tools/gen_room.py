@@ -54,6 +54,9 @@ MATS = {  # name: (albedo rgb, roughness, emission rgb or None, transparent)
     "amber_eye": ((1.0, 0.7, 0.3), 0.3, (1.0, 0.65, 0.25), False),
     "person": ((0.12, 0.12, 0.14), 1.0, None, False),
     "window": ((0.2, 0.25, 0.4), 1.0, (0.35, 0.45, 0.8), False),
+    "outside": ((0.09, 0.1, 0.13), 1.0, None, False),
+    "sky": ((0.02, 0.03, 0.07), 1.0, (0.03, 0.05, 0.12), False),
+    "moon": ((0.9, 0.92, 1.0), 1.0, (0.85, 0.9, 1.0), False),
     "tvscreen": ((0.1, 0.15, 0.3), 0.3, (0.25, 0.4, 0.9), False),
     "kitchen": ((0.55, 0.52, 0.45), 0.5, None, False),
     "fault": ((0.5, 0.05, 0.05), 0.5, (1.0, 0.1, 0.05), False),
@@ -63,6 +66,7 @@ MATS = {  # name: (albedo rgb, roughness, emission rgb or None, transparent)
     "steam": ((0.92, 0.93, 0.97), 1.0, (0.25, 0.27, 0.3), True),
 }
 
+ALPHA = {"steam": 0.12, "glass": 0.08}   # transparent materials that need to be fainter than the default 0.35
 S = []  # shapes, all in metres
 
 def box(name, x0, x1, y0, y1, z0, z1, mat, col=True, group="Greybox"):
@@ -79,16 +83,32 @@ X0, X1, Z0, Z1, H = -4.75, 4.75, -2.65, 2.65, 2.7
 BW = -0.4                       # bedroom east wall
 DOOR = (0.95, 1.8)              # door gap on the bedroom wall (z)
 box("Floor", X0, X1, -0.06, 0, Z0, Z1, "floor", group="Shell")
-box("WallN", X0 - .06, X1 + .06, 0, H, Z0 - .06, Z0, "wall", group="Shell")
-box("WallS", X0 - .06, X1 + .06, 0, H, Z1, Z1 + .06, "wall", group="Shell")
+NWIN = (-3.45, -2.65, 1.0, 2.0)      # the bedroom's north window: x0 x1 y0 y1
+box("WallN", X0 - .06, X1 + .06, 0, NWIN[2], Z0 - .06, Z0, "wall", group="Shell")
+box("WallNHigh", X0 - .06, X1 + .06, NWIN[3], H, Z0 - .06, Z0, "wall", group="Shell")
+box("WallNWest", X0 - .06, NWIN[0], NWIN[2], NWIN[3], Z0 - .06, Z0, "wall", group="Shell")
+box("WallNEast", NWIN[1], X1 + .06, NWIN[2], NWIN[3], Z0 - .06, Z0, "wall", group="Shell")
+WIN = (-1.2, 4.0, 1.0, 2.2)          # the long window in the south wall: x0 x1 y0 y1
+box("WallS", X0 - .06, X1 + .06, 0, WIN[2], Z1, Z1 + .06, "wall", group="Shell")
+box("WallSHigh", X0 - .06, X1 + .06, WIN[3], H, Z1, Z1 + .06, "wall", group="Shell")
+BWIN = (-3.8, -2.6, 1.1, 2.0)        # the bedroom's south window: x0 x1 y0 y1
+box("WallSWest", X0 - .06, BWIN[0], WIN[2], WIN[3], Z1, Z1 + .06, "wall", group="Shell")
+box("WallSBedLow", BWIN[0], BWIN[1], WIN[2], BWIN[2], Z1, Z1 + .06, "wall", group="Shell")
+box("WallSBedHigh", BWIN[0], BWIN[1], BWIN[3], WIN[3], Z1, Z1 + .06, "wall", group="Shell")
+box("WallSMid", BWIN[1], WIN[0], WIN[2], WIN[3], Z1, Z1 + .06, "wall", group="Shell")
+box("WallSEast", WIN[1], X1 + .06, WIN[2], WIN[3], Z1, Z1 + .06, "wall", group="Shell")
 box("WallW", X0 - .06, X0, 0, H, Z0, Z1, "wall", group="Shell")
 box("WallE", X1, X1 + .06, 0, H, Z0, Z1, "wall", group="Shell")
 box("BedroomWallN", BW - .06, BW, 0, H, Z0, DOOR[0], "wall", group="Shell")
 box("BedroomWallS", BW - .06, BW, 0, H, DOOR[1], Z1, "wall", group="Shell")
 box("DoorLintel", BW - .06, BW, 2.05, H, DOOR[0], DOOR[1], "wall", group="Shell")
-box("WindowBedroomN", -3.45, -2.65, 1.0, 2.0, Z0 + .005, Z0 + .01, "window", col=False, group="Shell")
-box("WindowBedroomS", -3.8, -2.6, 1.1, 2.0, Z1 - .01, Z1 - .005, "window", col=False, group="Shell")
-box("WindowLongS", -1.2, 4.0, 1.0, 2.2, Z1 - .01, Z1 - .005, "window", col=False, group="Shell")
+box("WindowBedroomN", -3.45, -2.65, 1.0, 2.0, Z0 + .005, Z0 + .01, "glass", col=False, group="Shell")
+box("WindowBedroomS", -3.8, -2.6, 1.1, 2.0, Z1 - .01, Z1 - .005, "glass", col=False, group="Shell")
+box("WindowLongS", WIN[0], WIN[1], WIN[2], WIN[3], Z1 + .02, Z1 + .025, "glass", col=False, group="Shell")
+for i, x in enumerate([-1.2, -0.13, 0.93, 2.0, 3.07, 4.0]):   # window frame: mullions + a transom
+    box(f"WindowMullion{i + 1}", x - 0.025, x + 0.025, WIN[2], WIN[3], Z1, Z1 + 0.06, "darkwood", col=False, group="Shell")
+box("WindowTransom", WIN[0], WIN[1], 1.72, 1.75, Z1, Z1 + 0.06, "darkwood", col=False, group="Shell")
+# outside: the ground, the town, the sky and the moon are all built at runtime (scripts/town.gd, shaders/night_sky.gdshader)
 
 # ---------------- stop 0: bed + nightstand (head at the north wall) - lit by a shaft of moonlight
 box("BedFrame", -4.75, -3.35, 0, 0.35, -2.65, -0.65, "darkwood", group="Bedroom")
@@ -279,11 +299,20 @@ box("ArmchairBack", 1.2, 2.0, 0, 0.95, 2.15, 2.3, "fabric", group="Stop5")
 box("RadioTable", 2.15, 2.5, 0, 0.55, 1.9, 2.25, "wood", group="Stop5")
 box("Radio", 2.18, 2.47, 0.55, 0.72, 1.95, 2.2, "darkwood", group="Stop5")
 
+# the clothesline (scripts/zipline.gd), hooked across the living room: from the kitchen end of the window,
+# over the room to a hook behind the sofa, back to the window by the armchair, then along the window to the
+# breaker box. Each span sags a little.
+ZIP_POINTS = [(4.35, 1.62, 2.5), (2.0, 1.56, -0.4), (0.9, 1.48, 2.45), (-0.3, 1.38, 2.45)]
+ZIP_SAGS = [0.14, 0.12, 0.05]
 # ---------------- stop 6: breaker box south of the bedroom door + wire clips up from the sill (rough)
-box("BreakerBox", BW, BW + 0.08, 1.3, 1.75, 2.0, 2.35, "metal", group="Stop6")
-box("BreakerFault", BW + 0.08, BW + 0.085, 1.66, 1.69, 2.12, 2.15, "fault", col=False, group="Stop6")
-for i, (y, z) in enumerate([(1.02, 2.5), (1.16, 2.25), (1.3, 2.5), (1.44, 2.25), (1.58, 2.5)]):
-    box(f"WireClip{i + 1}", BW, BW + 0.15, y - 0.015, y, z - 0.07, z + 0.07, "metal", group="Stop6")
+# The clothesline ends right above a little wall shelf under the breaker box: drop onto it, walk to the box.
+box("BreakerBox", BW, BW + 0.08, 1.11, 1.56, 2.0, 2.35, "metal", group="Stop6")
+box("BreakerFault", BW + 0.08, BW + 0.085, 1.47, 1.50, 2.12, 2.15, "fault", col=False, group="Stop6")
+box("BreakerShelf", BW, BW + 0.2, 1.03, 1.06, 1.95, 2.62, "wood", group="Stop6")
+for i, z in enumerate([2.0, 2.55]):
+    box(f"ShelfBracket{i + 1}", BW, BW + 0.12, 0.95, 1.03, z - 0.01, z + 0.01, "darkwood", col=False, group="Stop6")
+box("WireDrop", BW, BW + 0.012, 1.56, 1.915, 2.16, 2.175, "person", col=False, group="Stop6")
+box("BreakerOk", BW + 0.08, BW + 0.085, 1.42, 1.45, 2.12, 2.15, "cyanmark", col=False, group="Stop6")
 box("WireAlongWall", BW, BW + 0.012, 1.9, 1.915, -2.6, 2.0, "person", col=False, group="Stop6")
 
 PEOPLE = [  # name, kind, radius(m), height(m), centre(m), rotation(deg)
@@ -309,6 +338,7 @@ CHECKPOINTS = [  # name, position(m), chapter, recharge, respawn_charge, fail_be
     ("SpiceShelf", (3.2, 1.33, -2.585), "middle", 0.0, 0.5, -100),
     ("Kettle", (4.66, KC, -1.52), "middle", 0.0, 0.45, -100),
     ("SinkSouth", (4.45, KC, 0.85), "middle", 0.0, 0.4, -100),
+    ("SillEnd", (-0.27, 1.06, 2.42), "old", 0.0, 0.2, -100),
 ]
 MARKERS = {
     "PlayerStart": SPAWN,
@@ -318,7 +348,8 @@ MARKERS = {
     "DeskLampTarget": (BW - 0.14, 1.1, 0.55),
     "DoorLook": (-0.45, 0.85, 0.95),
     "OpenPlanDrop": (BW + 0.3, 0.002, 1.3),
-    "BreakerLook": (BW + 0.04, 1.5, 2.17),
+    "BreakerLook": (BW + 0.04, 1.33, 2.17),
+    "FinaleStand": (BW + 0.13, 1.062, 2.27),
     "TvLook": (1.0, 0.75, -2.18),
     "TvExitLanding": (1.68, 0.002, -1.80),
     "StoveLook": (3.7, 1.0, -2.3),
@@ -351,7 +382,7 @@ LIGHTS = [  # name, kind, pos(m), colour, energy, range(m)
     ("TVGlow", "omni", (1.0, 0.75, -1.9), (0.35, 0.5, 1.0), 2.0, 2.2),
     ("StoveGlow", "omni", (3.7, 1.1, -2.3), (1.0, 0.5, 0.2), 3.5, 2.8),
     ("FloodSheen", "omni", (3.4, 0.35, 0.3), (0.45, 0.65, 1.0), 1.2, 2.6),   # makes the flood water glint
-    ("BreakerFaultLight", "omni", (BW + 0.1, 1.68, 2.13), (1.0, 0.1, 0.05), 0.8, 0.6),
+    ("BreakerFaultLight", "omni", (BW + 0.1, 1.48, 2.13), (1.0, 0.1, 0.05), 1.8, 0.9),
 ]
 
 
@@ -378,10 +409,12 @@ L = ['[gd_scene format=3]', '',
      '[ext_resource type="Script" path="res://scripts/desk_maze.gd" id="maze"]',
      '[ext_resource type="Script" path="res://scripts/tv_screen.gd" id="tv"]',
      '[ext_resource type="Script" path="res://scripts/components/hazard.gd" id="hazard"]',
-     '[ext_resource type="PackedScene" path="res://scenes/post_fx.tscn" id="post"]', '']
+     '[ext_resource type="Script" path="res://scripts/zipline.gd" id="zip"]',
+     '[ext_resource type="PackedScene" path="res://scenes/post_fx.tscn" id="post"]',
+     '[ext_resource type="Shader" path="res://shaders/night_sky.gdshader" id="nightsky"]', '']
 for name, (rgb, rough, em, transp) in MATS.items():
     L.append(f'[sub_resource type="StandardMaterial3D" id="m_{name}"]')
-    L += (['transparency = 1', f'albedo_color = Color({rgb[0]}, {rgb[1]}, {rgb[2]}, {0.12 if name == "steam" else 0.35})'] if transp
+    L += (['transparency = 1', f'albedo_color = Color({rgb[0]}, {rgb[1]}, {rgb[2]}, {ALPHA.get(name, 0.35)})'] if transp
           else [f'albedo_color = Color({rgb[0]}, {rgb[1]}, {rgb[2]}, 1)'])
     L.append(f'roughness = {rough}')
     if em:
@@ -389,7 +422,11 @@ for name, (rgb, rough, em, transp) in MATS.items():
     L.append('')
 for name, (c, sz) in AREAS.items():
     L += [f'[sub_resource type="BoxShape3D" id="area_{name}"]', f'size = Vector3({sz[0] * K:.4g}, {sz[1] * K:.4g}, {sz[2] * K:.4g})', '']
-L += ['[sub_resource type="Environment" id="env"]', 'background_mode = 1', 'background_color = Color(0.01, 0.012, 0.025, 1)',
+L += ['[sub_resource type="PlaneMesh" id="bed_ceiling"]', f'size = Vector2({(BW - X0) * K:.4g}, {(Z1 - Z0) * K:.4g})', 'flip_faces = true', '']
+L += ['[sub_resource type="ShaderMaterial" id="sky_mat"]', 'shader = ExtResource("nightsky")', '',
+      '[sub_resource type="Sky" id="sky"]', 'sky_material = SubResource("sky_mat")', 'radiance_size = 1', '']
+L += ['[sub_resource type="Environment" id="env"]', 'background_mode = 2', 'background_color = Color(0.025, 0.035, 0.08, 1)',
+      'sky = SubResource("sky")', 'fog_sky_affect = 0.0',
       'ambient_light_source = 2', 'ambient_light_color = Color(0.35, 0.42, 0.65, 1)', 'ambient_light_energy = 0.45',
       'tonemap_mode = 3', 'ssao_enabled = true', 'glow_enabled = true', 'glow_hdr_threshold = 0.9',
       'fog_enabled = true', 'fog_light_color = Color(0.03, 0.04, 0.07, 1)', 'fog_density = 0.006',
@@ -557,12 +594,40 @@ for side, x in [("W", 3.55), ("E", 3.85)]:
           f'[node name="Flare{side}" type="Area3D" parent="Stop4"]', f'transform = {tr((x, (KC + 0.12 + 1.46) / 2, -2.4))}',
           'script = ExtResource("hazard")', 'kind = "fire"', 'enabled = false',
           f'size = Vector3({0.2 * K:.4g}, {(1.46 - KC - 0.12) * K:.4g}, {0.4 * K:.4g})', '']
+# ---- stop 5: the clothesline and the hanger you grab (E) at the kitchen end
+L += ['[node name="Zipline" type="Node3D" parent="Stop5"]', 'script = ExtResource("zip")',
+      'points = PackedVector3Array(' + ', '.join(f'{c * K:.4g}' for p in ZIP_POINTS for c in p) + ')',
+      'sags = PackedFloat32Array(' + ', '.join(f'{v * K:.4g}' for v in ZIP_SAGS) + ')', f'ceiling = {H * K:.4g}', '',
+      '[node name="ZiplineGrab" type="Area3D" parent="Stop5"]', f'transform = {tr((ZIP_POINTS[0][0], 0.92, ZIP_POINTS[0][2] - 0.05))}',
+      'script = ExtResource("ia")', 'cost = 0.0', 'radius = 1.1', 'prompt_offset = Vector3(0, 1.0, 0)', '']
+# ---- the finale: the breaker's lever, holding E to pour the last charge in, the house's own lights
+L += ['[node name="BreakerLever" type="Node3D" parent="Stop6"]', f'transform = {tr((BW + 0.085, 1.30, 2.24))}', '',
+      '[node name="Handle" type="CSGBox3D" parent="Stop6/BreakerLever"]', f'transform = {tr((0.02, -0.04, 0))}',
+      f'size = Vector3({0.03 * K:.4g}, {0.09 * K:.4g}, {0.03 * K:.4g})', 'material = SubResource("m_toy_red")', '',
+      '[node name="BreakerCharge" type="Area3D" parent="Stop6"]', f'transform = {tr((BW + 0.13, 1.08, 2.25))}', 'script = ExtResource("ia")',
+      'cost = 0.0', 'hold_time = 4.0', 'radius = 0.9', 'prompt_offset = Vector3(0, 1.2, 0)', '']
+HOUSE_LIGHTS = [(-0.1, 2.4, 2.0), (0.9, 2.4, 1.2), (1.0, 2.4, -1.3), (2.8, 2.4, 0.0), (3.8, 2.4, -1.6), (4.3, 2.4, 1.0),
+                (-1.4, 2.4, 1.6), (-1.8, 2.4, -0.6), (-3.4, 2.4, -1.6), (-3.2, 2.4, 1.6)]
+for i, p in enumerate(HOUSE_LIGHTS):  # off until the power comes back
+    L += [f'[node name="HouseLight{i + 1}" type="OmniLight3D" parent="."]', f'transform = {tr(p)}',
+          'light_color = Color(1, 0.78, 0.5, 1)', 'light_energy = 0.0', f'omni_range = {3.2 * K:.4g}', 'omni_attenuation = 1.2', '']
+for i, p in enumerate([(1.5, 1.6, 3.4), (-3.2, 1.6, 3.2), (-3.05, 1.5, -3.2)]):  # warm light spilling out of the windows
+    L += [f'[node name="WindowSpill{i + 1}" type="OmniLight3D" parent="."]', f'transform = {tr(p)}',
+          'light_color = Color(1, 0.75, 0.45, 1)', 'light_energy = 0.0', f'omni_range = {2.6 * K:.4g}', '']
 L += ['[node name="Areas" type="Node3D" parent="."]', '']
 for name, (c, sz) in AREAS.items():
     L += [f'[node name="{name}" type="Area3D" parent="Areas"]', f'transform = {tr(c)}', '',
           f'[node name="Shape" type="CollisionShape3D" parent="Areas/{name}"]', f'shape = SubResource("area_{name}")', '']
 for name, p in MARKERS.items():
     L += [f'[node name="{name}" type="Marker3D" parent="."]', f'transform = {tr(p)}', '']
+# a ceiling over the open-plan room (the clothesline's hanging things hang from it); casts no shadow so the
+# room keeps its moonlight. The bedroom's ceiling is one-sided (seen only from below), so the overhead shots and
+# the desk maze's top-down camera still look straight down into the room - but the sky no longer shows through it.
+L += ['[node name="Ceiling" type="CSGBox3D" parent="Shell"]', f'transform = {tr(((BW + X1) / 2, H + 0.03, (Z0 + Z1) / 2))}',
+      f'size = Vector3({(X1 - BW) * K:.4g}, {0.06 * K:.4g}, {(Z1 - Z0) * K:.4g})', 'cast_shadow = 0', 'material = SubResource("m_wall")', '']
+L += ['[node name="BedroomCeiling" type="MeshInstance3D" parent="Shell"]', f'transform = {tr(((X0 + BW) / 2, H, (Z0 + Z1) / 2))}',
+      'mesh = SubResource("bed_ceiling")', 'cast_shadow = 0', 'surface_material_override/0 = SubResource("m_wall")', '']
 L += ['[node name="PostFX" parent="." instance=ExtResource("post")]', '']
-OUT.write_text("\n".join(L), encoding="utf-8")
+from bedroom_layout import apply_layout
+OUT.write_text(apply_layout("\n".join(L)), encoding="utf-8")
 print("wrote", OUT, len(S), "shapes; K =", K)
