@@ -1,0 +1,104 @@
+[WARN] prop_battery.glb  {"role": "prop", "tris": 1124, "size_m": [0.012, 0.03, 0.012], "min_y": -0.015, "materials": 4, "textures": ["512x512", "512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.030 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+    WARN: pivot not at feet (min y = -0.015); game re-centres automatically
+[PASS] prop_bed_frame.glb  {"role": "prop", "tris": 2808, "size_m": [1.4, 1.0, 2.0], "min_y": 0.0, "materials": 1, "textures": ["512x512"], "animations": [], "skins": 0, "joints": 0}
+[PASS] prop_bigbot.glb  {"role": "prop", "tris": 17518, "size_m": [0.52, 0.58, 0.696], "min_y": 0.0, "materials": 4, "textures": ["2048x2048"], "animations": [], "skins": 0, "joints": 0}
+[PASS] prop_block_stack.glb  {"role": "prop", "tris": 432, "size_m": [0.08, 0.2, 0.08], "min_y": 0.0, "materials": 4, "textures": ["512x512", "512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+[PASS] prop_clockwork_monkey.glb  {"role": "prop", "tris": 2694, "size_m": [0.07, 0.09, 0.082], "min_y": 0.0, "materials": 1, "textures": ["1024x1024"], "animations": [], "skins": 0, "joints": 0}
+[WARN] prop_clown_spring.glb  {"role": "prop", "tris": 2032, "size_m": [0.03, 0.038, 0.03], "min_y": 0.0, "materials": 1, "textures": ["512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.038 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_coin.glb  {"role": "prop", "tris": 638, "size_m": [0.024, 0.003, 0.024], "min_y": 0.0, "materials": 2, "textures": ["512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.003 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[PASS] prop_desk_alarm_clock.glb  {"role": "prop", "tris": 1512, "size_m": [0.027, 0.089, 0.027], "min_y": 0.0, "materials": 3, "textures": ["512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+[WARN] prop_desk_birthday_card.glb  {"role": "prop", "tris": 110, "size_m": [0.068, 0.001, 0.084], "min_y": 0.0, "materials": 2, "textures": ["512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.001 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_desk_book_stack.glb  {"role": "prop", "tris": 1296, "size_m": [0.233, 0.039, 0.026], "min_y": 0.0, "materials": 4, "textures": ["512x512", "512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.039 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_desk_broken_edge.glb  {"role": "prop", "tris": 864, "size_m": [0.117, 0.006, 0.009], "min_y": 0.0, "materials": 1, "textures": ["512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.006 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_desk_calculator.glb  {"role": "prop", "tris": 1512, "size_m": [0.117, 0.039, 0.026], "min_y": 0.0, "materials": 3, "textures": ["512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.039 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_desk_cartridge.glb  {"role": "prop", "tris": 192, "size_m": [0.032, 0.009, 0.024], "min_y": 0.0, "materials": 2, "textures": ["512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.009 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_desk_certificate.glb  {"role": "prop", "tris": 110, "size_m": [0.068, 0.001, 0.084], "min_y": 0.0, "materials": 2, "textures": ["512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.001 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_desk_clip_lamp.glb  {"role": "prop", "tris": 408, "size_m": [0.035, 0.047, 0.033], "min_y": 0.0, "materials": 4, "textures": ["512x512", "512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.047 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_desk_electronic_clock.glb  {"role": "prop", "tris": 1512, "size_m": [0.048, 0.023, 0.023], "min_y": 0.0, "materials": 3, "textures": ["512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.023 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[PASS] prop_desk_eraser.glb  {"role": "prop", "tris": 558, "size_m": [0.095, 0.095, 0.095], "min_y": 0.0, "materials": 2, "textures": ["512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+[WARN] prop_desk_exam.glb  {"role": "prop", "tris": 110, "size_m": [0.068, 0.001, 0.084], "min_y": 0.0, "materials": 2, "textures": ["512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.001 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[PASS] prop_desk_fallen_books.glb  {"role": "prop", "tris": 1728, "size_m": [0.35, 0.052, 0.026], "min_y": 0.0, "materials": 5, "textures": ["512x512", "512x512", "512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+[WARN] prop_desk_flashlight.glb  {"role": "prop", "tris": 768, "size_m": [0.024, 0.024, 0.048], "min_y": -0.0, "materials": 4, "textures": ["512x512", "512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.024 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_desk_folded_note.glb  {"role": "prop", "tris": 122, "size_m": [0.07, 0.002, 0.05], "min_y": 0.0, "materials": 3, "textures": ["512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.002 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[PASS] prop_desk_frame.glb  {"role": "prop", "tris": 1404, "size_m": [0.7, 0.72, 1.4], "min_y": 0.0, "materials": 2, "textures": ["512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+[WARN] prop_desk_handheld.glb  {"role": "prop", "tris": 1680, "size_m": [0.055, 0.01, 0.04], "min_y": 0.0, "materials": 4, "textures": ["512x512", "512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.010 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_desk_homework.glb  {"role": "prop", "tris": 110, "size_m": [0.068, 0.001, 0.084], "min_y": 0.0, "materials": 2, "textures": ["512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.001 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[PASS] prop_desk_mini_lamp.glb  {"role": "prop", "tris": 896, "size_m": [0.048, 0.071, 0.048], "min_y": 0.0, "materials": 3, "textures": ["512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+[WARN] prop_desk_mug.glb  {"role": "prop", "tris": 2364, "size_m": [0.028, 0.033, 0.026], "min_y": 0.0, "materials": 1, "textures": ["512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.033 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_desk_open_book.glb  {"role": "prop", "tris": 324, "size_m": [0.068, 0.007, 0.06], "min_y": 0.0, "materials": 2, "textures": ["512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.007 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_desk_paper_ball.glb  {"role": "prop", "tris": 320, "size_m": [0.013, 0.012, 0.01], "min_y": 0.0, "materials": 1, "textures": ["512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.012 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_desk_paperclip.glb  {"role": "prop", "tris": 96, "size_m": [0.008, 0.001, 0.016], "min_y": -0.0, "materials": 1, "textures": ["512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.001 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_desk_pencil_pot.glb  {"role": "prop", "tris": 2860, "size_m": [0.026, 0.047, 0.026], "min_y": 0.0, "materials": 4, "textures": ["512x512", "512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.047 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_desk_pencil_pouch.glb  {"role": "prop", "tris": 300, "size_m": [0.233, 0.046, 0.03], "min_y": 0.0, "materials": 3, "textures": ["512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.046 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_desk_pencil_shaving.glb  {"role": "prop", "tris": 108, "size_m": [0.012, 0.001, 0.006], "min_y": 0.0, "materials": 1, "textures": ["512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.001 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_desk_pencil_stub.glb  {"role": "prop", "tris": 164, "size_m": [0.02, 0.003, 0.003], "min_y": 0.0, "materials": 1, "textures": ["512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.003 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_desk_ruler_exercise.glb  {"role": "prop", "tris": 960, "size_m": [0.35, 0.038, 0.025], "min_y": 0.0, "materials": 4, "textures": ["512x512", "512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.038 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[PASS] prop_desk_ruler_pot.glb  {"role": "prop", "tris": 2968, "size_m": [0.026, 0.14, 0.026], "min_y": 0.0, "materials": 4, "textures": ["512x512", "512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+[PASS] prop_desk_soda_can.glb  {"role": "prop", "tris": 556, "size_m": [0.028, 0.057, 0.028], "min_y": 0.0, "materials": 3, "textures": ["512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+[WARN] prop_desk_splinter_corner.glb  {"role": "prop", "tris": 216, "size_m": [0.018, 0.009, 0.009], "min_y": 0.0, "materials": 1, "textures": ["512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.009 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[PASS] prop_desk_tape_dispenser.glb  {"role": "prop", "tris": 708, "size_m": [0.117, 0.071, 0.026], "min_y": 0.0, "materials": 3, "textures": ["512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+[PASS] prop_desk_textbook.glb  {"role": "prop", "tris": 432, "size_m": [0.117, 0.08, 0.023], "min_y": 0.0, "materials": 2, "textures": ["512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+[WARN] prop_desk_upright_ruler.glb  {"role": "prop", "tris": 384, "size_m": [0.233, 0.04, 0.014], "min_y": 0.0, "materials": 2, "textures": ["512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.040 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_drum.glb  {"role": "prop", "tris": 2900, "size_m": [0.12, 0.09, 0.12], "min_y": -0.045, "materials": 3, "textures": ["512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: pivot not at feet (min y = -0.045); game re-centres automatically
+[WARN] prop_electric_car.glb  {"role": "prop", "tris": 2584, "size_m": [0.05, 0.03, 0.08], "min_y": -0.0, "materials": 6, "textures": ["512x512", "512x512", "512x512", "512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.030 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[PASS] prop_jackbox_body.glb  {"role": "prop", "tris": 756, "size_m": [0.1, 0.09, 0.101], "min_y": 0.0, "materials": 3, "textures": ["512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+[WARN] prop_jackbox_crank.glb  {"role": "prop", "tris": 324, "size_m": [0.036, 0.025, 0.009], "min_y": -0.022, "materials": 2, "textures": ["512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.025 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+    WARN: pivot not at feet (min y = -0.022); game re-centres automatically
+[WARN] prop_jackbox_head.glb  {"role": "prop", "tris": 1673, "size_m": [0.08, 0.091, 0.069], "min_y": 0.036, "materials": 1, "textures": ["1024x1024"], "animations": [], "skins": 0, "joints": 0}
+    WARN: pivot not at feet (min y = 0.036); game re-centres automatically
+[WARN] prop_jackbox_lid.glb  {"role": "prop", "tris": 108, "size_m": [0.1, 0.01, 0.1], "min_y": 0.0, "materials": 1, "textures": ["512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.010 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[PASS] prop_letter_block_a.glb  {"role": "prop", "tris": 174, "size_m": [0.15, 0.15, 0.15], "min_y": -0.0, "materials": 2, "textures": ["512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+[PASS] prop_letter_block_b.glb  {"role": "prop", "tris": 756, "size_m": [0.067, 0.067, 0.067], "min_y": -0.0, "materials": 2, "textures": ["512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+[WARN] prop_loose_book.glb  {"role": "prop", "tris": 576, "size_m": [0.24, 0.035, 0.16], "min_y": -0.018, "materials": 4, "textures": ["512x512", "512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.035 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+    WARN: pivot not at feet (min y = -0.018); game re-centres automatically
+[PASS] prop_nightstand.glb  {"role": "prop", "tris": 1872, "size_m": [0.44, 0.72, 0.456], "min_y": 0.0, "materials": 3, "textures": ["512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+[PASS] prop_old_books.glb  {"role": "prop", "tris": 2112, "size_m": [0.17, 0.14, 0.15], "min_y": 0.0, "materials": 6, "textures": ["512x512", "512x512", "512x512", "512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+[WARN] prop_photo_frame.glb  {"role": "prop", "tris": 626, "size_m": [0.13, 0.012, 0.18], "min_y": -0.0, "materials": 3, "textures": ["512x512", "704x1024", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.012 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[PASS] prop_plush_bear.glb  {"role": "prop", "tris": 2697, "size_m": [0.099, 0.12, 0.139], "min_y": 0.0, "materials": 1, "textures": ["1024x1024"], "animations": [], "skins": 0, "joints": 0}
+[PASS] prop_plush_rabbit.glb  {"role": "prop", "tris": 2699, "size_m": [0.124, 0.12, 0.194], "min_y": 0.0, "materials": 1, "textures": ["1024x1024"], "animations": [], "skins": 0, "joints": 0}
+[PASS] prop_seesaw_fulcrum.glb  {"role": "prop", "tris": 108, "size_m": [0.06, 0.06, 0.1], "min_y": 0.0, "materials": 1, "textures": ["512x512"], "animations": [], "skins": 0, "joints": 0}
+[WARN] prop_seesaw_rest.glb  {"role": "prop", "tris": 108, "size_m": [0.04, 0.03, 0.06], "min_y": 0.0, "materials": 1, "textures": ["512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.030 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[WARN] prop_seesaw_ruler.glb  {"role": "prop", "tris": 1696, "size_m": [0.36, 0.014, 0.08], "min_y": 0.0, "materials": 3, "textures": ["512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.014 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+[PASS] prop_train_carriage.glb  {"role": "prop", "tris": 1004, "size_m": [0.1, 0.06, 0.05], "min_y": -0.0, "materials": 3, "textures": ["512x512", "512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+[WARN] prop_train_track.glb  {"role": "prop", "tris": 2592, "size_m": [0.236, 0.005, 0.236], "min_y": -0.002, "materials": 2, "textures": ["512x512", "512x512"], "animations": [], "skins": 0, "joints": 0}
+    WARN: height 0.005 m looks wrong (expected (0.05, 20.0)); game auto-fits but check export units
+    WARN: pivot not at feet (min y = -0.002); game re-centres automatically
+[PASS] prop_window_north.glb  {"role": "prop", "tris": 804, "size_m": [0.84, 1.027, 0.101], "min_y": -0.027, "materials": 2, "textures": ["512x512"], "animations": [], "skins": 0, "joints": 0}
+[PASS] tex_floor_boards.png  {"size": "1024x1024", "mode": "RGB", "seam_lr": 0.0, "seam_tb": 0.0, "mean_lum": 63.3, "quadrant_spread": 0.4}
+[PASS] tex_wall_boards.png  {"size": "1024x1024", "mode": "RGB", "seam_lr": 0.0, "seam_tb": 0.0, "mean_lum": 132.3, "quadrant_spread": 0.6}
+check: 62 files, 0 failed, 0.2s

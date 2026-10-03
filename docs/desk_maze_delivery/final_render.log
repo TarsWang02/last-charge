@@ -1,0 +1,51 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward+ - Using Device #0: NVIDIA - NVIDIA GeForce RTX 5070
+
+DRESSING {"emotional":2,"papers":25,"pillars":37,"scatter":102,"stacks":7,"walls":35}
+[maze] seed=0 path=25 holes=13 lights=5
+DRESSING {"emotional":2,"papers":32,"pillars":38,"scatter":112,"stacks":9,"walls":33}
+[maze] seed=3 path=23 holes=17 lights=5
+DRESSING {"emotional":2,"papers":29,"pillars":33,"scatter":95,"stacks":10,"walls":38}
+[maze] seed=6 path=27 holes=13 lights=5
+DRESSING {"emotional":1,"papers":35,"pillars":38,"scatter":115,"stacks":9,"walls":33}
+[maze] seed=7 path=29 holes=10 lights=5
+DRESSING {"emotional":2,"papers":28,"pillars":33,"scatter":115,"stacks":12,"walls":34}
+[maze] seed=14 path=23 holes=15 lights=5
+DRESSING {"emotional":1,"papers":33,"pillars":36,"scatter":129,"stacks":6,"walls":36}
+[maze] seed=16 path=29 holes=15 lights=5
+DRESSING {"emotional":2,"papers":21,"pillars":37,"scatter":91,"stacks":14,"walls":37}
+[maze] seed=18 path=23 holes=18 lights=5
+DRESSING {"emotional":1,"papers":25,"pillars":37,"scatter":98,"stacks":9,"walls":35}
+[maze] seed=22 path=27 holes=15 lights=5
+DRESSING {"emotional":1,"papers":30,"pillars":35,"scatter":111,"stacks":6,"walls":36}
+[maze] seed=23 path=23 holes=16 lights=5
+DRESSING {"emotional":2,"papers":27,"pillars":38,"scatter":115,"stacks":11,"walls":38}
+[maze] seed=32 path=29 holes=14 lights=5
+DRESSING {"emotional":2,"papers":37,"pillars":35,"scatter":111,"stacks":4,"walls":32}
+[maze] seed=37 path=23 holes=11 lights=5
+DRESSING {"emotional":1,"papers":29,"pillars":35,"scatter":112,"stacks":5,"walls":33}
+[maze] seed=41 path=29 holes=11 lights=5
+DRESSING {"emotional":1,"papers":37,"pillars":34,"scatter":114,"stacks":9,"walls":33}
+[maze] seed=47 path=29 holes=10 lights=5
+DRESSING {"emotional":1,"papers":25,"pillars":40,"scatter":84,"stacks":7,"walls":35}
+[maze] seed=48 path=27 holes=18 lights=5
+DRESSING {"emotional":1,"papers":39,"pillars":36,"scatter":122,"stacks":13,"walls":36}
+[maze] seed=49 path=27 holes=11 lights=5
+DRESSING {"emotional":1,"papers":32,"pillars":37,"scatter":87,"stacks":12,"walls":39}
+[maze] seed=59 path=29 holes=15 lights=5
+DRESSING {"emotional":1,"papers":21,"pillars":35,"scatter":114,"stacks":7,"walls":34}
+[maze] seed=68 path=23 holes=13 lights=5
+DRESSING {"emotional":1,"papers":27,"pillars":35,"scatter":104,"stacks":8,"walls":34}
+[maze] seed=70 path=27 holes=17 lights=5
+DRESSING {"emotional":2,"papers":36,"pillars":34,"scatter":100,"stacks":8,"walls":34}
+[maze] seed=71 path=25 holes=12 lights=5
+DRESSING {"emotional":1,"papers":32,"pillars":33,"scatter":103,"stacks":6,"walls":30}
+[maze] seed=77 path=25 holes=13 lights=5
+DRESSING {"emotional":1,"papers":28,"pillars":38,"scatter":87,"stacks":12,"walls":39}
+[maze] seed=79 path=27 holes=14 lights=5
+DRESSING {"emotional":1,"papers":31,"pillars":38,"scatter":107,"stacks":7,"walls":31}
+[maze] seed=84 path=29 holes=13 lights=5
+DRESSING {"emotional":1,"papers":23,"pillars":41,"scatter":109,"stacks":11,"walls":35}
+[maze] seed=85 path=29 holes=10 lights=5
+DRESSING {"emotional":1,"papers":31,"pillars":35,"scatter":106,"stacks":4,"walls":34}
+[maze] seed=88 path=25 holes=13 lights=5

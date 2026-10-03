@@ -1,0 +1,236 @@
+{
+  "blender": "5.2.2 LTS",
+  "input": "C:\\Users\\Thunder\\jam-test\\assets\\models\\robot_lo.glb",
+  "output": "C:\\Users\\Thunder\\jam-test\\inbox\\robot_parts.glb",
+  "original_tris": 28542,
+  "output_tris": 30970,
+  "bbox_error_m": 0.0,
+  "loose_parts": 628,
+  "parts": {
+    "Body": {
+      "triangles": 11675,
+      "bbox": [
+        [
+          -0.3416140079498291,
+          0.048712000250816345,
+          -0.24500000476837158
+        ],
+        [
+          0.2070000022649765,
+          0.6100000143051147,
+          0.2531970143318176
+        ]
+      ],
+      "pivot": [
+        0.0,
+        0.049,
+        -0.0
+      ]
+    },
+    "Head": {
+      "triangles": 6848,
+      "bbox": [
+        [
+          -0.23706099390983582,
+          0.6100000143051147,
+          -0.13356000185012817
+        ],
+        [
+          0.23645000159740448,
+          0.980010986328125,
+          0.2364960014820099
+        ]
+      ],
+      "pivot": [
+        0.0,
+        0.61,
+        -0.0
+      ]
+    },
+    "Arm_R": {
+      "triangles": 1729,
+      "bbox": [
+        [
+          -0.4427799880504608,
+          0.2105100005865097,
+          -0.01790199987590313
+        ],
+        [
+          -0.2070000022649765,
+          0.5729380249977112,
+          0.2660680115222931
+        ]
+      ],
+      "pivot": [
+        -0.207,
+        0.535,
+        -0.0
+      ]
+    },
+    "Arm_L": {
+      "triangles": 1745,
+      "bbox": [
+        [
+          0.2070000022649765,
+          0.21166999638080597,
+          -0.017532000318169594
+        ],
+        [
+          0.44384801387786865,
+          0.5725250244140625,
+          0.26719701290130615
+        ]
+      ],
+      "pivot": [
+        0.207,
+        0.535,
+        -0.0
+      ]
+    },
+    "Track_R": {
+      "triangles": 4576,
+      "bbox": [
+        [
+          -0.332489013671875,
+          0.00042699999175965786,
+          -0.266525000333786
+        ],
+        [
+          -0.14499999582767487,
+          0.2800000011920929,
+          0.33219900727272034
+        ]
+      ],
+      "pivot": [
+        -0.235,
+        0.125,
+        -0.0
+      ]
+    },
+    "Track_L": {
+      "triangles": 4002,
+      "bbox": [
+        [
+          0.14499999582767487,
+          0.0003659999929368496,
+          -0.2921299934387207
+        ],
+        [
+          0.3320919871330261,
+          0.2800000011920929,
+          0.3078770041465759
+        ]
+      ],
+      "pivot": [
+        0.235,
+        0.125,
+        -0.0
+      ]
+    },
+    "WindKey": {
+      "triangles": 395,
+      "bbox": [
+        [
+          0.1627649962902069,
+          0.3927919864654541,
+          -0.3319239914417267
+        ],
+        [
+          0.1935420036315918,
+          0.5800859928131104,
+          -0.24500000476837158
+        ]
+      ],
+      "pivot": [
+        0.178,
+        0.478,
+        -0.205
+      ]
+    }
+  },
+  "caps": [
+    {
+      "cut": "neck z=0.610",
+      "side": "negative",
+      "faces": 1
+    },
+    {
+      "cut": "neck z=0.610",
+      "side": "positive",
+      "faces": 1
+    },
+    {
+      "cut": "lower partition z=0.280",
+      "side": "negative",
+      "faces": 9
+    },
+    {
+      "cut": "lower partition z=0.280",
+      "side": "positive",
+      "faces": 9
+    },
+    {
+      "cut": "key stem y=0.245",
+      "side": "negative",
+      "faces": 1
+    },
+    {
+      "cut": "key stem y=0.245",
+      "side": "positive",
+      "faces": 1
+    },
+    {
+      "cut": "left shoulder x=-0.207",
+      "side": "negative",
+      "faces": 2
+    },
+    {
+      "cut": "left shoulder x=-0.207",
+      "side": "positive",
+      "faces": 2
+    },
+    {
+      "cut": "right shoulder x=0.207",
+      "side": "negative",
+      "faces": 1
+    },
+    {
+      "cut": "right shoulder x=0.207",
+      "side": "positive",
+      "faces": 1
+    },
+    {
+      "cut": "left track axle x=-0.145",
+      "side": "negative",
+      "faces": 3
+    },
+    {
+      "cut": "left track axle x=-0.145",
+      "side": "positive",
+      "faces": 3
+    },
+    {
+      "cut": "right track axle x=0.145",
+      "side": "negative",
+      "faces": 3
+    },
+    {
+      "cut": "right track axle x=0.145",
+      "side": "positive",
+      "faces": 3
+    }
+  ],
+  "checks": {
+    "names": true,
+    "hierarchy": true,
+    "triangle_count": true,
+    "bbox": true,
+    "materials": true,
+    "embedded_textures": true,
+    "no_animation_skin": true,
+    "texture_bytes_unchanged": true
+  },
+  "export_seconds": 0.7642452000000048,
+  "script_seconds": 2.930863000000045,
+  "task_seconds_to_export": 1111.2642812
+}

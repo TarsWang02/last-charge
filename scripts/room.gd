@@ -1,0 +1,1395 @@
+extends Node3D
+## The farmhouse (white box), built one stop at a time. Implemented so far:
+##   stop 0 - nightstand in a shaft of moonlight: move/jump among the old man's things, climb the old
+##            books -> the camera turns to the desk lamp (the goal), stand the photo frame up (E), then
+##            walk out on the book hanging over the edge -> it tips, the robot slides into the box.
+##   stop 1 - the toy box. Its floor is "the dark" (touch it = back to the checkpoint). Plush heap ->
+##            blocks -> truck -> ride the train -> jack-in-the-box springs you onto the shoebox ->
+##            push two blocks into stairs -> the big toy robot's shoulder -> its head. Give the electric car on
+##            its head some of your charge (hold E), drop onto the seesaw between its legs -> the car knocks the
+##            drum off its head onto the other end -> launched onto the desk.
+##   stop 2 - the desk: a random dark top-down maze (scripts/desk_maze.gd), no jumping. The robot's own small
+##            light is always on; old lights (E, costs charge) show an area - the start one shows the END - until
+##            the robot moves. Holes drop you back; push the eraser into the hole on the route; the door's
+##            lever handle -> out.
+##   stop 3 - the TV (white box, part 1): follow the console cable across the floor, climb the boxes /
+##            magazines / speakers onto the TV cabinet, E at the screen -> the camera pushes into the glass and
+##            the robot becomes a pixel robot in the game on the TV (scripts/tv_game.gd). Off the right edge
+##            of the game -> spat back out onto the kitchen side of the cabinet; the camera finds the stove.
+##   stop 4 - the kitchen (white box, part 1): the tap was left running, the floor is flooded (water = short
+##            circuit). Reveal: the overflowing sink, then the windowsill (the way home). Climb the groceries
+##            and the chair onto the counter; power the microwave (its door shoves the cutting board over the
+##            gap); power the toaster, which pops you up onto the spice shelf. The stove fire burns.
+##            Part 2: from the spice shelf the robot hangs under the steel hood by its electromagnet (RMB),
+##            past the two burners flaring up in turn, onto the utensil rail, round the corner (the corner
+##            counter is wet: a pot boiled over) and drops by the kettle.
+##            Part 3: power the kettle (E): it boils and its steam leans south over the wet counter - float
+##            in it to the dish rack (it only lasts a few seconds). Step down onto the lid in the sink: the
+##            whole pile comes down (a cutscene, all clatter), the plug pops, the flood drains away. Tap the
+##            daughter's mug by the window (E): one clear note. The windowsill starts there.
+##   godot --path . res://scenes/room.tscn -- --autotest --shots=DIR
+
+const PLAYER := preload("res://scenes/tps_player.tscn")
+const K := 9.0
+const KC_U := 0.9 * 9.0   ## kitchen counter top (units)
+const ROOM_ART := preload("res://scripts/room_art.gd")
+
+var player: CharacterBody3D
+@onready var maze: DeskMaze = $Stop2/DeskMaze
+var fall_armed := true
+var fell := false
+var revealed := false
+var frame_up := false
+var jack_busy := false
+var machine_busy := false
+var launched := false
+var in_desk := false
+var _walk_stalls: Array = []
+var door_open := false
+var note_found := false
+var in_tv := false
+var tv_done := false
+var tv_finale := false
+var kitchen_revealed := false
+var board_pushed := false
+var toaster_busy := false
+var on_spice_shelf := false
+var _fire_t := 0.0
+const FLARE_PERIOD := 3.2
+const METAL := ["RangeHood", "UtensilRailN", "UtensilRailE"]
+const STEAM_SECONDS := 7.0
+const STEAM_TOP := 1.3 * 9.0   ## units
+var steam_left := 0.0
+var kettle_busy := false
+var sink_done := false
+var mug_rung := false
+var time_box_open := false
+var _tv_cam: Camera3D
+var _env_saved := []
+var _block_home := {}
+var _machine_home := {}
+
+func _ready() -> void:
+	ROOM_ART.install(self)
+	player = PLAYER.instantiate()
+	player.process_mode = Node.PROCESS_MODE_PAUSABLE
+	add_child(player)
+	player.teleport($PlayerStart.global_position)
+	# camera west of the robot looking east over its shoulder: the desk lamp is the first thing you see
+	player.cam_pivot.rotation.y = -PI / 2
+	player.spring.rotation.x = deg_to_rad(-14)
+	player._face_yaw = PI / 2
+	player.visual.rotation.y = PI / 2
+	$PostFX.player_path = player.get_path()
+	Game.register_player(player)
+	Game.set_checkpoint($Checkpoints/Opening)
+	$Areas/BookTip.body_entered.connect(func(b): if b == player and fall_armed: _fall())
+	$Areas/BooksTop.body_entered.connect(func(b): if b == player and not revealed: _reveal_desk())
+	$Areas/JackTop.body_entered.connect(func(b): if b == player: _jack())
+	$Stop0/FrameInteract.activated.connect(_stand_frame_up)
+	$Stop1/CarCharge.activated.connect(_run_machine)
+	$Stop2/DoorHandleUse.activated.connect(_open_door)
+	$Stop3/TvEnter.activated.connect(_enter_tv)
+	$Stop3/TvScreen.game.rescued.connect(_tv_finale)
+	$Stop3/TimeBoxOpen.activated.connect(_open_time_box)
+	$Areas/KitchenReveal.body_entered.connect(func(b): if b == player and not kitchen_revealed: _kitchen_reveal())
+	$Stop4/MicrowaveUse.activated.connect(_microwave)
+	$Stop4/ToasterUse.activated.connect(_toaster)
+	$Stop4/KettleUse.activated.connect(_kettle)
+	$Stop4/MugTap.activated.connect(_ring_mug)
+	$Areas/SinkPile.body_entered.connect(func(b): if b == player and not sink_done: _sink_collapse())
+	$Stop4/SteamColumn.visible = false
+	# off the rail by the kettle: turn to the dish rack beyond the wet counter (the next goal)
+	$Checkpoints/Kettle.body_entered.connect(_kettle_look)
+	for n in METAL:
+		get_node("Stop4/" + n).add_to_group("metal")
+	# the camera while hanging: from the room side (south) along the north wall, from the west along the east wall
+	$Stop4/RangeHood.set_meta("cam_yaw", 0.0)
+	$Stop4/UtensilRailN.set_meta("cam_yaw", 0.0)
+	$Stop4/UtensilRailE.set_meta("cam_yaw", -PI / 2)
+	for n in ["PushBlockLarge", "PushBlockSmall"]:
+		_block_home[n] = get_node("Stop1/" + n).global_position
+	for n in ["ElectricCar", "Drum", "Seesaw"]:
+		_machine_home[n] = get_node("Stop1/" + n).transform
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if "--autotest" in OS.get_cmdline_user_args():
+		_autotest()
+	elif "--f9test" in OS.get_cmdline_user_args():
+		await _wait(1.0)
+		var e := InputEventKey.new()
+		e.physical_keycode = KEY_F9
+		e.pressed = true
+		Input.parse_input_event(e)
+		await _wait(1.5)
+		print("F9TEST ", JSON.stringify({"on_floor": player.is_on_floor(), "near_door": player.global_position.distance_to($OpenPlanDrop.global_position) < 0.6, "checkpoint": Game.checkpoint.name}))
+		get_tree().quit()
+
+func _process(_d: float) -> void:
+	# the stove fire is alive (only the people are frozen)
+	_fire_t += _d
+	var f := 0.75 + 0.2 * sin(_fire_t * 13.0) * sin(_fire_t * 7.3) + randf() * 0.08
+	$StoveGlow.light_energy = 3.5 * f
+	$Stop4/StoveFlame.scale.y = 0.6 + 0.8 * f
+	# the two burners flare up in turn (warning: the flame grows; then a column right up to the hood)
+	var flaring := 0.0
+	for i in 2:
+		var side := "W" if i == 0 else "E"
+		var st: Array = flare_state(i)
+		var h := 1.0 + f * 0.3
+		if st[0] == "warn":
+			h = 1.0 + 3.0 * st[1] / 0.6 + randf() * 0.6
+		elif st[0] == "on":
+			h = 16.0 * (0.85 + 0.15 * f)
+			flaring += 1.0
+		get_node("Stop4/FlarePivot" + side).scale.y = h
+		get_node("Stop4/Flare" + side).enabled = st[0] == "on"
+	$StoveGlow.light_energy += flaring * 3.0
+	# hanging kitchen utensils swing as the robot passes under them
+	if player and player.clinging != null:
+		for u in $Stop4.get_children():
+			if u.name.begins_with("HangingUtensil") and not u.has_meta("swinging") \
+					and Vector2(u.global_position.x - player.global_position.x, u.global_position.z - player.global_position.z).length() < 0.7:
+				u.set_meta("swinging", true)
+				var tw := create_tween()
+				for a in [14.0, -10.0, 6.0, -3.0, 0.0]:
+					tw.tween_property(u, "rotation_degrees:x", a, 0.22).set_trans(Tween.TRANS_SINE)
+				tw.tween_callback(func(): u.remove_meta("swinging"))
+	if in_desk and not note_found and player.global_position.distance_to(maze.note.global_position) < 1.0:
+		note_found = true
+		var m := StandardMaterial3D.new()
+		m.albedo_color = Color(1, 0.9, 0.7)
+		m.emission_enabled = true
+		m.emission = Color(1, 0.7, 0.35)
+		m.emission_energy_multiplier = 0.0
+		maze.note.material_override = m
+		create_tween().tween_property(m, "emission_energy_multiplier", 2.5, 0.8)
+		Game.restore_memory("mom_note")
+
+## Debug: F9 skips to the living room (by the bedroom door), for testing the TV stop.
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F9:
+		_skip_to_living_room()
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F10:
+		_skip_to_kitchen()
+
+## Debug: F10 = out of the TV, on the floor by the kitchen.
+func _skip_to_kitchen() -> void:
+	_skip_to_living_room()
+	tv_done = true
+	player.magnet_enabled = false
+	player.teleport($TvExitLanding.global_position + Vector3(0, 0.05, 0))
+	Game.set_checkpoint($Checkpoints/TvExit)
+	_after_tv_looks()
+
+func _skip_to_living_room() -> void:
+	if in_desk:
+		in_desk = false
+		var env: Environment = $WorldEnvironment.environment
+		env.ambient_light_energy = _env_saved[0]
+		$Moonlight.light_energy = _env_saved[1]
+	player.set_top_down(false)
+	for n in ["WallLampShade", "WallLampArm"]:
+		get_node("Stop2/" + n).visible = true
+	player.locked = false
+	player.teleport($OpenPlanDrop.global_position + Vector3(0, 0.05, 0))
+	Game.set_checkpoint($Checkpoints/OpenPlan)
+	_look_at($TvLook.global_position, -6.0, 0.8)
+
+func _physics_process(_d: float) -> void:
+	# the kettle's steam: inside the plume while it lasts = carried up
+	steam_left = maxf(steam_left - _d, 0.0)
+	player.updraft_top = STEAM_TOP if steam_left > 0.0 and $Areas/SteamPlume.overlaps_body(player) and not player.locked else -INF
+	if steam_left > 0.0:
+		var col: Node3D = $Stop4/SteamColumn
+		col.visible = true
+		col.scale = Vector3(1.0 + sin(_fire_t * 5.0) * 0.06, minf(1.0, steam_left) * (0.9 + sin(_fire_t * 3.3) * 0.1), 1.0)
+	elif $Stop4/SteamColumn.visible:
+		$Stop4/SteamColumn.visible = false
+	# a block pushed off the shoebox goes back where it started
+	for n in _block_home:
+		var blk: CharacterBody3D = get_node("Stop1/" + n)
+		if blk.global_position.y < 0.25 * K and not blk.grabbed:
+			blk.global_position = _block_home[n]
+			blk.velocity = Vector3.ZERO
+
+func _arc(a: Vector3, b: Vector3, height: float, time: float) -> void:
+	await _arc_tween(a, b, height, time).finished
+
+func _arc_tween(a: Vector3, b: Vector3, height: float, time: float) -> Tween:
+	var tw := create_tween()
+	tw.tween_method(func(t: float):
+		player.global_position = a.lerp(b, t) + Vector3(0, sin(t * PI) * height, 0), 0.0, 1.0, time) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	return tw
+
+# ------------------------------------------------------------------ stop 0
+## Reveal shot: turn the camera towards a target, then hand control back.
+func _look_at(target: Vector3, pitch_deg: float, time := 1.4) -> void:
+	var d: Vector3 = target - player.global_position
+	var yaw := atan2(-d.x, -d.z)
+	var tw := create_tween().set_parallel()
+	tw.tween_method(func(v): player.cam_pivot.rotation.y = v, player.cam_pivot.rotation.y,
+		player.cam_pivot.rotation.y + wrapf(yaw - player.cam_pivot.rotation.y, -PI, PI), time) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(player.spring, "rotation:x", deg_to_rad(pitch_deg), time).set_trans(Tween.TRANS_SINE)
+
+func _reveal_desk() -> void:
+	revealed = true
+	_look_at($DeskLampTarget.global_position, -6.0)
+
+func _stand_frame_up() -> void:
+	frame_up = true
+	create_tween().tween_property($Stop0/PhotoFrame, "rotation_degrees:x", -78.0, 0.7) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	Game.restore_memory("family_photo")
+
+func _fall() -> void:
+	fall_armed = false
+	player.locked = true
+	var book: Node3D = $Stop0/LooseBook
+	var wob := create_tween()  # the book creaks: two small dips, then it tips over the edge
+	for a in [-5.0, -1.5, -9.0]:
+		wob.tween_property(book, "rotation_degrees:z", a, 0.18).set_trans(Tween.TRANS_SINE)
+	player.rig.kick_arms(0.0, 320.0)
+	player.rig.kick_head(-120.0, 200.0)
+	await wob.finished
+	var tip := create_tween().set_parallel()
+	tip.tween_property(book, "rotation_degrees:z", -75.0, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tip.tween_property(book, "position", book.position + Vector3(0.6, -0.3, 0), 0.3)
+	player.launch_squash()
+	var fly := _arc_tween(player.global_position, $FallLanding.global_position, 0.8, 1.0)
+	await tip.finished
+	var drop := create_tween().set_parallel()
+	drop.tween_property(book, "position", $BookLanding.position, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	drop.tween_property(book, "rotation_degrees:z", -180.0, 0.55)
+	await fly.finished
+	player.velocity = Vector3(0, -2.0, 0)
+	player.locked = false
+	fell = true
+	Game.set_checkpoint($Checkpoints/ToyBox)
+	_look_at($MachineLook.global_position, -14.0)  # show the goal: the big robot, the drum, the seesaw
+
+# ------------------------------------------------------------------ stop 1
+## Jack-in-the-box: the clown head bursts out (a little scare) and flings the robot onto the shoebox.
+func _jack() -> void:
+	if jack_busy:
+		return
+	jack_busy = true
+	player.locked = true
+	var head: Node3D = $Stop1/JackHead
+	var h0 := head.position
+	await get_tree().create_timer(0.25).timeout
+	var pop := create_tween().set_parallel()
+	pop.tween_property(head, "position", h0 + Vector3(0, 0.22 * K, 0), 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	pop.tween_property(head, "scale", Vector3.ONE * 1.6, 0.12)
+	player.launch_squash()
+	await _arc(player.global_position, $ShelfTarget.global_position, 2.2, 0.9)
+	player.velocity = Vector3.ZERO
+	player.locked = false
+	Game.set_checkpoint($Checkpoints/BoxShelf)
+	await get_tree().create_timer(1.2).timeout
+	var back := create_tween().set_parallel()  # the head wobbles back into its box
+	back.tween_property(head, "position", h0, 0.6).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	back.tween_property(head, "scale", Vector3.ONE, 0.6)
+	await back.finished
+	jack_busy = false
+
+## The exit machine. Powered with the robot's own charge (the Interactable takes it); the car drives
+## to the drum, the drum drops onto the seesaw, whoever stands on the other end is thrown onto the desk.
+func _run_machine() -> void:
+	if machine_busy:
+		return
+	machine_busy = true
+	var car: Node3D = $Stop1/ElectricCar
+	var drum: Node3D = $Stop1/Drum
+	var saw: Node3D = $Stop1/Seesaw
+	var drive := create_tween()
+	var from := car.position
+	for w in [$CarWay1, $CarWay2, $CarWay3, $CarWay4]:
+		var to: Vector3 = w.position
+		var dir := to - from
+		drive.tween_property(car, "rotation:y", atan2(-dir.z, dir.x), 0.15)  # turn at the corner
+		drive.tween_property(car, "position", to, dir.length() / (0.15 * K)).set_trans(Tween.TRANS_LINEAR)
+		from = to
+	await drive.finished
+	var fall := create_tween().set_parallel()  # the drum tips west off the robot's head onto the raised end
+	fall.tween_property(drum, "position", $DrumLanding.position, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	fall.tween_property(drum, "rotation_degrees:z", 85.0, 0.45)
+	await fall.finished
+	var on_end: bool = $Areas/SeesawEnd.overlaps_body(player)
+	if on_end:
+		player.locked = true
+	create_tween().tween_property(saw, "rotation_degrees:z", -12.0, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	if on_end:
+		player.launch_squash()
+		await _arc(player.global_position, $DeskLanding.global_position, 5.0, 1.7)
+		player.velocity = Vector3.ZERO
+		player.locked = false
+		launched = true
+		Game.set_checkpoint($Checkpoints/Desk)
+		_enter_desk()
+	# reset the machine for another try (or for show if the robot made it)
+	await get_tree().create_timer(1.5).timeout
+	for n in _machine_home:
+		var node: Node3D = get_node("Stop1/" + n)
+		create_tween().tween_property(node, "transform", _machine_home[n], 0.6)
+	await get_tree().create_timer(0.7).timeout
+	machine_busy = false
+
+# ------------------------------------------------------------------ stop 2
+## Landing on the desk: show the goal (the door handle), the desk lamp dies, the room goes dark,
+## the camera rises overhead. W walks south, towards the door.
+func _enter_desk() -> void:
+	player.locked = true
+	_look_at($DoorLook.global_position, -12.0, 1.3)
+	await get_tree().create_timer(1.6).timeout
+	var g: OmniLight3D = $DeskLampGlow
+	for e in [0.3, 2.2, 0.15, 1.6, 0.05, 0.9, 0.0]:
+		g.light_energy = e
+		await get_tree().create_timer(0.09).timeout
+	var env: Environment = $WorldEnvironment.environment
+	_env_saved = [env.ambient_light_energy, $Moonlight.light_energy]
+	var dark := create_tween().set_parallel()
+	dark.tween_property(env, "ambient_light_energy", 0.07, 1.2)
+	dark.tween_property($Moonlight, "light_energy", 0.04, 1.2)
+	for n in ["WallLampShade", "WallLampArm"]:  # it would sit between the overhead camera and the desk
+		get_node("Stop2/" + n).visible = false
+	player.set_top_down(true, -PI / 2)  # desk lies across the screen: D walks right, towards the door
+	await get_tree().create_timer(1.4).timeout
+	player.locked = false
+	in_desk = true
+
+## The lever handle: the robot steps onto it, its weight presses it down, the door swings open,
+## the robot drops onto the living-room floor; the camera comes back down and finds the breaker box.
+func _open_door() -> void:
+	if door_open:
+		return
+	door_open = true
+	player.locked = true
+	var handle: Node3D = $Stop2/DoorPivot/Handle
+	var lever_end: Vector3 = handle.global_position + Vector3(0, 0.15, -0.12 * K)
+	await _arc(player.global_position, lever_end, 0.6, 0.45)
+	create_tween().tween_property(handle, "rotation_degrees:x", -35.0, 0.2).set_trans(Tween.TRANS_BACK)
+	player.launch_squash()
+	await get_tree().create_timer(0.3).timeout
+	await create_tween().tween_property($Stop2/DoorPivot, "rotation_degrees:y", -75.0, 0.9) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT).finished
+	await _arc(player.global_position, $OpenPlanDrop.global_position, 1.0, 0.8)
+	player.velocity = Vector3(0, -2.0, 0)
+	in_desk = false
+	player.set_top_down(false)
+	for n in ["WallLampShade", "WallLampArm"]:
+		get_node("Stop2/" + n).visible = true
+	var env: Environment = $WorldEnvironment.environment
+	var light := create_tween().set_parallel()
+	light.tween_property(env, "ambient_light_energy", _env_saved[0], 1.5)
+	light.tween_property($Moonlight, "light_energy", _env_saved[1], 1.5)
+	Game.set_checkpoint($Checkpoints/OpenPlan)
+	await get_tree().create_timer(0.3).timeout
+	player.locked = false
+	_look_at($BreakerLook.global_position, -4.0, 1.5)
+	await _wait(2.2)
+	_look_at($TvLook.global_position, -6.0, 1.5)  # ...then the blue light of the TV: go there first
+
+# ------------------------------------------------------------------ stop 3
+func _player_cam() -> Camera3D:
+	return player.get_node("CamPivot/SpringArm3D/Camera3D")
+
+## E at the screen: the camera pushes into the glass, the robot hops at it and shrinks into it,
+## static + flash, and the pixel robot drops into the game.
+func _enter_tv() -> void:
+	var tv: TvScreen = $Stop3/TvScreen
+	player.locked = true
+	Game.set_checkpoint($Checkpoints/TvTop)
+	var pcam := _player_cam()
+	_tv_cam = Camera3D.new()
+	add_child(_tv_cam)
+	_tv_cam.fov = pcam.fov
+	_tv_cam.global_transform = pcam.global_transform
+	_tv_cam.make_current()
+	var push := create_tween()
+	push.tween_property(_tv_cam, "global_transform", tv.camera_spot(_tv_cam.fov), 1.8) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	await _wait(0.9)
+	player.launch_squash()
+	create_tween().tween_property(player.visual, "scale", Vector3.ONE * 0.05, 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await _arc(player.global_position, tv.global_position + Vector3(0, -0.4, 0), 0.5, 0.6)
+	player.visual.visible = false
+	tv.zap()
+	$PostFX.enabled = false
+	await push.finished
+	tv.game.start()
+	in_tv = true
+
+## The tin box at the top of the dragon's tower: the game loses its colour (and its power) and lets go
+## of the robot; once it is out, the TV switches itself off.
+func _tv_finale() -> void:
+	var tv: TvScreen = $Stop3/TvScreen
+	tv_finale = true
+	var fade := create_tween().set_parallel()
+	fade.tween_method(func(v): tv.mat.set_shader_parameter("desat", v), 0.0, 1.0, 2.2)
+	fade.tween_method(func(v): tv.mat.set_shader_parameter("glow", v), 1.5, 0.9, 2.2)
+	await fade.finished
+	await _wait(0.4)
+	tv.game.stop()
+	await _exit_tv()
+	await _wait(0.6)
+	create_tween().tween_method(func(v): tv.mat.set_shader_parameter("power", v), 1.0, 0.0, 0.5) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	create_tween().tween_property($TVGlow, "light_energy", 0.0, 0.5)
+
+## The childhood time box beside the cabinet: the lid lifts, a warm light; inside, his drawing.
+func _open_time_box() -> void:
+	time_box_open = true
+	create_tween().tween_property($Stop3/TimeBoxLid, "rotation_degrees:x", -105.0, 0.8) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	create_tween().tween_property($Stop3/TimeBoxGlow, "light_energy", 2.0, 1.2)
+	Game.restore_memory("time_box")
+
+## Out of the game: the robot pops out of the glass and lands on the floor on the kitchen
+## side; the camera pulls back out to the robot's own camera, which then turns to the stove.
+func _exit_tv() -> void:
+	var tv: TvScreen = $Stop3/TvScreen
+	in_tv = false
+	tv_done = true
+	tv.zap(0.6)
+	player.teleport(tv.global_position + Vector3(0.5 * K * 0.48 * 0.8, -0.3, 0.15))
+	player.visual.visible = true
+	create_tween().tween_property(player.visual, "scale", Vector3.ONE, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	player.launch_squash()
+	var d: Vector3 = $StoveLook.global_position - $TvExitLanding.global_position
+	player.cam_pivot.rotation.y = atan2(-d.x, -d.z)
+	player.spring.rotation.x = deg_to_rad(-12.0)
+	player._face_yaw = atan2(d.x, d.z)
+	var pcam := _player_cam()
+	var from := _tv_cam.global_transform
+	var pull := create_tween()
+	pull.tween_method(func(t: float): _tv_cam.global_transform = from.interpolate_with(pcam.global_transform, t), 0.0, 1.0, 1.3) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	await _arc(player.global_position, $TvExitLanding.global_position, 1.2, 0.9)
+	player.velocity = Vector3.ZERO
+	await pull.finished
+	pcam.make_current()
+	_tv_cam.queue_free()
+	_tv_cam = null
+	$PostFX.enabled = true
+	Game.set_checkpoint($Checkpoints/TvExit)
+	player.locked = false
+	_after_tv_looks()
+
+# ------------------------------------------------------------------ stop 4
+## Burner i (0 = west, 1 = east): ["warn" | "on" | "off", seconds into that state]. They alternate.
+func flare_state(i: int) -> Array:
+	var t := fposmod(_fire_t + (FLARE_PERIOD / 2.0 if i == 1 else 0.0), FLARE_PERIOD)
+	if t < 0.6:
+		return ["warn", t]
+	if t < 1.6:
+		return ["on", t - 0.6]
+	return ["off", t - 1.6]
+
+## Out of the TV: the orange glow of the stove, then the kitchen reveal (from here the view is open).
+func _after_tv_looks() -> void:
+	_look_at($StoveLook.global_position, -8.0, 1.5)
+	await _wait(1.9)
+	if not kitchen_revealed:
+		_kitchen_reveal()
+
+## First steps towards the kitchen: the tap left running and the water spreading over the floor, then the
+## windowsill on the far side - the way home is over the counters.
+func _kitchen_reveal() -> void:
+	kitchen_revealed = true
+	await _cinematic([
+		[Vector3(2.9, 1.55, -0.9), $SinkLook.global_position / K + Vector3(0, -0.15, 0), 1.4, 1.3],  # the sink, the flood
+		[Vector3(2.4, 1.6, -1.2), $SillLook.global_position / K, 1.3, 1.1],                         # the way home
+	])
+
+## A short camera move: poses = [position (m), look-at (m), move seconds, hold seconds]. Starts and ends on
+## the robot's own camera; the robot can't move meanwhile.
+func _cinematic(poses: Array) -> void:
+	player.locked = true
+	var pcam := _player_cam()
+	var cam := Camera3D.new()
+	add_child(cam)
+	cam.fov = pcam.fov
+	cam.global_transform = pcam.global_transform
+	cam.make_current()
+	for p in poses:
+		var to := Transform3D(Basis.IDENTITY, p[0] * K).looking_at(p[1] * K)
+		await create_tween().tween_property(cam, "global_transform", to, p[2]).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).finished
+		await _wait(p[3])
+	var from := cam.global_transform
+	await create_tween().tween_method(func(t: float): cam.global_transform = from.interpolate_with(pcam.global_transform, t), 0.0, 1.0, 1.0) 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).finished
+	pcam.make_current()
+	cam.queue_free()
+	player.locked = false
+
+## Powered microwave: beep, the door pops open and shoves the cutting board across the gap.
+func _microwave() -> void:
+	board_pushed = true
+	var door: Node3D = $Stop4/MicrowaveDoor
+	await create_tween().tween_property(door, "rotation_degrees:y", 100.0, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).finished
+	var board: Node3D = $Stop4/CuttingBoard
+	create_tween().tween_property(board, "position:x", board.position.x + 0.39 * K, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+## Powered toaster: the robot drops into the slot, the coils glow, tick tick... ding - up onto the spice shelf.
+func _toaster() -> void:
+	if toaster_busy:
+		return
+	toaster_busy = true
+	player.locked = true
+	await _arc(player.global_position, $ToasterSlot.global_position, 0.25, 0.3)
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color(0.2, 0.08, 0.05)
+	m.emission_enabled = true
+	m.emission = Color(1.0, 0.35, 0.1)
+	m.emission_energy_multiplier = 0.0
+	$Stop4/ToasterCoils.material = m
+	await create_tween().tween_property(m, "emission_energy_multiplier", 4.0, 1.6).finished
+	player.launch_squash()
+	await _arc(player.global_position, $SpiceShelfLanding.global_position, 1.4, 0.7)
+	player.velocity = Vector3.ZERO
+	player.locked = false
+	on_spice_shelf = true
+	player.magnet_enabled = true  # the steel hood is right there: the claws can become an electromagnet
+	Game.set_checkpoint($Checkpoints/SpiceShelf)
+	create_tween().tween_property(m, "emission_energy_multiplier", 0.0, 2.0)
+	toaster_busy = false
+
+func _kettle_look(b: Node) -> void:
+	if b == player and not has_meta("kettle_look") and not player.locked:
+		set_meta("kettle_look", true)
+		_look_at(Vector3(4.5, 1.15, -0.6) * K, -12.0, 1.2)
+
+## The kettle: E powers it, the switch light comes on, it rumbles, then steam for a few seconds (whistling).
+func _kettle() -> void:
+	if kettle_busy:
+		return
+	kettle_busy = true
+	var k: Node3D = $Stop4/Kettle
+	var home := k.position
+	$Stop4/KettleLight.material = _glow_mat(Color(1.0, 0.45, 0.15), 3.0)
+	var shake := create_tween()
+	for i in 10:
+		shake.tween_property(k, "position", home + Vector3(randf_range(-0.03, 0.03), 0, randf_range(-0.03, 0.03)), 0.08)
+	shake.tween_property(k, "position", home, 0.08)
+	await shake.finished
+	steam_left = STEAM_SECONDS
+	await _wait(STEAM_SECONDS)
+	$Stop4/KettleLight.material = null
+	kettle_busy = false
+
+func _glow_mat(c: Color, e: float) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = c
+	m.emission_enabled = true
+	m.emission = c
+	m.emission_energy_multiplier = e
+	return m
+
+## The sink: the robot steps onto the lid and the whole pile comes down - one thing after another, faster
+## and faster (all clatter). The robot rides the lid off onto the counter, the plug pops, the flood
+## drains away; the last lid spins in the basin, slower, and stops. Then quiet.
+func _sink_collapse() -> void:
+	sink_done = true
+	player.locked = true
+	var cam := Camera3D.new()
+	add_child(cam)
+	cam.fov = _player_cam().fov
+	cam.global_transform = _player_cam().global_transform
+	cam.make_current()
+	create_tween().tween_property(cam, "global_transform",
+		Transform3D(Basis.IDENTITY, $SinkCam.global_position).looking_at(Vector3(4.45, 0.85, 0.15) * K), 0.8).set_trans(Tween.TRANS_SINE)
+	var fall := [  # piece, tilt (x, z degrees), drop (m), beat (s)
+		["DishLid", Vector3(-14, 0, 6), 0.0, 0.0],
+		["DishBowlB", Vector3(0, 0, -70), 0.1, 0.45],
+		["DishBowlA", Vector3(60, 0, 20), 0.1, 0.32],
+		["DishLadle", Vector3(0, 40, 80), 0.18, 0.26],
+		["DishPlates", Vector3(-35, 0, -25), 0.05, 0.22],
+		["DishPot", Vector3(-75, 0, 0), 0.08, 0.18]]
+	for i in fall.size():
+		var f: Array = fall[i]
+		await _wait(f[3])
+		var n: Node3D = get_node("Stop4/" + f[0])
+		var tw := create_tween().set_parallel()
+		tw.tween_property(n, "rotation_degrees", f[1], 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw.tween_property(n, "position:y", n.position.y - f[2] * K, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		if i == 1:  # the lid tips the robot off, onto the counter south of the sink
+			player.launch_squash()
+			_arc_tween(player.global_position, $SinkLanding.global_position, 1.2, 0.8)
+	# the lid drops into the basin and spins
+	var lid: Node3D = $Stop4/DishLid
+	create_tween().tween_property(lid, "position", Vector3(4.45, 0.75, 0.2) * K, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	create_tween().tween_property(lid, "rotation_degrees", Vector3(0, 0, 0), 0.3)
+	var spin := create_tween()
+	spin.tween_method(func(a: float): lid.rotation.y = a, 0.0, TAU * 6.0, 3.2).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	spin.parallel().tween_method(func(w: float): lid.rotation.x = sin(lid.rotation.y * 2.0) * w, 0.12, 0.0, 3.2)
+	# the plug pops out; the water drains away
+	await _wait(0.4)
+	var plug: Node3D = $Stop4/SinkPlug
+	var pop := create_tween()
+	pop.tween_property(plug, "position:y", plug.position.y + 0.12 * K, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	pop.tween_property(plug, "position:y", plug.position.y + 0.01 * K, 0.3).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	_drain_flood()
+	await spin.finished
+	await _wait(0.6)
+	var from := cam.global_transform
+	await create_tween().tween_method(func(t: float): cam.global_transform = from.interpolate_with(_player_cam().global_transform, t), 0.0, 1.0, 1.0) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).finished
+	_player_cam().make_current()
+	cam.queue_free()
+	player.velocity = Vector3.ZERO
+	player.locked = false
+	Game.set_checkpoint($Checkpoints/SinkSouth)
+
+## The flood goes: the water on the floor, in the gap, on the counter and in the basin sinks away.
+func _drain_flood() -> void:
+	for n in ["WaterFloor", "WaterGap", "WaterCounter"]:
+		get_node("Stop4/" + n).enabled = false
+	for n in ["FloodFloor", "FloodGap", "CounterWater", "SinkWater"]:
+		var w: Node3D = get_node("Stop4/" + n)
+		var tw := create_tween()
+		tw.tween_property(w, "position:y", w.position.y - (0.17 if n == "SinkWater" else 0.02) * K, 2.6).set_trans(Tween.TRANS_SINE)
+		tw.tween_callback(func(): w.visible = false)
+	var spill: Node3D = $Stop4/SinkSpill
+	create_tween().tween_property(spill, "scale:y", 0.01, 1.2)
+
+## The daughter's mug by the window: one tap - a single clear note and a warm glow - and the camera finds
+## the frozen father at the stove for a moment.
+func _ring_mug() -> void:
+	mug_rung = true
+	player.rig.kick_arms(-250.0, 0.0)
+	var g: OmniLight3D = $Stop4/MugGlow
+	var tw := create_tween()
+	tw.tween_property(g, "light_energy", 3.0, 0.08)
+	tw.tween_property(g, "light_energy", 0.8, 2.5)
+	Game.restore_memory("daughter_mug")
+	_look_at($FatherHead.global_position, -2.0, 1.6)
+
+# ------------------------------------------------------------------ self test
+func _wait(s: float) -> void:
+	await get_tree().create_timer(s).timeout
+
+func _act(action: String, down: bool) -> void:
+	var e := InputEventAction.new()
+	e.action = action
+	e.pressed = down
+	Input.parse_input_event(e)
+
+func _shot(dir: String, n: String) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png(dir.path_join(n))
+
+func _cam_shot(dir: String, n: String, pos: Vector3, look: Vector3, ortho := 0.0) -> void:
+	var cam := Camera3D.new()
+	add_child(cam)
+	cam.position = pos
+	if ortho > 0.0:
+		cam.projection = Camera3D.PROJECTION_ORTHOGONAL
+		cam.size = ortho
+		cam.rotation_degrees = Vector3(-90, 0, 0)
+	else:
+		cam.look_at(look)
+	cam.make_current()
+	var env: Environment = $WorldEnvironment.environment
+	var keep := [env.fog_enabled, env.volumetric_fog_enabled, env.ambient_light_energy]
+	$PostFX.enabled = false
+	env.fog_enabled = false
+	env.volumetric_fog_enabled = false
+	env.ambient_light_energy = 2.5
+	await _wait(0.25)
+	await _shot(dir, n)
+	$PostFX.enabled = true
+	env.fog_enabled = keep[0]
+	env.volumetric_fog_enabled = keep[1]
+	env.ambient_light_energy = keep[2]
+	player.get_node("CamPivot/SpringArm3D/Camera3D").make_current()
+	cam.queue_free()
+
+func _set_axis(x: float, y: float) -> void:
+	for pair in [["move_right", x], ["move_left", -x], ["move_back", y], ["move_fwd", -y]]:
+		if pair[1] > 0.05:
+			Input.action_press(pair[0], clampf(pair[1], 0.0, 1.0))
+		else:
+			Input.action_release(pair[0])
+
+## Walk through waypoints (x, z in metres) with real movement input; returns the number of respawns seen.
+func _walk_path(points: Array) -> int:
+	var respawns := 0
+	for pt in points:
+		var target: Vector3 = pt if pt is Vector3 else Vector3(pt.x * K, 0, pt.y * K)
+		var t := 0.0
+		var last := player.global_position
+		while t < 4.0:
+			var d := target - player.global_position
+			d.y = 0.0
+			if d.length() < 0.12:
+				break
+			var v := Basis(Vector3.UP, -player.cam_pivot.rotation.y) * d.normalized()
+			var s := clampf(d.length() / 0.6, 0.35, 1.0)
+			_set_axis(v.x * s, v.z * s)
+			await get_tree().physics_frame
+			if player.global_position.distance_to(last) > 2.0:
+				respawns += 1
+			last = player.global_position
+			t += 1.0 / 60.0
+		if t >= 4.0:
+			_walk_stalls.append(str(target.snapped(Vector3.ONE * 0.01)) + " at " + str(player.global_position.snapped(Vector3.ONE * 0.01)))
+	_set_axis(0, 0)
+	await _wait(0.3)
+	return respawns
+
+## Teleport (metres), face camera yaw (forward = (-sin, 0, -cos)), run + jump; returns landing y in units.
+func _hop(from_m: Vector3, y_units: float, yaw: float, hold := 0.35, run_after := 0.05) -> float:
+	player.teleport(Vector3(from_m.x * K, y_units, from_m.z * K))
+	player.cam_pivot.rotation.y = yaw
+	await _wait(0.4)
+	_act("move_fwd", true)
+	_act("jump", true)
+	await _wait(hold)
+	_act("jump", false)
+	await _wait(run_after)
+	_act("move_fwd", false)
+	await _wait(0.8)
+	return snappedf(player.global_position.y, 0.01) if player.is_on_floor() else -1.0
+
+## Plays the TV game with real input until the robot passes x_goal (or the finale starts / time runs out):
+## jumps at the known spots, hops plank to plank, waits for the moving platform, baits the knight's thrust
+## and hits it while it recovers, claws whatever is in front; in the boss fight it dodges the lunge
+## marker, hops fireballs and the tail, and claws the dazed head.
+var _tv_debug := "--tv-debug" in OS.get_cmdline_user_args()
+var _prev_tail_d := 9999.0
+const PILOT_JUMPS := [104.0, 556.0, 682.0, 1026.0, 1062.0, 1108.0, 1164.0]
+
+func _tv_pilot(g: TvGame, x_goal: float, timeout: float) -> void:
+	if timeout > 2.0:
+		print("TVPILOT to %s from x=%.0f charge=%.2f hits=%d cont=%d" % [x_goal, g.bot.position.x, player.charge, g.hits_taken, g.continues])
+	var t := 0.0
+	var hold := 0.0
+	var atk := false
+	var dt := 1.0 / 60.0
+	while t < timeout and not tv_finale and g.bot.position.x < x_goal:
+		var b: TvGame.PixelBot = g.bot
+		var bx: float = b.position.x
+		var on_floor := b.is_on_floor()
+		var ax := 1.0
+		var jump := false
+		var swing := false
+		var live: Array = g.enemies.filter(func(e): return is_instance_valid(e) and not e.dead)
+		if g.frozen:
+			ax = 0.0
+		elif g.boss_started and not g.boss_beaten:
+			var dr: TvGame.Dragon = g.dragon
+			var target := 1336.0
+			if dr.state == TvGame.Dragon.DAZED:
+				target = dr.head.x - 15.0
+			elif dr.state == TvGame.Dragon.LUNGE_WARN or dr.state == TvGame.Dragon.LUNGE:
+				target = dr._to.x - 46.0 if dr._to.x > 1340.0 else dr._to.x + 46.0
+			ax = signf(target - bx) if absf(target - bx) > 3.0 else 0.0
+			for e in live:
+				if e is TvGame.Fireball and e.position.y >= 207.0 and e.position.x - bx > 4.0 and e.position.x - bx < 30.0:
+					jump = true
+			var tail_d := absf(dr.tail_tip.x - bx)
+			if dr.state == TvGame.Dragon.TAIL and tail_d < 34.0 and tail_d < _prev_tail_d:
+				jump = true  # it is coming at us
+			_prev_tail_d = tail_d
+			if dr.head_hittable() and absf(dr.head.x - bx) < 24.0 and dr.head.x > bx:
+				swing = true
+				ax = 0.0
+		elif g.boss_beaten:
+			jump = on_floor and bx > 1505.0
+		else:
+			for spot in PILOT_JUMPS:
+				if bx > spot and bx < spot + 6.0:
+					jump = true
+			if on_floor and bx > 596.0 and bx < 606.0 and b.position.y > 205.0:
+				jump = true  # onto the turret's block
+			if on_floor and bx > 700.0 and bx < 884.0 and b.position.y < 205.0:
+				jump = true  # plank to plank, no waiting
+			if on_floor and bx > 1190.0 and bx < 1226.0 and b.position.y < 152.0:
+				jump = true  # off the last tower, over the spikes
+			if bx > 384.0 and bx < 400.0 and on_floor and b.position.y > 205.0:
+				if g._platform.position.x > 407.0:
+					ax = 0.0  # wait for the platform to come close
+				else:
+					jump = true
+			if on_floor and b.position.y < 200.0 and bx > 400.0 and bx < 470.0:
+				ax = 1.0 if g._platform.position.x > 440.0 else 0.0  # ride it across
+			for e in live:  # the knight: bait the thrust, back off, hit it while it recovers
+				if e is TvGame.Knight and e.position.x - bx < 80.0 and e.position.x - bx > -10.0:
+					var d: float = e.position.x - bx
+					if e.state == TvGame.Knight.WINDUP or e.state == TvGame.Knight.THRUST:
+						ax = -1.0 if d < 50.0 and bx > 892.0 else 0.0
+					elif e.state == TvGame.Knight.RECOVER:
+						ax = 1.0 if d > 17.0 else 0.0
+						if d < 24.0 and b.facing > 0:
+							swing = true
+					else:
+						ax = 1.0 if d > 27.0 else 0.0
+		for e in live:  # claw anything right in front
+			if e is TvGame.Knight or not e.hittable():
+				continue
+			var d: float = (e.position.x - bx) * b.facing
+			if d > -2.0 and d < 22.0 and absf(e.position.y - b.position.y) < 16.0:
+				swing = true
+		_set_axis(ax, 0)
+		if jump and hold <= 0.0 and on_floor:
+			_act("jump", true)
+			hold = 0.34
+		elif hold > 0.0:
+			hold -= dt
+			if hold <= 0.0:
+				_act("jump", false)
+		if atk:
+			_act("attack", false)
+			atk = false
+		elif swing:
+			_act("attack", true)
+			atk = true
+		var was_floor := on_floor
+		await get_tree().physics_frame
+		t += dt
+		if _tv_debug and b.is_on_floor() != was_floor:
+			print("  %s at x=%.1f y=%.1f t=%.2f" % ["LAND" if b.is_on_floor() else "AIR ", b.position.x, b.position.y, t])
+	_act("jump", false)
+	_act("attack", false)
+	_set_axis(0, 0)
+
+## The TV stop's self test: climb, into the screen, all five screens of the game, out, the time box.
+func _autotest_tv(dir: String) -> Dictionary:
+	# ---- stop 3: the TV, part 1 (climb, into the screen, out again)
+	var s3 := {}
+	await _wait(3.8)
+	var to_tv: Vector3 = ($TvLook.global_position - _player_cam().global_position).normalized()
+	s3["reveal_looks_at_tv"] = -_player_cam().global_basis.z.dot(to_tv) > 0.9
+	await _shot(dir, "room_s3_reveal_tv.png")
+	s3["floor_to_boxes(0.81)"] = await _hop(Vector3(0.35, 0, -1.70), 0.05, 0.0)
+	s3["boxes_to_mags(1.71)"] = await _hop(Vector3(0.36, 0, -1.86), 0.86, 0.0)
+	s3["mags_to_sub(2.61)"] = await _hop(Vector3(0.37, 0, -2.02), 1.76, 0.0)
+	s3["sub_to_speaker(3.51)"] = await _hop(Vector3(0.38, 0, -2.20), 2.66, 0.0)
+	s3["speaker_to_cabinet(4.5)"] = await _hop(Vector3(0.40, 0, -2.45), 3.56, -PI / 2)
+	s3["walk_respawns"] = await _walk_path([Vector2(0.6, -2.09), Vector2(1.0, -2.09)])
+	s3["at_screen"] = player.global_position.distance_to(Vector3(1.0 * K, 0.5 * K, -2.09 * K)) < 0.5
+	await _shot(dir, "room_s3_cabinet.png")
+	_act("interact", true)
+	await _wait(0.1)
+	_act("interact", false)
+	await _wait(1.2)
+	await _shot(dir, "room_s3_push_in.png")
+	await _wait(1.6)
+	var tvg: TvGame = $Stop3/TvScreen.game
+	s3["in_tv"] = in_tv and tvg.active
+	s3["tv_camera"] = get_viewport().get_camera_3d() == _tv_cam
+	await _wait(1.0)
+	s3["pixel_bot_landed"] = tvg.bot.is_on_floor()
+	await _shot(dir, "room_s3_in_tv.png")
+	var by: float = tvg.bot.position.y
+	_act("jump", true)
+	await _wait(0.2)
+	s3["pixel_jump"] = tvg.bot.position.y < by - 10.0
+	_act("jump", false)
+	await _wait(0.6)
+	for a in OS.get_cmdline_user_args():  # debug: --tv-start=X drops the robot at x and plays from there
+		if a.begins_with("--tv-start="):
+			tvg.bot.position = Vector2(float(a.substr(11)), 190)
+			tvg.screen_reached = clampi(int(tvg.bot.position.x / 320.0), 0, 4)
+			var t0 := Time.get_ticks_msec()
+			while not tv_finale and Time.get_ticks_msec() - t0 < 150000:
+				await _tv_pilot(tvg, 99999.0, 1.0)
+			s3["debug_seconds"] = (Time.get_ticks_msec() - t0) / 1000.0
+			s3["debug_end_x"] = tvg.bot.position.x
+			s3["boss_hp"] = tvg.dragon.hp
+			s3["hits_taken"] = tvg.hits_taken
+			s3["finale"] = tv_finale
+			s3["continues"] = tvg.continues
+			return s3
+	# screen 1 (pit, the slime in the tunnel), played by an autopilot with real input
+	await _tv_pilot(tvg, 330.0, 20.0)
+	s3["screen1_cleared"] = tvg.bot.position.x >= 330.0
+	s3["tunnel_slime_killed"] = tvg.kills >= 1
+	# a pit = insert coin: 5% charge, back at the start of this screen
+	var c3: float = player.charge
+	tvg.bot.position = Vector2(436, 236)
+	tvg.bot.velocity = Vector2.ZERO
+	await _wait(0.8)
+	await _shot(dir, "room_s3_continue.png")
+	await _wait(1.2)
+	s3["continue_cost"] = snappedf(c3 - player.charge, 0.001)
+	s3["continue_respawn"] = tvg.bot.position.distance_to(TvGame.STARTS[1]) < 12.0 and not tvg.frozen
+	# screens 2 + 3 (moving platform, turret, crumbling planks, the shield knight)
+	await _tv_pilot(tvg, 1004.0, 60.0)
+	s3["screens2_3_cleared"] = tvg.bot.position.x >= 1004.0
+	s3["knight_beaten"] = not tvg.enemies.any(func(e): return e is TvGame.Knight)
+	s3["shield_blocks"] = tvg.blocked_hits
+	# screen 4 (towers over spikes, turret on top) up to the roof
+	await _tv_pilot(tvg, 1306.0, 40.0)
+	s3["screen4_cleared"] = tvg.bot.position.x >= 1306.0
+	s3["boss_started"] = tvg.boss_started
+	s3["continues_before_boss"] = tvg.continues
+	s3["hits_before_boss"] = tvg.hits_taken
+	await _wait(1.2)
+	await _shot(dir, "room_s3_boss.png")
+	# the dragon (two phases), then up the steps to the princess
+	var tb := Time.get_ticks_msec()
+	var hits0: int = tvg.hits_taken
+	var shot2 := false
+	while tvg.dragon.state != TvGame.Dragon.GONE and Time.get_ticks_msec() - tb < 150000:
+		await _tv_pilot(tvg, 99999.0, 1.0)
+		if tvg.dragon.phase2 and not shot2:
+			shot2 = true
+			await _shot(dir, "room_s3_boss_phase2.png")
+	s3["boss_seconds"] = snappedf((Time.get_ticks_msec() - tb) / 1000.0, 0.1)
+	s3["boss_hits_taken"] = tvg.hits_taken - hits0
+	s3["boss_phase2_seen"] = shot2
+	s3["boss_beaten"] = tvg.boss_beaten
+	await _tv_pilot(tvg, 99999.0, 12.0)
+	s3["princess_reached"] = tv_finale
+	s3["kills"] = tvg.kills
+	s3["hits_taken"] = tvg.hits_taken
+	s3["continues"] = tvg.continues
+	s3["batteries"] = tvg.batteries
+	await _wait(1.2)
+	await _shot(dir, "room_s3_colour_drains.png")
+	for i in 60:
+		if tv_done:
+			break
+		await _wait(0.1)
+	s3["left_tv"] = tv_done
+	await _wait(0.8)
+	await _shot(dir, "room_s3_pop_out.png")
+	await _wait(1.6)
+	s3["landed_kitchen_side"] = player.is_on_floor() and player.global_position.distance_to($TvExitLanding.global_position) < 0.8
+	s3["camera_back"] = get_viewport().get_camera_3d() == _player_cam()
+	s3["checkpoint"] = Game.checkpoint.name
+	s3["charge"] = snappedf(player.charge, 0.01)
+	await _wait(1.0)
+	await _shot(dir, "room_s3_stove_look.png")
+	var pw = $Stop3/TvScreen.mat.get_shader_parameter("power")
+	s3["tv_switched_off"] = pw != null and pw < 0.05
+	# the real time box, by the cabinet
+	player.teleport(Vector3(1.6 * K, 0.05, -1.98 * K))
+	player.cam_pivot.rotation.y = 0.0
+	await _wait(0.5)
+	_act("interact", true)
+	await _wait(0.1)
+	_act("interact", false)
+	await _wait(1.2)
+	s3["time_box_open"] = time_box_open and "time_box" in Game.memories
+	await _shot(dir, "room_s3_time_box.png")
+	return s3
+
+## The kitchen's self test (part 1): reveal, climb, the gap, the microwave bridge, the toaster lift, hazards.
+func _autotest_kitchen(dir: String) -> Dictionary:
+	var s4 := {}
+	_skip_to_kitchen()
+	await _wait(1.2)
+	await _wait(1.0)
+	s4["reveal"] = kitchen_revealed
+	await _wait(1.9)
+	await _shot(dir, "room_s4_reveal_sink.png")
+	s4["yaw_sink"] = snappedf(rad_to_deg(player.cam_pivot.rotation.y), 1.0)
+	await _wait(2.4)
+	await _shot(dir, "room_s4_reveal_sill.png")
+	await _wait(1.5)
+	s4["control_back_after_reveal"] = not player.locked and get_viewport().get_camera_3d() == _player_cam()
+	s4["yaw_sill"] = snappedf(rad_to_deg(player.cam_pivot.rotation.y), 1.0)
+	s4["robot_at"] = str((player.global_position / K).snapped(Vector3.ONE * 0.01))
+	s4["floor_to_cans(0.99)"] = await _hop(Vector3(1.62, 0, -2.47), 0.05, -PI / 2)
+	s4["cans_to_rice(1.98)"] = await _hop(Vector3(1.77, 0, -2.47), 1.04, -PI / 2)
+	s4["rice_to_stool(2.97)"] = await _hop(Vector3(1.90, 0, -2.47), 2.03, -PI / 2)
+	s4["stool_to_seat(3.96)"] = await _hop(Vector3(2.04, 0, -2.47), 3.02, -PI / 2)
+	s4["seat_to_lunchbox(4.95)"] = await _hop(Vector3(2.22, 0, -2.48), 4.01, PI)
+	s4["lunchbox_to_cereal(6.03)"] = await _hop(Vector3(2.22, 0, -2.37), 5.0, PI)
+	s4["cereal_to_chairback(7.2)"] = await _hop(Vector3(2.22, 0, -2.27), 6.08, PI)
+	s4["chairback_to_counter(8.1)"] = await _hop(Vector3(2.22, 0, -2.18), 7.25, -PI / 2)
+	s4["checkpoint_kitchen"] = Game.checkpoint.name == "Kitchen"
+	await _shot(dir, "room_s4_counter.png")
+	# the gap is too wide to jump; falling in = water = short circuit, back to the checkpoint
+	var c0: float = player.charge
+	var y_gap: float = await _hop(Vector3(2.80, 0, -2.17), KC_U + 0.05, -PI / 2, 0.35, 0.4)
+	await _wait(1.2)
+	s4["gap_too_wide"] = y_gap < 0.0 or y_gap < KC_U - 0.5
+	s4["water_shorts_out"] = $Stop4/WaterGap.hits >= 1 and player.charge < c0 and player.global_position.distance_to($Checkpoints/Kitchen.global_position) < 1.0
+	# the microwave: the door shoves the cutting board over the gap
+	player.teleport(Vector3(2.56 * K, KC_U + 0.25, -2.19 * K))
+	await _wait(0.5)
+	c0 = player.charge
+	_act("interact", true)
+	await _wait(0.1)
+	_act("interact", false)
+	await _wait(1.0)
+	s4["microwave_cost"] = snappedf(c0 - player.charge, 0.001)
+	s4["board_bridges_gap"] = board_pushed and absf($Stop4/CuttingBoard.global_position.x - 2.99 * K) < 0.1
+	await _shot(dir, "room_s4_board.png")
+	s4["walk_board_respawns"] = await _walk_path([Vector2(2.7, -2.17), Vector2(3.17, -2.17)])
+	s4["crossed_gap"] = player.global_position.x > 3.1 * K and player.global_position.y > KC_U - 0.1
+	s4["board_to_breadbag(8.91)"] = await _hop(Vector3(3.17, 0, -2.2), player.global_position.y + 0.05, -PI / 2)
+	s4["breadbag_to_toaster(9.72)"] = await _hop(Vector3(3.32, 0, -2.18), 8.96, 0.0)
+	s4["shelf_not_jumpable"] = (await _hop(Vector3(3.30, 0, -2.36), 9.77, 0.0)) < 11.5
+	# the toaster: in, glow, ding, up onto the spice shelf
+	player.teleport(Vector3(3.30 * K, 9.8, -2.40 * K))
+	await _wait(0.5)
+	c0 = player.charge
+	_act("interact", true)
+	await _wait(0.1)
+	_act("interact", false)
+	await _wait(1.2)
+	await _shot(dir, "room_s4_toaster.png")
+	await _wait(2.0)
+	s4["toaster_cost"] = snappedf(c0 - player.charge, 0.001)
+	s4["popped_to_shelf"] = on_spice_shelf and player.is_on_floor() and absf(player.global_position.y - 1.33 * K) < 0.15
+	s4["checkpoint_shelf"] = Game.checkpoint.name == "SpiceShelf"
+	await _shot(dir, "room_s4_shelf.png")
+	# the stove fire burns
+	player.teleport(Vector3(3.7 * K, 9.1, -2.35 * K))
+	await _wait(1.6)
+	s4["fire_burns"] = $Stop4/StoveFire.hits >= 1 and player.global_position.distance_to($Checkpoints/SpiceShelf.global_position) < 1.0
+	# ---- the electromagnet: hang under the hood, past the flares, the rail round the corner, drop by the kettle
+	var hood: Node3D = $Stop4/RangeHood
+	player.teleport(Vector3(3.32 * K, 1.335 * K, -2.6 * K))
+	await _wait(0.5)
+	s4["magnet_hint_shown"] = player._magnet_hint.visible
+	_act("magnet", true)
+	await _wait(0.4)
+	s4["clings_to_hood"] = player.clinging == hood and not player.is_on_floor()
+	await _shot(dir, "room_s4_hang.png")
+	# a flare while hanging under it burns
+	await _cling_to(Vector3(3.40, 0, -2.5), -1)
+	while flare_state(0)[0] != "warn":
+		await get_tree().physics_frame
+	await _cling_to(Vector3(3.55, 0, -2.5), -1)
+	await _wait(1.6)
+	_act("magnet", false)
+	s4["flare_burns"] = $Stop4/FlareW.hits >= 1 and Game.checkpoint.name == "SpiceShelf" \
+		and player.global_position.distance_to($Checkpoints/SpiceShelf.global_position) < 1.0
+	# letting go over the stove = the fire
+	await _wait(0.6)
+	player.teleport(Vector3(3.32 * K, 1.335 * K, -2.6 * K))
+	await _wait(0.4)
+	_act("magnet", true)
+	await _wait(0.3)
+	await _cling_to(Vector3(3.40, 0, -2.5), 0)
+	await _cling_to(Vector3(3.70, 0, -2.5), -1)
+	var fire0: int = $Stop4/StoveFire.hits + $Stop4/FlareW.hits + $Stop4/FlareE.hits
+	var at_release := str((player.global_position / K).snapped(Vector3.ONE * 0.01))
+	_act("magnet", false)
+	await _wait(1.4)
+	s4["drop_on_stove_burns"] = $Stop4/StoveFire.hits + $Stop4/FlareW.hits + $Stop4/FlareE.hits > fire0
+	if not s4["drop_on_stove_burns"]:
+		s4["drop_debug"] = "released at %s, now at %s, cp %s" % [at_release, str((player.global_position / K).snapped(Vector3.ONE * 0.01)), Game.checkpoint.name]
+	# the full crossing, waiting for each burner to die down
+	await _wait(0.6)
+	player.teleport(Vector3(3.32 * K, 1.335 * K, -2.6 * K))
+	await _wait(0.4)
+	var c1: float = player.charge
+	var t1: float = player.magnet_seconds
+	var burns: int = $Stop4/FlareW.hits + $Stop4/FlareE.hits
+	_act("magnet", true)
+	await _wait(0.3)
+	await _cling_to(Vector3(3.40, 0, -2.5), -1)
+	await _cling_to(Vector3(3.70, 0, -2.5), 0)
+	await _cling_to(Vector3(3.99, 0, -2.6), 1)
+	await _shot(dir, "room_s4_past_flares.png")
+	await _cling_to(Vector3(4.3, 0, -2.62), -1)
+	s4["on_rail_n"] = player.clinging == $Stop4/UtensilRailN
+	await _shot(dir, "room_s4_rail.png")
+	await _cling_to(Vector3(4.69, 0, -2.6), -1)
+	await _cling_to(Vector3(4.69, 0, -1.5), -1)
+	s4["on_rail_e"] = player.clinging == $Stop4/UtensilRailE
+	_act("magnet", false)
+	await _wait(1.0)
+	s4["flare_burns_on_crossing"] = $Stop4/FlareW.hits + $Stop4/FlareE.hits - burns
+	s4["dropped_by_kettle"] = player.is_on_floor() and absf(player.global_position.y - KC_U) < 0.15 \
+		and absf(player.global_position.z - (-1.5 * K)) < 0.5
+	s4["checkpoint_kettle"] = Game.checkpoint.name == "Kettle"
+	s4["magnet_cost"] = snappedf(c1 - player.charge, 0.001)
+	s4["magnet_seconds"] = snappedf(player.magnet_seconds - t1, 0.1)
+	await _shot(dir, "room_s4_kettle.png")
+	# the corner counter is wet: dropping off the rail too early shorts out
+	player.teleport(Vector3(4.4 * K, KC_U + 0.3, -2.0 * K))
+	await _wait(1.2)
+	s4["corner_is_wet"] = $Stop4/WaterCorner.hits >= 1
+	# ---- the kettle's steam to the dish rack (the hazard tests above drained a lot: back to a normal ~50%)
+	s4["charge_before_kettle_reset"] = snappedf(player.charge, 0.01)
+	player.revive(0.5)
+	player.teleport(Vector3(4.68 * K, KC_U + 0.05, -1.5 * K))
+	await _wait(0.5)
+	var ck: float = player.charge
+	_act("interact", true)
+	await _wait(0.1)
+	_act("interact", false)
+	await _wait(1.3)
+	s4["kettle_cost"] = snappedf(ck - player.charge, 0.001)
+	s4["steam_on"] = steam_left > 0.0
+	await _wait(1.2)
+	s4["steam_lifts"] = player.global_position.y > 1.2 * K
+	await _shot(dir, "room_s4_steam.png")
+	await _float_to(Vector3(4.5, 0, -0.62))
+	await _wait(1.0)
+	s4["on_dish_rack"] = player.is_on_floor() and absf(player.global_position.y - 1.15 * K) < 0.2
+	s4["wet_counter_hits_during_float"] = $Stop4/WaterCounter.hits
+	# ---- the sink comes down
+	await _walk_path([Vector2(4.47, -0.45), Vector2(4.47, -0.15)])
+	s4["collapse_started"] = sink_done
+	await _wait(1.6)
+	await _shot(dir, "room_s4_collapse.png")
+	await _wait(4.6)
+	s4["flood_drained"] = not $Stop4/WaterFloor.enabled and not $Stop4/FloodFloor.visible
+	s4["landed_south_of_sink"] = player.is_on_floor() and player.global_position.distance_to($SinkLanding.global_position) < 0.6
+	s4["control_back_after_sink"] = not player.locked and get_viewport().get_camera_3d() == _player_cam()
+	s4["checkpoint_sink"] = Game.checkpoint.name == "SinkSouth"
+	await _shot(dir, "room_s4_after_sink.png")
+	# ---- the mug, then onto the windowsill
+	await _walk_path([Vector2(4.45, 1.55), Vector2(4.45, 2.28)])
+	s4["mug_robot_at"] = str((player.global_position / K).snapped(Vector3.ONE * 0.01))
+	s4["mug_in_range"] = $Stop4/MugTap.player_in_range()
+	_act("interact", true)
+	await _wait(0.1)
+	_act("interact", false)
+	await _wait(1.8)
+	s4["mug_rung"] = mug_rung and "daughter_mug" in Game.memories
+	await _shot(dir, "room_s4_mug.png")
+	s4["to_sill_respawns"] = await _walk_path([Vector2(4.28, 2.3), Vector2(4.22, 2.52), Vector2(3.9, 2.52)])
+	s4["on_windowsill"] = player.is_on_floor() and player.global_position.x < 4.15 * K and absf(player.global_position.y - 0.9 * K) < 0.15
+	s4["charge"] = snappedf(player.charge, 0.01)
+	await _cam_shot(dir, "room_s4_overview.png", Vector3(1.6 * K, 2.2 * K, 0.6 * K), Vector3(3.6 * K, 0.8 * K, -1.6 * K))
+	return s4
+
+## While hanging: steer (real input) to a point (x, z in units); if `wait_flare` >= 0, first wait for that
+## burner to have just died down.
+func _cling_to(target: Vector3, wait_flare: int) -> void:
+	if wait_flare >= 0:
+		while not (flare_state(wait_flare)[0] == "off" and flare_state(wait_flare)[1] < 0.2):
+			await get_tree().physics_frame
+	var tgt := Vector3(target.x * K, 0, target.z * K)
+	var t := 0.0
+	while t < 6.0 and player.clinging != null:
+		var d := tgt - player.global_position
+		d.y = 0.0
+		if d.length() < 0.1:
+			break
+		var v := Basis(Vector3.UP, -player.cam_pivot.rotation.y) * d.normalized()
+		var sp := clampf(d.length() / 0.4, 0.4, 1.0)
+		_set_axis(v.x * sp, v.z * sp)
+		await get_tree().physics_frame
+		t += 1.0 / 60.0
+	_set_axis(0, 0)
+	await get_tree().physics_frame
+
+## Floating in the kettle's steam: steer (real input) towards a point (x, z in m) until the robot lands.
+func _float_to(target: Vector3) -> void:
+	var tgt := Vector3(target.x * K, 0, target.z * K)
+	var t := 0.0
+	while t < 6.0:
+		var d := tgt - player.global_position
+		d.y = 0.0
+		if d.length() < 0.15 or (t > 0.5 and player.is_on_floor()):
+			break
+		var v := Basis(Vector3.UP, -player.cam_pivot.rotation.y) * d.normalized()
+		_set_axis(v.x, v.z)
+		await get_tree().physics_frame
+		t += 1.0 / 60.0
+	_set_axis(0, 0)
+
+func _autotest() -> void:
+	var dir := OS.get_user_data_dir()
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--shots="):
+			dir = a.substr(8)
+	var r := {}
+	if "--from=kitchen" in OS.get_cmdline_user_args():  # only the kitchen
+		await _wait(1.0)
+		r["stop4"] = await _autotest_kitchen(dir)
+		print("ROOMTEST ", JSON.stringify(r))
+		get_tree().quit()
+		return
+	if "--from=tv" in OS.get_cmdline_user_args():  # only the TV stop (starts by the bedroom door)
+		await _wait(1.0)
+		_skip_to_living_room()
+		r["stop3"] = await _autotest_tv(dir)
+		print("ROOMTEST ", JSON.stringify(r))
+		get_tree().quit()
+		return
+	var top := 0.72 * K
+	await _wait(1.5)
+	r["start_on_nightstand"] = player.is_on_floor() and absf(player.global_position.y - top) < 0.1
+	await _shot(dir, "room_s0_start.png")
+	await _cam_shot(dir, "room_box_topdown.png", Vector3(-2.24 * K, 30, -2.2 * K), Vector3.ZERO, 13.0)
+	await _cam_shot(dir, "room_box_view.png", Vector3(-2.24 * K, 11, -1.2 * K), Vector3(-2.24 * K, 1.0, -2.25 * K))
+	await _cam_shot(dir, "room_bedroom_view.png", Vector3(-16, 13, -6), Vector3(-24, 3, -20))
+	# ---- stop 0
+	var s0 := {}
+	s0["table_to_pill(7.2)"] = await _hop(Vector3(-3.07, 0, -2.445), top + 0.05, 0.0, 0.3, 0.0)
+	s0["pill_to_books(7.74)"] = await _hop(Vector3(-3.07, 0, -2.55), top + 0.8, PI / 2)
+	await _wait(1.6)
+	s0["reveal"] = revealed
+	player.teleport(Vector3(-3.05 * K, top + 0.05, -2.33 * K))
+	await _wait(0.4)
+	_act("interact", true)
+	await _wait(0.1)
+	_act("interact", false)
+	await _wait(1.0)
+	s0["frame_up"] = frame_up
+	player.teleport(Vector3(-3.0 * K, top + 0.05, -2.33 * K))
+	player.cam_pivot.rotation.y = -PI / 2
+	await _wait(0.4)
+	_act("move_fwd", true)
+	for i in 30:
+		await _wait(0.1)
+		if not fall_armed:
+			break
+	_act("move_fwd", false)
+	await _wait(2.2)
+	s0["fell_into_box"] = fell and player.is_on_floor() and Game.checkpoint.name == "ToyBox"
+	await _wait(1.0)
+	await _shot(dir, "room_s1_machine_reveal.png")
+	r["stop0"] = s0
+	await _shot(dir, "room_s1_landed.png")
+	# ---- stop 1
+	var s1 := {}
+	s1["plush_to_blockstack(1.8)"] = await _hop(Vector3(-2.72, 0, -2.40), 0.9, PI)
+	s1["blockstack_to_truck(1.26)"] = await _hop(Vector3(-2.71, 0, -2.27), 1.85, PI)
+	# box floor = the dark -> respawn
+	player.teleport(Vector3(-2.4 * K, 0.2, -2.4 * K))
+	await _wait(1.6)
+	s1["dark_floor_respawns"] = player.global_position.distance_to($Checkpoints/ToyBox.global_position) < 1.0
+	# ride the train
+	var train: Node3D = $Stop1/Train
+	player.teleport(train.global_position + Vector3(0, 0.6, 0))
+	await _wait(0.2)
+	var p0 := player.global_position
+	await _wait(1.5)
+	s1["train_carries"] = player.is_on_floor() and player.global_position.distance_to(p0) > 0.4 and player.global_position.y > 0.4
+	await _shot(dir, "room_s1_train.png")
+	# jack-in-the-box
+	player.teleport(Vector3(-2.28 * K, 0.95, -1.95 * K))
+	await _wait(0.6)
+	await _shot(dir, "room_s1_jack.png")
+	await _wait(1.2)
+	s1["jack_to_shelf(2.7)"] = snappedf(player.global_position.y, 0.01) if player.is_on_floor() else -1.0
+	# push the big block east to the shoebox's east edge (the top step of the stairs)
+	var big: Node3D = $Stop1/PushBlockLarge
+	var bx0 := big.global_position.x
+	player.teleport(Vector3(big.global_position.x - 0.675 - 0.36, 2.75, big.global_position.z))
+	player.cam_pivot.rotation.y = -PI / 2
+	await _wait(0.4)
+	_act("interact", true)
+	await _wait(0.1)
+	_act("move_fwd", true)
+	await _wait(1.2)
+	_act("move_fwd", false)
+	_act("interact", false)
+	await _wait(0.3)
+	s1["big_block_pushed_m"] = snappedf((big.global_position.x - bx0) / K, 0.001)
+	# stairs (blocks set in their final places) -> the big robot's shoulder -> its head
+	big.global_position = Vector3(-1.995 * K, 0.301 * K, -2.47 * K)
+	$Stop1/PushBlockSmall.global_position = Vector3(-2.1035 * K, 0.301 * K, -2.47 * K)
+	await _wait(0.3)
+	s1["shelf_to_small(3.31)"] = await _hop(Vector3(-2.20, 0, -2.47), 2.75, -PI / 2, 0.3, 0.0)
+	s1["small_to_big(4.06)"] = await _hop(Vector3(-2.1035, 0, -2.47), 3.4, -PI / 2, 0.3, 0.0)
+	s1["big_to_shoulder(4.5)"] = await _hop(Vector3(-1.995, 0, -2.42), 4.12, -PI / 2, 0.3, 0.05)
+	s1["shoulder_to_head(5.22)"] = await _hop(Vector3(-1.80, 0, -2.40), 4.55, PI, 0.3, 0.05)
+	await _shot(dir, "room_s1_head.png")
+	# the exit machine: charge the car on the head, drop onto the seesaw's cyan end, get launched
+	player.teleport(Vector3(-1.76 * K, 5.3, -2.15 * K))
+	await _wait(0.4)
+	var c0: float = player.charge
+	_act("interact", true)
+	await _wait(1.7)
+	_act("interact", false)
+	s1["car_charge_cost"] = snappedf(c0 - player.charge, 0.01)
+	s1["machine_running"] = machine_busy
+	player.teleport(Vector3(-2.26 * K, 0.75, -2.20 * K))
+	await _wait(2.6)
+	await _shot(dir, "room_s1_launch.png")
+	await _wait(3.0)
+	s1["launched_onto_desk"] = launched and player.is_on_floor() and absf(player.global_position.y - 0.75 * K) < 0.2
+	s1["checkpoint"] = Game.checkpoint.name
+	await _shot(dir, "room_s1_on_desk.png")
+	r["stop1"] = s1
+	# ---- stop 2: the random desk maze
+	var s2 := {"seed": maze.used_seed, "route_cells": maze.path.size(), "holes": maze.holes.size(), "lights": maze.lights.size()}
+	await _wait(3.6)
+	s2["top_down"] = player.top_down
+	s2["room_dark"] = $WorldEnvironment.environment.ambient_light_energy < 0.12
+	await _shot(dir, "room_s2_dark.png")
+	var y0 := player.global_position.y
+	_act("jump", true)
+	await _wait(0.3)
+	_act("jump", false)
+	s2["no_jump"] = absf(player.global_position.y - y0) < 0.05
+	# the start flashlight shows the END of the maze, and the camera widens to show it
+	var pts: Array = maze.route_points()
+	player.teleport(pts[0] + Vector3(0, 0.05, 0))
+	await _wait(0.5)
+	var c2: float = player.charge
+	_act("interact", true)
+	await _wait(0.1)
+	_act("interact", false)
+	await _wait(1.2)
+	var fl: Node3D = maze.lights[0]
+	s2["start_light_on"] = fl.lit
+	s2["start_light_shows_goal"] = fl.lit_center().distance_to(pts.back()) < 0.1
+	s2["camera_widened"] = player.spring.spring_length > player.top_down_dist + 1.0
+	s2["light_cost"] = snappedf(c2 - player.charge, 0.01)
+	await _shot(dir, "room_s2_flashlight.png")
+	# walk the generated route with real input; push the eraser into its hole on the way
+	var e: int = maze.eraser_index
+	var respawns := 0
+	if e > 0:
+		respawns += await _walk_path(pts.slice(1, e - 1))
+		var fwd: Vector3 = (pts[e - 1] - pts[e - 2]).normalized()
+		respawns += await _walk_path([pts[e - 2] + fwd * 0.25])
+		_act("interact", true)
+		await _wait(0.1)
+		var v := Basis(Vector3.UP, -player.cam_pivot.rotation.y) * fwd
+		_set_axis(v.x, v.z)
+		for i in 120:  # push until it drops into the hole, then let go
+			await get_tree().physics_frame
+			if maze.hole_fill.bridge != null:
+				break
+		_set_axis(0, 0)
+		_act("interact", false)
+		await _wait(0.6)
+		s2["eraser_bridged"] = maze.hole_fill.bridge != null
+		respawns += await _walk_path(pts.slice(e - 1))
+	else:
+		respawns += await _walk_path(pts.slice(1))
+	s2["start_light_went_out"] = not fl.lit
+	s2["route_respawns"] = respawns
+	s2["reached_goal_cell"] = player.global_position.distance_to(pts.back()) < 0.5
+	s2["walk_stalls"] = _walk_stalls
+	await _shot(dir, "room_s2_goal.png")
+	# a hole off the route drops you back to the last checkpoint
+	var hole_c: Vector2i = maze.holes.back()
+	var before := player.global_position
+	player.teleport(maze.cell_world(hole_c) + Vector3(0, 0.3, 0))
+	await _wait(1.8)
+	s2["hole_respawns"] = player.global_position.y > 6.6 and player.global_position.distance_to(maze.cell_world(hole_c)) > 0.4
+	# mom's note
+	player.teleport(maze.note.global_position + Vector3(0.3, 0.05, 0))
+	await _wait(0.5)
+	s2["note_found"] = note_found
+	# the door handle
+	player.teleport(pts.back() + Vector3(0, 0.05, 0))
+	await _wait(0.4)
+	_act("interact", true)
+	await _wait(0.1)
+	_act("interact", false)
+	await _wait(3.6)
+	s2["door_opened"] = door_open and absf($Stop2/DoorPivot.rotation_degrees.y + 75.0) < 2.0
+	s2["out_on_floor"] = player.is_on_floor() and player.global_position.y < 0.3 and player.global_position.x > -0.4 * K
+	s2["back_to_third_person"] = not player.top_down
+	s2["checkpoint"] = Game.checkpoint.name
+	s2["developer_fps"] = Performance.get_monitor(Performance.TIME_FPS)
+	r["stop2"] = s2
+	# Desk art acceptance stops before the independently developed TV station.
+	if "--desk-autotest" in OS.get_cmdline_user_args():
+		print("ROOMTEST ", JSON.stringify(r))
+		get_tree().quit()
+		return
+	r["stop3"] = await _autotest_tv(dir)
+
+	print("ROOMTEST ", JSON.stringify(r))
+	get_tree().quit()

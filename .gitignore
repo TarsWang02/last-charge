@@ -1,0 +1,25 @@
+# Godot: the import cache is rebuilt on open (keep the *.import and *.uid files - they ARE tracked)
+.godot/
+
+# builds, screenshots from the self tests, the asset inbox (raw downloads), Python env
+build/
+shots/
+inbox/
+tools/.venv/
+__pycache__/
+*.pyc
+tools/blender/renders/
+tools/blender/godot_validation/
+tools/blender/*.log
+
+# art production: keep the reports (*.md), not the raw source files (models, renders, references)
+docs/art_production_*/**
+!docs/art_production_*/**/
+!docs/art_production_*/**/*.md
+docs/desk_maze_delivery/backup/
+
+# local editor / agent settings
+.claude/settings.local.json
+*.tmp
+Thumbs.db
+.DS_Store

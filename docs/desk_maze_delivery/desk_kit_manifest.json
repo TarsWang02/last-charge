@@ -1,0 +1,386 @@
+[
+  {
+    "id": "textbook",
+    "group": "A1",
+    "glb_path": "res://assets/models/props/prop_desk_textbook.glb",
+    "size_m": [
+      0.1166670024394989,
+      0.07999999821186066,
+      0.023000000044703484
+    ],
+    "weight": 2,
+    "triangles": 432
+  },
+  {
+    "id": "calculator",
+    "group": "A1",
+    "glb_path": "res://assets/models/props/prop_desk_calculator.glb",
+    "size_m": [
+      0.1166670024394989,
+      0.039000000804662704,
+      0.026000000536441803
+    ],
+    "weight": 1,
+    "triangles": 1512
+  },
+  {
+    "id": "tape_dispenser",
+    "group": "A1",
+    "glb_path": "res://assets/models/props/prop_desk_tape_dispenser.glb",
+    "size_m": [
+      0.1166670024394989,
+      0.07100000232458115,
+      0.026000000536441803
+    ],
+    "weight": 1,
+    "triangles": 708
+  },
+  {
+    "id": "book_stack",
+    "group": "A2",
+    "glb_path": "res://assets/models/props/prop_desk_book_stack.glb",
+    "size_m": [
+      0.23333300650119781,
+      0.038999997079372406,
+      0.026000000536441803
+    ],
+    "weight": 2,
+    "triangles": 1296
+  },
+  {
+    "id": "fallen_books",
+    "group": "A3",
+    "glb_path": "res://assets/models/props/prop_desk_fallen_books.glb",
+    "size_m": [
+      0.3499999940395355,
+      0.052000001072883606,
+      0.026000000536441803
+    ],
+    "weight": 2,
+    "triangles": 1728
+  },
+  {
+    "id": "pencil_pouch",
+    "group": "A2",
+    "glb_path": "res://assets/models/props/prop_desk_pencil_pouch.glb",
+    "size_m": [
+      0.23333300650119781,
+      0.045500002801418304,
+      0.029999999329447746
+    ],
+    "weight": 1,
+    "triangles": 324
+  },
+  {
+    "id": "upright_ruler",
+    "group": "A2",
+    "glb_path": "res://assets/models/props/prop_desk_upright_ruler.glb",
+    "size_m": [
+      0.23333300650119781,
+      0.03999999910593033,
+      0.014100000262260437
+    ],
+    "weight": 1,
+    "triangles": 384
+  },
+  {
+    "id": "ruler_exercise",
+    "group": "A3",
+    "glb_path": "res://assets/models/props/prop_desk_ruler_exercise.glb",
+    "size_m": [
+      0.3499999940395355,
+      0.03799999877810478,
+      0.02500000037252903
+    ],
+    "weight": 1,
+    "triangles": 960
+  },
+  {
+    "id": "open_book",
+    "group": "A_stack",
+    "glb_path": "res://assets/models/props/prop_desk_open_book.glb",
+    "size_m": [
+      0.06800000369548798,
+      0.007000000216066837,
+      0.05999999865889549
+    ],
+    "weight": 1,
+    "triangles": 324
+  },
+  {
+    "id": "cartridge",
+    "group": "A_stack",
+    "glb_path": "res://assets/models/props/prop_desk_cartridge.glb",
+    "size_m": [
+      0.03200000151991844,
+      0.009200000204145908,
+      0.024000000208616257
+    ],
+    "weight": 1,
+    "triangles": 216
+  },
+  {
+    "id": "pencil_pot",
+    "group": "B",
+    "glb_path": "res://assets/models/props/prop_desk_pencil_pot.glb",
+    "size_m": [
+      0.026000000536441803,
+      0.04749999940395355,
+      0.026000000536441803
+    ],
+    "weight": 1,
+    "triangles": 2860
+  },
+  {
+    "id": "mug",
+    "group": "B",
+    "glb_path": "res://assets/models/props/prop_desk_mug.glb",
+    "size_m": [
+      0.02800000086426735,
+      0.03286602720618248,
+      0.026000000536441803
+    ],
+    "weight": 1,
+    "triangles": 2364
+  },
+  {
+    "id": "soda_can",
+    "group": "B",
+    "glb_path": "res://assets/models/props/prop_desk_soda_can.glb",
+    "size_m": [
+      0.02800000086426735,
+      0.05650000274181366,
+      0.02800000086426735
+    ],
+    "weight": 1,
+    "triangles": 580
+  },
+  {
+    "id": "alarm_clock",
+    "group": "B_tall",
+    "glb_path": "res://assets/models/props/prop_desk_alarm_clock.glb",
+    "size_m": [
+      0.027000000700354576,
+      0.08900000154972076,
+      0.027000000700354576
+    ],
+    "weight": 1,
+    "triangles": 1512
+  },
+  {
+    "id": "ruler_pot",
+    "group": "B_tall",
+    "glb_path": "res://assets/models/props/prop_desk_ruler_pot.glb",
+    "size_m": [
+      0.026000000536441803,
+      0.14000000059604645,
+      0.026000000536441803
+    ],
+    "weight": 1,
+    "triangles": 2968
+  },
+  {
+    "id": "exam",
+    "group": "C",
+    "glb_path": "res://assets/models/props/prop_desk_exam.glb",
+    "size_m": [
+      0.06800000369548798,
+      0.0010499999625608325,
+      0.08399999886751175
+    ],
+    "weight": 2,
+    "triangles": 110
+  },
+  {
+    "id": "homework",
+    "group": "C",
+    "glb_path": "res://assets/models/props/prop_desk_homework.glb",
+    "size_m": [
+      0.06800000369548798,
+      0.0010499999625608325,
+      0.08399999886751175
+    ],
+    "weight": 2,
+    "triangles": 110
+  },
+  {
+    "id": "birthday_card",
+    "group": "C",
+    "glb_path": "res://assets/models/props/prop_desk_birthday_card.glb",
+    "size_m": [
+      0.06800000369548798,
+      0.0010499999625608325,
+      0.08399999886751175
+    ],
+    "weight": 1,
+    "triangles": 110
+  },
+  {
+    "id": "certificate",
+    "group": "C",
+    "glb_path": "res://assets/models/props/prop_desk_certificate.glb",
+    "size_m": [
+      0.06800000369548798,
+      0.0010499999625608325,
+      0.08399999886751175
+    ],
+    "weight": 1,
+    "triangles": 110
+  },
+  {
+    "id": "broken_edge",
+    "group": "D",
+    "glb_path": "res://assets/models/props/prop_desk_broken_edge.glb",
+    "size_m": [
+      0.1166670024394989,
+      0.006000000052154064,
+      0.00849999999627471
+    ],
+    "weight": 1,
+    "triangles": 864
+  },
+  {
+    "id": "splinter_corner",
+    "group": "D",
+    "glb_path": "res://assets/models/props/prop_desk_splinter_corner.glb",
+    "size_m": [
+      0.017999999225139618,
+      0.008500000461935997,
+      0.008999999612569809
+    ],
+    "weight": 1,
+    "triangles": 216
+  },
+  {
+    "id": "pencil_shaving",
+    "group": "E",
+    "glb_path": "res://assets/models/props/prop_desk_pencil_shaving.glb",
+    "size_m": [
+      0.012000000104308128,
+      0.0007999999797903001,
+      0.006000000052154064
+    ],
+    "weight": 1,
+    "triangles": 108
+  },
+  {
+    "id": "paperclip",
+    "group": "E",
+    "glb_path": "res://assets/models/props/prop_desk_paperclip.glb",
+    "size_m": [
+      0.008282843045890331,
+      0.000800000096205622,
+      0.015682843513786793
+    ],
+    "weight": 1,
+    "triangles": 96
+  },
+  {
+    "id": "paper_ball",
+    "group": "E",
+    "glb_path": "res://assets/models/props/prop_desk_paper_ball.glb",
+    "size_m": [
+      0.012999999802559614,
+      0.011699999682605267,
+      0.010400000028312206
+    ],
+    "weight": 1,
+    "triangles": 320
+  },
+  {
+    "id": "pencil_stub",
+    "group": "E",
+    "glb_path": "res://assets/models/props/prop_desk_pencil_stub.glb",
+    "size_m": [
+      0.019999999552965164,
+      0.003117692715022713,
+      0.0033391464967280626
+    ],
+    "weight": 1,
+    "triangles": 164
+  },
+  {
+    "id": "flashlight",
+    "group": "F_flashlight",
+    "glb_path": "res://assets/models/props/prop_desk_flashlight.glb",
+    "size_m": [
+      0.024000000208616257,
+      0.024000000510607883,
+      0.04800000041723251
+    ],
+    "weight": 1,
+    "triangles": 768
+  },
+  {
+    "id": "clip_lamp",
+    "group": "F_far",
+    "glb_path": "res://assets/models/props/prop_desk_clip_lamp.glb",
+    "size_m": [
+      0.03500000014901161,
+      0.04700000211596489,
+      0.032999999821186066
+    ],
+    "weight": 1,
+    "triangles": 432
+  },
+  {
+    "id": "handheld",
+    "group": "F_local",
+    "glb_path": "res://assets/models/props/prop_desk_handheld.glb",
+    "size_m": [
+      0.054999999701976776,
+      0.010499999858438969,
+      0.03999999910593033
+    ],
+    "weight": 1,
+    "triangles": 1728
+  },
+  {
+    "id": "electronic_clock",
+    "group": "F_local",
+    "glb_path": "res://assets/models/props/prop_desk_electronic_clock.glb",
+    "size_m": [
+      0.04800000041723251,
+      0.023000000044703484,
+      0.023000000044703484
+    ],
+    "weight": 1,
+    "triangles": 1512
+  },
+  {
+    "id": "mini_lamp",
+    "group": "F_lamp",
+    "glb_path": "res://assets/models/props/prop_desk_mini_lamp.glb",
+    "size_m": [
+      0.047564055770635605,
+      0.07099999487400055,
+      0.047564055770635605
+    ],
+    "weight": 1,
+    "triangles": 896
+  },
+  {
+    "id": "eraser",
+    "group": "F_eraser",
+    "glb_path": "res://assets/models/props/prop_desk_eraser.glb",
+    "size_m": [
+      0.0949999988079071,
+      0.0949999988079071,
+      0.0949999988079071
+    ],
+    "weight": 1,
+    "triangles": 558
+  },
+  {
+    "id": "folded_note",
+    "group": "F_note",
+    "glb_path": "res://assets/models/props/prop_desk_folded_note.glb",
+    "size_m": [
+      0.07000000029802322,
+      0.002300000051036477,
+      0.05000000074505806
+    ],
+    "weight": 1,
+    "triangles": 122
+  }
+]

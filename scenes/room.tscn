@@ -1,0 +1,1809 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/room.gd" id="room"]
+[ext_resource type="Script" path="res://scripts/components/checkpoint.gd" id="cp"]
+[ext_resource type="Script" path="res://scripts/components/pushable.gd" id="push"]
+[ext_resource type="Script" path="res://scripts/components/interactable.gd" id="ia"]
+[ext_resource type="Script" path="res://scripts/components/toy_train.gd" id="train"]
+[ext_resource type="Script" path="res://scripts/components/battery_pickup.gd" id="bat"]
+[ext_resource type="Script" path="res://scripts/components/reveal_light.gd" id="reveal"]
+[ext_resource type="Script" path="res://scripts/components/hole_fill.gd" id="holefill"]
+[ext_resource type="Script" path="res://scripts/desk_maze.gd" id="maze"]
+[ext_resource type="Script" path="res://scripts/tv_screen.gd" id="tv"]
+[ext_resource type="Script" path="res://scripts/components/hazard.gd" id="hazard"]
+[ext_resource type="PackedScene" path="res://scenes/post_fx.tscn" id="post"]
+
+[sub_resource type="StandardMaterial3D" id="m_floor"]
+albedo_color = Color(0.28, 0.2, 0.14, 1)
+roughness = 0.75
+
+[sub_resource type="StandardMaterial3D" id="m_wall"]
+albedo_color = Color(0.32, 0.31, 0.28, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="m_wood"]
+albedo_color = Color(0.38, 0.24, 0.13, 1)
+roughness = 0.6
+
+[sub_resource type="StandardMaterial3D" id="m_darkwood"]
+albedo_color = Color(0.22, 0.14, 0.08, 1)
+roughness = 0.6
+
+[sub_resource type="StandardMaterial3D" id="m_fabric"]
+albedo_color = Color(0.3, 0.33, 0.42, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="m_cardboard"]
+albedo_color = Color(0.55, 0.4, 0.24, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="m_cardboard_dark"]
+albedo_color = Color(0.36, 0.25, 0.14, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="m_plush"]
+albedo_color = Color(0.6, 0.45, 0.32, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="m_toy_red"]
+albedo_color = Color(0.6, 0.15, 0.12, 1)
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="m_toy_blue"]
+albedo_color = Color(0.15, 0.3, 0.6, 1)
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="m_toy_yellow"]
+albedo_color = Color(0.7, 0.55, 0.15, 1)
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="m_toy_green"]
+albedo_color = Color(0.2, 0.45, 0.25, 1)
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="m_metal"]
+albedo_color = Color(0.45, 0.47, 0.5, 1)
+roughness = 0.4
+
+[sub_resource type="StandardMaterial3D" id="m_brass"]
+albedo_color = Color(0.6, 0.45, 0.2, 1)
+roughness = 0.35
+
+[sub_resource type="StandardMaterial3D" id="m_paper"]
+albedo_color = Color(0.7, 0.66, 0.55, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="m_glass"]
+transparency = 1
+albedo_color = Color(0.7, 0.8, 0.9, 0.35)
+roughness = 0.1
+
+[sub_resource type="StandardMaterial3D" id="m_abyss"]
+albedo_color = Color(0.02, 0.02, 0.03, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="m_ruler"]
+albedo_color = Color(0.85, 0.72, 0.35, 1)
+roughness = 0.5
+
+[sub_resource type="StandardMaterial3D" id="m_cyanmark"]
+albedo_color = Color(0.2, 1.0, 0.9, 1)
+roughness = 0.4
+emission_enabled = true
+emission = Color(0.2, 1.0, 0.9, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="StandardMaterial3D" id="m_amber_eye"]
+albedo_color = Color(1.0, 0.7, 0.3, 1)
+roughness = 0.3
+emission_enabled = true
+emission = Color(1.0, 0.65, 0.25, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="StandardMaterial3D" id="m_person"]
+albedo_color = Color(0.12, 0.12, 0.14, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="m_window"]
+albedo_color = Color(0.2, 0.25, 0.4, 1)
+roughness = 1.0
+emission_enabled = true
+emission = Color(0.35, 0.45, 0.8, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="StandardMaterial3D" id="m_tvscreen"]
+albedo_color = Color(0.1, 0.15, 0.3, 1)
+roughness = 0.3
+emission_enabled = true
+emission = Color(0.25, 0.4, 0.9, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="StandardMaterial3D" id="m_kitchen"]
+albedo_color = Color(0.55, 0.52, 0.45, 1)
+roughness = 0.5
+
+[sub_resource type="StandardMaterial3D" id="m_fault"]
+albedo_color = Color(0.5, 0.05, 0.05, 1)
+roughness = 0.5
+emission_enabled = true
+emission = Color(1.0, 0.1, 0.05, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="StandardMaterial3D" id="m_lampshade"]
+albedo_color = Color(0.8, 0.7, 0.5, 1)
+roughness = 0.8
+emission_enabled = true
+emission = Color(1.0, 0.7, 0.4, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="StandardMaterial3D" id="m_cable"]
+albedo_color = Color(0.05, 0.07, 0.12, 1)
+roughness = 0.6
+emission_enabled = true
+emission = Color(0.15, 0.25, 0.6, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="StandardMaterial3D" id="m_water"]
+transparency = 1
+albedo_color = Color(0.3, 0.55, 0.9, 0.35)
+roughness = 0.05
+emission_enabled = true
+emission = Color(0.18, 0.4, 0.8, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="StandardMaterial3D" id="m_steam"]
+transparency = 1
+albedo_color = Color(0.92, 0.93, 0.97, 0.12)
+roughness = 1.0
+emission_enabled = true
+emission = Color(0.25, 0.27, 0.3, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="BoxShape3D" id="area_BookTip"]
+size = Vector3(0.81, 0.45, 1.44)
+
+[sub_resource type="BoxShape3D" id="area_BooksTop"]
+size = Vector3(1.35, 0.36, 1.17)
+
+[sub_resource type="BoxShape3D" id="area_JackTop"]
+size = Vector3(0.81, 0.45, 0.81)
+
+[sub_resource type="BoxShape3D" id="area_SeesawEnd"]
+size = Vector3(0.72, 0.72, 0.72)
+
+[sub_resource type="BoxShape3D" id="area_KitchenReveal"]
+size = Vector3(3.24, 0.9, 3.6)
+
+[sub_resource type="BoxShape3D" id="area_SinkPile"]
+size = Vector3(2.7, 0.63, 2.7)
+
+[sub_resource type="BoxShape3D" id="area_SteamPlume"]
+size = Vector3(3.78, 3.69, 8.1)
+
+[sub_resource type="Environment" id="env"]
+background_mode = 1
+background_color = Color(0.01, 0.012, 0.025, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.35, 0.42, 0.65, 1)
+ambient_light_energy = 0.45
+tonemap_mode = 3
+ssao_enabled = true
+glow_enabled = true
+glow_hdr_threshold = 0.9
+fog_enabled = true
+fog_light_color = Color(0.03, 0.04, 0.07, 1)
+fog_density = 0.006
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.004
+
+[node name="Room" type="Node3D"]
+script = ExtResource("room")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Moonlight" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.939693, 0.196175, -0.280166, 0, 0.819152, 0.573576, 0.34202, 0.538986, -0.769751, 0, 36, 0)
+light_color = Color(0.55, 0.65, 1, 1)
+light_energy = 0.8
+light_volumetric_fog_energy = 2.0
+shadow_enabled = true
+
+[node name="Shell" type="Node3D" parent="."]
+
+[node name="Bedroom" type="Node3D" parent="."]
+
+[node name="Stop0" type="Node3D" parent="."]
+
+[node name="Stop1" type="Node3D" parent="."]
+
+[node name="Stop2" type="Node3D" parent="."]
+
+[node name="Stop3" type="Node3D" parent="."]
+
+[node name="Stop4" type="Node3D" parent="."]
+
+[node name="Stop5" type="Node3D" parent="."]
+
+[node name="Stop6" type="Node3D" parent="."]
+
+[node name="Floor" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0, -0.27, 0)
+use_collision = true
+size = Vector3(85.5, 0.54, 47.7)
+material = SubResource("m_floor")
+
+[node name="WallN" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0, 12.15, -24.12)
+use_collision = true
+size = Vector3(86.58, 24.3, 0.54)
+material = SubResource("m_wall")
+
+[node name="WallS" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0, 12.15, 24.12)
+use_collision = true
+size = Vector3(86.58, 24.3, 0.54)
+material = SubResource("m_wall")
+
+[node name="WallW" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -43.02, 12.15, 0)
+use_collision = true
+size = Vector3(0.54, 24.3, 47.7)
+material = SubResource("m_wall")
+
+[node name="WallE" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 43.02, 12.15, 0)
+use_collision = true
+size = Vector3(0.54, 24.3, 47.7)
+material = SubResource("m_wall")
+
+[node name="BedroomWallN" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -3.87, 12.15, -7.65)
+use_collision = true
+size = Vector3(0.54, 24.3, 32.4)
+material = SubResource("m_wall")
+
+[node name="BedroomWallS" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -3.87, 12.15, 20.03)
+use_collision = true
+size = Vector3(0.54, 24.3, 7.65)
+material = SubResource("m_wall")
+
+[node name="DoorLintel" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -3.87, 21.38, 12.38)
+use_collision = true
+size = Vector3(0.54, 5.85, 7.65)
+material = SubResource("m_wall")
+
+[node name="WindowBedroomN" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -27.45, 13.5, -23.78)
+size = Vector3(7.2, 9, 0.045)
+material = SubResource("m_window")
+
+[node name="WindowBedroomS" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -28.8, 13.95, 23.78)
+size = Vector3(10.8, 8.1, 0.045)
+material = SubResource("m_window")
+
+[node name="WindowLongS" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 12.6, 14.4, 23.78)
+size = Vector3(46.8, 10.8, 0.045)
+material = SubResource("m_window")
+
+[node name="BedFrame" type="CSGBox3D" parent="Bedroom"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -36.45, 1.575, -14.85)
+use_collision = true
+size = Vector3(12.6, 3.15, 18)
+material = SubResource("m_darkwood")
+
+[node name="Mattress" type="CSGBox3D" parent="Bedroom"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -36.45, 4.05, -14.85)
+use_collision = true
+size = Vector3(11.7, 1.8, 17.1)
+material = SubResource("m_fabric")
+
+[node name="Headboard" type="CSGBox3D" parent="Bedroom"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -36.45, 4.5, -23.54)
+use_collision = true
+size = Vector3(12.6, 9, 0.63)
+material = SubResource("m_darkwood")
+
+[node name="Pillow" type="CSGBox3D" parent="Bedroom"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -36.45, 5.49, -21.38)
+size = Vector3(9.9, 1.08, 3.15)
+material = SubResource("m_paper")
+
+[node name="Blanket" type="CSGBox3D" parent="Bedroom"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -36.45, 5.265, -13.05)
+size = Vector3(11.34, 0.63, 12.6)
+material = SubResource("m_fabric")
+
+[node name="Nightstand" type="CSGBox3D" parent="Stop0"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -27.72, 3.24, -21.87)
+use_collision = true
+size = Vector3(3.96, 6.48, 3.96)
+material = SubResource("m_wood")
+
+[node name="NightstandDrawer" type="CSGBox3D" parent="Stop0"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -27.72, 5.13, -19.89)
+size = Vector3(3.6, 1.26, 0.09)
+material = SubResource("m_darkwood")
+
+[node name="OldBooks" type="CSGBox3D" parent="Stop0"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -28.66, 7.11, -22.91)
+use_collision = true
+size = Vector3(1.53, 1.26, 1.35)
+material = SubResource("m_darkwood")
+
+[node name="PillBottleA" type="CSGCylinder3D" parent="Stop0"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -27.63, 6.84, -22.95)
+use_collision = true
+radius = 0.18
+height = 0.72
+sides = 24
+material = SubResource("m_toy_yellow")
+
+[node name="PillBottleB" type="CSGCylinder3D" parent="Stop0"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -26.73, 6.772, -22.05)
+use_collision = true
+radius = 0.162
+height = 0.585
+sides = 24
+material = SubResource("m_paper")
+
+[node name="WaterGlass" type="CSGCylinder3D" parent="Stop0"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -26.28, 6.975, -23.22)
+use_collision = true
+radius = 0.315
+height = 0.99
+sides = 24
+material = SubResource("m_glass")
+
+[node name="ReadingGlasses" type="CSGBox3D" parent="Stop0"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -27, 6.561, -20.16)
+use_collision = true
+size = Vector3(1.08, 0.162, 0.27)
+material = SubResource("m_metal")
+
+[node name="CoinA" type="CSGCylinder3D" parent="Stop0"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -28.8, 6.493, -21.78)
+radius = 0.108
+height = 0.027
+sides = 24
+material = SubResource("m_brass")
+
+[node name="CoinB" type="CSGCylinder3D" parent="Stop0"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -28.53, 6.493, -21.6)
+radius = 0.108
+height = 0.027
+sides = 24
+material = SubResource("m_brass")
+
+[node name="BoxFloor" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.16, 0.036, -19.8)
+use_collision = true
+size = Vector3(10.8, 0.072, 8.1)
+material = SubResource("m_abyss")
+
+[node name="BoxWallW" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -25.51, 2.7, -19.8)
+use_collision = true
+size = Vector3(0.108, 5.4, 8.1)
+material = SubResource("m_cardboard")
+
+[node name="BoxWallE" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -14.81, 2.7, -19.8)
+use_collision = true
+size = Vector3(0.108, 5.4, 8.1)
+material = SubResource("m_cardboard")
+
+[node name="BoxWallN" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.16, 2.7, -23.8)
+use_collision = true
+size = Vector3(10.8, 5.4, 0.108)
+material = SubResource("m_cardboard")
+
+[node name="BoxWallS" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.16, 2.475, -15.8)
+use_collision = true
+size = Vector3(10.8, 4.95, 0.108)
+material = SubResource("m_cardboard")
+
+[node name="FlapN" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.16, 6.66, -23.89)
+use_collision = true
+size = Vector3(10.8, 2.52, 0.108)
+material = SubResource("m_cardboard")
+
+[node name="FlapE" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -14.81, 7.2, -19.8)
+use_collision = true
+size = Vector3(0.108, 3.6, 8.1)
+material = SubResource("m_cardboard")
+
+[node name="FlapWTorn" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -26.55, 4.635, -20.34)
+size = Vector3(1.98, 0.09, 5.58)
+material = SubResource("m_cardboard_dark")
+
+[node name="PlushHeap" type="CSGSphere3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -24.3, -0.27, -22.5)
+use_collision = true
+radius = 1.35
+radial_segments = 16
+rings = 10
+material = SubResource("m_plush")
+
+[node name="PlushBunnyHead" type="CSGSphere3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -25.02, 0.99, -23.22)
+radius = 0.405
+radial_segments = 16
+rings = 10
+material = SubResource("m_plush")
+
+[node name="BlockStack" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -24.48, 0.9, -20.52)
+use_collision = true
+size = Vector3(0.72, 1.8, 0.72)
+material = SubResource("m_toy_blue")
+
+[node name="ToyTruck" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -24.66, 0.63, -18.72)
+use_collision = true
+size = Vector3(1.08, 1.26, 1.08)
+material = SubResource("m_toy_green")
+
+[node name="TruckCab" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -24.93, 1.485, -18.99)
+use_collision = true
+size = Vector3(0.54, 0.45, 0.54)
+material = SubResource("m_toy_green")
+
+[node name="JackBox" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.52, 0.45, -17.55)
+use_collision = true
+size = Vector3(0.9, 0.9, 0.9)
+material = SubResource("m_toy_red")
+
+[node name="DollHeadA" type="CSGSphere3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -24.93, 0.36, -17.1)
+use_collision = true
+radius = 0.36
+radial_segments = 16
+rings = 10
+material = SubResource("m_paper")
+
+[node name="DollHeadB" type="CSGSphere3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -24.12, 0.27, -16.38)
+use_collision = true
+radius = 0.27
+radial_segments = 16
+rings = 10
+material = SubResource("m_paper")
+
+[node name="WindUpMonkey" type="CSGCylinder3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -19.35, 0.405, -16.38)
+use_collision = true
+radius = 0.27
+height = 0.81
+sides = 24
+material = SubResource("m_toy_yellow")
+
+[node name="Shoebox" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -19.8, 1.35, -22.59)
+use_collision = true
+size = Vector3(5.04, 2.7, 1.98)
+material = SubResource("m_cardboard_dark")
+
+[node name="BigBotSeat" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.13, 0.54, -19.8)
+use_collision = true
+size = Vector3(2.304, 1.08, 2.88)
+material = SubResource("m_metal")
+
+[node name="BigBotTorso" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.04, 2.52, -19.8)
+use_collision = true
+size = Vector3(2.124, 2.88, 2.52)
+material = SubResource("m_toy_yellow")
+
+[node name="BigBotHead" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.29, 4.59, -19.8)
+use_collision = true
+size = Vector3(2.52, 1.26, 2.52)
+material = SubResource("m_toy_yellow")
+
+[node name="BigBotShoulderN" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.2, 3.87, -21.6)
+use_collision = true
+size = Vector3(1.8, 1.26, 0.72)
+material = SubResource("m_metal")
+
+[node name="BigBotShoulderS" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.2, 3.87, -18)
+use_collision = true
+size = Vector3(1.8, 1.26, 0.72)
+material = SubResource("m_metal")
+
+[node name="BigBotArmN" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.47, 1.62, -21.78)
+use_collision = true
+size = Vector3(0.9, 3.24, 0.72)
+material = SubResource("m_metal")
+
+[node name="BigBotArmS" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.47, 1.62, -17.82)
+use_collision = true
+size = Vector3(0.9, 3.24, 0.72)
+material = SubResource("m_metal")
+
+[node name="BigBotLegN" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -18.99, 0.405, -20.88)
+use_collision = true
+size = Vector3(3.42, 0.81, 0.72)
+material = SubResource("m_toy_yellow")
+
+[node name="BigBotLegS" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -18.99, 0.405, -18.72)
+use_collision = true
+size = Vector3(3.42, 0.81, 0.72)
+material = SubResource("m_toy_yellow")
+
+[node name="BigBotFootN" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.97, 0.675, -20.88)
+use_collision = true
+size = Vector3(0.54, 1.35, 0.9)
+material = SubResource("m_metal")
+
+[node name="BigBotFootS" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.97, 0.675, -18.72)
+use_collision = true
+size = Vector3(0.54, 1.35, 0.9)
+material = SubResource("m_metal")
+
+[node name="CarTrack1" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -15.48, 5.233, -19.8)
+size = Vector3(0.18, 0.027, 1.98)
+material = SubResource("m_metal")
+
+[node name="CarTrack2" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -15.84, 5.233, -20.79)
+size = Vector3(0.9, 0.027, 0.18)
+material = SubResource("m_metal")
+
+[node name="CarTrack3" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.2, 5.233, -20.29)
+size = Vector3(0.18, 0.027, 0.99)
+material = SubResource("m_metal")
+
+[node name="SeesawFulcrum" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -19.08, 0.27, -19.8)
+use_collision = true
+size = Vector3(0.54, 0.54, 0.9)
+material = SubResource("m_wood")
+
+[node name="SeesawRest" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.43, 0.135, -19.8)
+use_collision = true
+size = Vector3(0.36, 0.27, 0.54)
+material = SubResource("m_wood")
+
+[node name="DeskLegNW" type="CSGBox3D" parent="Stop2"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -10.26, 3.24, -4.77)
+use_collision = true
+size = Vector3(0.36, 6.48, 0.36)
+material = SubResource("m_wood")
+
+[node name="DeskLegSW" type="CSGBox3D" parent="Stop2"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -10.26, 3.24, 7.47)
+use_collision = true
+size = Vector3(0.36, 6.48, 0.36)
+material = SubResource("m_wood")
+
+[node name="DeskLegSE" type="CSGBox3D" parent="Stop2"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -4.32, 3.24, 7.47)
+use_collision = true
+size = Vector3(0.36, 6.48, 0.36)
+material = SubResource("m_wood")
+
+[node name="DeskApron" type="CSGBox3D" parent="Stop2"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -7.29, 6.12, 1.35)
+use_collision = true
+size = Vector3(6.3, 0.36, 12.6)
+material = SubResource("m_darkwood")
+
+[node name="DeskDrawerUnit" type="CSGBox3D" parent="Stop2"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -5.715, 4.95, -2.745)
+use_collision = true
+size = Vector3(3.15, 1.98, 4.05)
+material = SubResource("m_wood")
+
+[node name="DeskChair" type="CSGBox3D" parent="Stop2"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -12.33, 4.005, 4.5)
+use_collision = true
+size = Vector3(3.42, 0.27, 3.6)
+material = SubResource("m_wood")
+
+[node name="DeskChairBack" type="CSGBox3D" parent="Stop2"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -14.04, 6.345, 4.5)
+use_collision = true
+size = Vector3(0.36, 4.41, 3.6)
+material = SubResource("m_wood")
+
+[node name="WallLampArm" type="CSGBox3D" parent="Stop2"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -4.14, 10.15, 4.95)
+size = Vector3(1.08, 0.135, 0.18)
+material = SubResource("m_brass")
+
+[node name="WallLampShade" type="CSGCylinder3D" parent="Stop2"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -4.86, 9.9, 4.95)
+radius = 0.63
+height = 0.81
+sides = 24
+material = SubResource("m_lampshade")
+
+[node name="TVCabinet" type="CSGBox3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 9, 2.25, -20.93)
+use_collision = true
+size = Vector3(9, 4.5, 5.85)
+material = SubResource("m_darkwood")
+
+[node name="CRT" type="CSGBox3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 9, 6.75, -21.51)
+use_collision = true
+size = Vector3(5.4, 4.5, 3.78)
+material = SubResource("m_metal")
+
+[node name="CRTScreen" type="CSGBox3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 9, 6.75, -19.62)
+size = Vector3(4.32, 3.42, 0.036)
+material = SubResource("m_tvscreen")
+
+[node name="GameConsole" type="CSGBox3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 12.6, 4.77, -19.12)
+use_collision = true
+size = Vector3(1.44, 0.54, 1.35)
+material = SubResource("m_metal")
+
+[node name="GameBoxes" type="CSGBox3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 3.15, 0.405, -16.88)
+use_collision = true
+size = Vector3(1.62, 0.81, 1.35)
+material = SubResource("m_toy_red")
+
+[node name="MagStack" type="CSGBox3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 3.33, 0.855, -18.41)
+use_collision = true
+size = Vector3(1.62, 1.71, 1.53)
+material = SubResource("m_paper")
+
+[node name="Subwoofer" type="CSGBox3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 3.42, 1.305, -20.12)
+use_collision = true
+size = Vector3(1.8, 2.61, 1.71)
+material = SubResource("m_person")
+
+[node name="SpeakerTall" type="CSGBox3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 3.51, 1.755, -22.32)
+use_collision = true
+size = Vector3(1.62, 3.51, 2.52)
+material = SubResource("m_person")
+
+[node name="TimeBoxBody" type="CSGBox3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 14.4, 0.225, -19.35)
+use_collision = true
+size = Vector3(1.08, 0.45, 0.81)
+material = SubResource("m_metal")
+
+[node name="PowerStrip" type="CSGBox3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -3.375, 0.135, 7.425)
+use_collision = true
+size = Vector3(0.45, 0.27, 2.25)
+material = SubResource("m_paper")
+
+[node name="ConsoleCable1" type="CSGBox3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -3.366, 0.027, -5.265)
+size = Vector3(0.108, 0.054, 23.13)
+material = SubResource("m_cable")
+
+[node name="ConsoleCable2" type="CSGBox3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -0.54, 0.027, -16.88)
+size = Vector3(5.76, 0.054, 0.108)
+material = SubResource("m_cable")
+
+[node name="ConsoleCable3" type="CSGBox3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 8.28, 0.027, -16.88)
+size = Vector3(8.64, 0.054, 0.108)
+material = SubResource("m_cable")
+
+[node name="ConsoleCable4" type="CSGBox3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 12.6, 2.25, -17.95)
+size = Vector3(0.108, 4.5, 0.072)
+material = SubResource("m_cable")
+
+[node name="ConsoleCable5" type="CSGBox3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 12.6, 4.527, -18.18)
+size = Vector3(0.108, 0.054, 0.54)
+material = SubResource("m_cable")
+
+[node name="SofaSeat" type="CSGBox3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 13.05, 1.89, -8.55)
+use_collision = true
+size = Vector3(14.4, 3.78, 6.3)
+material = SubResource("m_fabric")
+
+[node name="SofaBack" type="CSGBox3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 13.05, 3.825, -4.725)
+use_collision = true
+size = Vector3(14.4, 7.65, 1.35)
+material = SubResource("m_fabric")
+
+[node name="CounterA" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 23.4, 4.05, -21.15)
+use_collision = true
+size = Vector3(4.5, 8.1, 5.4)
+material = SubResource("m_kitchen")
+
+[node name="CounterB" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 29.7, 4.05, -21.15)
+use_collision = true
+size = Vector3(1.8, 8.1, 5.4)
+material = SubResource("m_kitchen")
+
+[node name="StoveBody" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 33.3, 4.185, -21.15)
+use_collision = true
+size = Vector3(5.4, 8.37, 5.4)
+material = SubResource("m_metal")
+
+[node name="StoveFlame" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 33.3, 8.438, -21.6)
+size = Vector3(3.6, 0.135, 2.7)
+material = SubResource("m_fault")
+
+[node name="StockPot" type="CSGCylinder3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 39.15, 9, -21.15)
+use_collision = true
+radius = 0.9
+height = 1.8
+sides = 24
+material = SubResource("m_metal")
+
+[node name="CornerWater" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 39.38, 8.118, -19.8)
+size = Vector3(6.75, 0.036, 8.1)
+material = SubResource("m_water")
+
+[node name="CounterC" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 36.68, 4.05, -21.15)
+use_collision = true
+size = Vector3(1.35, 8.1, 5.4)
+material = SubResource("m_kitchen")
+
+[node name="CounterE_N" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.05, 4.05, -13.05)
+use_collision = true
+size = Vector3(5.4, 8.1, 21.6)
+material = SubResource("m_kitchen")
+
+[node name="SinkBase" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.05, 3.24, 1.8)
+use_collision = true
+size = Vector3(3.6, 6.48, 8.1)
+material = SubResource("m_kitchen")
+
+[node name="SinkRimW" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 37.8, 4.05, 1.8)
+use_collision = true
+size = Vector3(0.9, 8.1, 8.1)
+material = SubResource("m_kitchen")
+
+[node name="SinkRimE" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 42.3, 4.05, 1.8)
+use_collision = true
+size = Vector3(0.9, 8.1, 8.1)
+material = SubResource("m_kitchen")
+
+[node name="CounterE_S" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.05, 4.05, 14.85)
+use_collision = true
+size = Vector3(5.4, 8.1, 18)
+material = SubResource("m_kitchen")
+
+[node name="UpperCabW" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 25.65, 16.65, -22.27)
+use_collision = true
+size = Vector3(9, 6.3, 3.15)
+material = SubResource("m_kitchen")
+
+[node name="RangeHood" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 33.3, 13.86, -22.05)
+use_collision = true
+size = Vector3(6.3, 1.44, 3.6)
+material = SubResource("m_metal")
+
+[node name="HoodChimney" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 33.3, 19.44, -22.72)
+use_collision = true
+size = Vector3(2.7, 9.72, 2.25)
+material = SubResource("m_metal")
+
+[node name="UpperCabE" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 39.6, 16.88, -22.27)
+use_collision = true
+size = Vector3(6.3, 5.85, 3.15)
+material = SubResource("m_kitchen")
+
+[node name="UpperCabEast" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 41.18, 16.88, -14.85)
+use_collision = true
+size = Vector3(3.15, 5.85, 11.7)
+material = SubResource("m_kitchen")
+
+[node name="SpiceShelf" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 28.71, 11.88, -23.27)
+use_collision = true
+size = Vector3(2.7, 0.18, 1.17)
+material = SubResource("m_wood")
+
+[node name="UtensilRailN" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 39.46, 11.77, -23.6)
+size = Vector3(6.03, 0.135, 0.135)
+material = SubResource("m_metal")
+
+[node name="UtensilRailE" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 42.41, 11.77, -18.36)
+size = Vector3(0.135, 0.135, 10.62)
+material = SubResource("m_metal")
+
+[node name="HangingUtensil1" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 37.35, 10.8, -23.58)
+size = Vector3(0.216, 1.8, 0.18)
+material = SubResource("m_metal")
+
+[node name="HangingUtensil2" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 38.7, 10.8, -23.58)
+size = Vector3(0.216, 1.8, 0.18)
+material = SubResource("m_metal")
+
+[node name="HangingUtensil3" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.05, 10.8, -23.58)
+size = Vector3(0.216, 1.8, 0.18)
+material = SubResource("m_metal")
+
+[node name="HangingUtensil4" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 41.4, 10.8, -23.58)
+size = Vector3(0.216, 1.8, 0.18)
+material = SubResource("m_metal")
+
+[node name="CannedGoods" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 16.02, 0.495, -22.23)
+use_collision = true
+size = Vector3(1.08, 0.99, 1.26)
+material = SubResource("m_toy_red")
+
+[node name="RiceBag" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 17.14, 0.99, -22.23)
+use_collision = true
+size = Vector3(1.17, 1.98, 1.44)
+material = SubResource("m_paper")
+
+[node name="StepStool" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 18.32, 1.485, -22.23)
+use_collision = true
+size = Vector3(1.17, 2.97, 1.62)
+material = SubResource("m_wood")
+
+[node name="ChairSeat" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 19.98, 3.78, -20.97)
+use_collision = true
+size = Vector3(2.16, 0.36, 3.42)
+material = SubResource("m_wood")
+
+[node name="ChairLeg1" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 18.99, 1.8, -22.59)
+use_collision = true
+size = Vector3(0.18, 3.6, 0.18)
+material = SubResource("m_wood")
+
+[node name="ChairLeg2" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 20.97, 1.8, -22.59)
+use_collision = true
+size = Vector3(0.18, 3.6, 0.18)
+material = SubResource("m_wood")
+
+[node name="ChairLeg3" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 18.99, 1.8, -19.35)
+use_collision = true
+size = Vector3(0.18, 3.6, 0.18)
+material = SubResource("m_wood")
+
+[node name="ChairLeg4" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 20.97, 1.8, -19.35)
+use_collision = true
+size = Vector3(0.18, 3.6, 0.18)
+material = SubResource("m_wood")
+
+[node name="ChairBack" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 19.98, 5.58, -19.62)
+use_collision = true
+size = Vector3(2.16, 3.24, 0.72)
+material = SubResource("m_wood")
+
+[node name="Lunchbox" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 19.98, 4.455, -21.33)
+use_collision = true
+size = Vector3(1.62, 0.99, 0.9)
+material = SubResource("m_toy_blue")
+
+[node name="CerealBox" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 19.98, 4.995, -20.43)
+use_collision = true
+size = Vector3(1.62, 2.07, 0.9)
+material = SubResource("m_toy_yellow")
+
+[node name="Microwave" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 23.04, 9.315, -22.14)
+use_collision = true
+size = Vector3(2.88, 2.43, 2.88)
+material = SubResource("m_metal")
+
+[node name="BreadBag" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 29.88, 8.505, -19.8)
+use_collision = true
+size = Vector3(1.35, 0.81, 1.44)
+material = SubResource("m_paper")
+
+[node name="Toaster" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 29.7, 8.91, -21.69)
+use_collision = true
+size = Vector3(1.44, 1.62, 1.98)
+material = SubResource("m_metal")
+
+[node name="Kettle" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.14, 9.09, -13.95)
+use_collision = true
+size = Vector3(1.8, 1.98, 1.8)
+material = SubResource("m_metal")
+
+[node name="DishRack" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.5, 9.225, -5.4)
+use_collision = true
+size = Vector3(3.6, 2.25, 4.5)
+material = SubResource("m_metal")
+
+[node name="DishPot" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.05, 7.56, -0.18)
+use_collision = true
+size = Vector3(2.88, 2.16, 3.6)
+material = SubResource("m_metal")
+
+[node name="DishLid" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.05, 8.775, -0.6525)
+use_collision = true
+size = Vector3(3.24, 0.27, 4.905)
+material = SubResource("m_metal")
+
+[node name="DishBowlA" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 39.33, 7.38, 2.7)
+use_collision = true
+size = Vector3(1.44, 1.8, 1.8)
+material = SubResource("m_paper")
+
+[node name="DishBowlB" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.91, 7.29, 2.7)
+use_collision = true
+size = Vector3(1.35, 1.62, 1.8)
+material = SubResource("m_paper")
+
+[node name="DishPlates" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.09, 7.47, 4.59)
+use_collision = true
+size = Vector3(2.97, 1.98, 1.98)
+material = SubResource("m_paper")
+
+[node name="DishLadle" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.05, 8.393, 2.835)
+use_collision = true
+size = Vector3(2.7, 0.225, 0.27)
+material = SubResource("m_metal")
+
+[node name="SinkPlug" type="CSGCylinder3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.05, 6.552, 4.5)
+radius = 0.225
+height = 0.135
+sides = 24
+material = SubResource("m_person")
+
+[node name="KettleLight" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 39.73, 8.348, -12.98)
+size = Vector3(0.27, 0.135, 0.045)
+material = SubResource("m_lampshade")
+
+[node name="SteamColumn" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.41, 11.16, -10.44)
+size = Vector3(2.34, 2.16, 7.92)
+material = SubResource("m_steam")
+
+[node name="Faucet" type="CSGCylinder3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 42.3, 9.225, 1.8)
+radius = 0.135
+height = 2.25
+sides = 24
+material = SubResource("m_metal")
+
+[node name="Mug" type="CSGCylinder3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.05, 8.55, 22.05)
+use_collision = true
+radius = 0.36
+height = 0.9
+sides = 24
+material = SubResource("m_toy_yellow")
+
+[node name="DiningTable" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 24.3, 6.615, -1.8)
+use_collision = true
+size = Vector3(9, 0.27, 7.2)
+material = SubResource("m_wood")
+
+[node name="FloodFloor" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 29.25, 0.027, 1.575)
+size = Vector3(16.2, 0.054, 40.05)
+material = SubResource("m_water")
+
+[node name="FloodGap" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 27.23, 0.027, -21.15)
+size = Vector3(3.15, 0.054, 5.4)
+material = SubResource("m_water")
+
+[node name="SinkSpill" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 37.32, 4.05, 2.25)
+size = Vector3(0.054, 8.1, 3.6)
+material = SubResource("m_water")
+
+[node name="CounterWater" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.05, 8.118, -6.975)
+size = Vector3(5.4, 0.036, 9.45)
+material = SubResource("m_water")
+
+[node name="SinkWater" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.05, 8.033, 1.8)
+size = Vector3(3.6, 0.045, 8.1)
+material = SubResource("m_water")
+
+[node name="Windowsill" type="CSGBox3D" parent="Stop5"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 12.15, 7.965, 22.72)
+use_collision = true
+size = Vector3(50.4, 0.27, 2.25)
+material = SubResource("m_wood")
+
+[node name="Armchair" type="CSGBox3D" parent="Stop5"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 14.4, 1.89, 15.97)
+use_collision = true
+size = Vector3(7.2, 3.78, 6.75)
+material = SubResource("m_fabric")
+
+[node name="ArmchairBack" type="CSGBox3D" parent="Stop5"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 14.4, 4.275, 20.02)
+use_collision = true
+size = Vector3(7.2, 8.55, 1.35)
+material = SubResource("m_fabric")
+
+[node name="RadioTable" type="CSGBox3D" parent="Stop5"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 20.93, 2.475, 18.68)
+use_collision = true
+size = Vector3(3.15, 4.95, 3.15)
+material = SubResource("m_wood")
+
+[node name="Radio" type="CSGBox3D" parent="Stop5"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 20.93, 5.715, 18.68)
+use_collision = true
+size = Vector3(2.61, 1.53, 2.25)
+material = SubResource("m_darkwood")
+
+[node name="BreakerBox" type="CSGBox3D" parent="Stop6"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -3.24, 13.72, 19.57)
+use_collision = true
+size = Vector3(0.72, 4.05, 3.15)
+material = SubResource("m_metal")
+
+[node name="BreakerFault" type="CSGBox3D" parent="Stop6"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.857, 15.07, 19.21)
+size = Vector3(0.045, 0.27, 0.27)
+material = SubResource("m_fault")
+
+[node name="WireClip1" type="CSGBox3D" parent="Stop6"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.925, 9.113, 22.5)
+use_collision = true
+size = Vector3(1.35, 0.135, 1.26)
+material = SubResource("m_metal")
+
+[node name="WireClip2" type="CSGBox3D" parent="Stop6"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.925, 10.37, 20.25)
+use_collision = true
+size = Vector3(1.35, 0.135, 1.26)
+material = SubResource("m_metal")
+
+[node name="WireClip3" type="CSGBox3D" parent="Stop6"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.925, 11.63, 22.5)
+use_collision = true
+size = Vector3(1.35, 0.135, 1.26)
+material = SubResource("m_metal")
+
+[node name="WireClip4" type="CSGBox3D" parent="Stop6"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.925, 12.89, 20.25)
+use_collision = true
+size = Vector3(1.35, 0.135, 1.26)
+material = SubResource("m_metal")
+
+[node name="WireClip5" type="CSGBox3D" parent="Stop6"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.925, 14.15, 22.5)
+use_collision = true
+size = Vector3(1.35, 0.135, 1.26)
+material = SubResource("m_metal")
+
+[node name="WireAlongWall" type="CSGBox3D" parent="Stop6"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -3.546, 17.17, -2.7)
+size = Vector3(0.108, 0.135, 41.4)
+material = SubResource("m_person")
+
+[node name="People" type="Node3D" parent="."]
+
+[node name="OldManInBed" type="CSGCylinder3D" parent="People"]
+transform = Transform3D(1, 0, 0, 0, 6.12323e-17, -1, 0, 1, 6.12323e-17, -36.45, 6.12, -13.5)
+radius = 1.53
+height = 10.35
+material = SubResource("m_person")
+
+[node name="OldManHead" type="CSGSphere3D" parent="People"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -36.45, 6.48, -21.15)
+radius = 0.99
+material = SubResource("m_person")
+
+[node name="BoyAtDesk" type="CSGCylinder3D" parent="People"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -11.7, 6.84, 4.5)
+radius = 1.44
+height = 5.4
+material = SubResource("m_person")
+
+[node name="BoyHead" type="CSGSphere3D" parent="People"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -11.34, 10.44, 4.5)
+radius = 0.9
+material = SubResource("m_person")
+
+[node name="YoungManOnSofa" type="CSGCylinder3D" parent="People"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 11.7, 7.2, -8.55)
+radius = 1.8
+height = 6.75
+material = SubResource("m_person")
+
+[node name="CookAtStove" type="CSGCylinder3D" parent="People"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 33.3, 6.75, -16.02)
+radius = 1.98
+height = 13.5
+material = SubResource("m_person")
+
+[node name="OldManInArmchair" type="CSGCylinder3D" parent="People"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 14.4, 6.93, 15.75)
+radius = 1.8
+height = 6.3
+material = SubResource("m_person")
+
+[node name="Checkpoints" type="Node3D" parent="."]
+
+[node name="Opening" type="Area3D" parent="Checkpoints"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -28.98, 6.48, -20.52)
+script = ExtResource("cp")
+chapter_id = "opening"
+recharge = 0.0
+respawn_charge = 1.0
+fail_below_y = -100
+size = Vector3(1.5, 1.5, 1.5)
+show_light = false
+
+[node name="ToyBox" type="Area3D" parent="Checkpoints"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -24.3, 1.08, -22.5)
+script = ExtResource("cp")
+chapter_id = "childhood"
+recharge = 0.0
+respawn_charge = 0.9
+fail_below_y = 0.3
+size = Vector3(1.5, 1.5, 1.5)
+show_light = false
+
+[node name="BoxShelf" type="Area3D" parent="Checkpoints"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.25, 2.7, -23.22)
+script = ExtResource("cp")
+chapter_id = "childhood"
+recharge = 0.05
+respawn_charge = 0.8
+fail_below_y = 0.3
+size = Vector3(1.5, 1.5, 1.5)
+show_light = false
+
+[node name="Desk" type="Area3D" parent="Checkpoints"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -9.885, 6.75, -4.425)
+script = ExtResource("cp")
+chapter_id = "teen"
+recharge = 0.1
+respawn_charge = 0.8
+fail_below_y = 6.7
+size = Vector3(1.5, 1.5, 1.5)
+show_light = false
+
+[node name="OpenPlan" type="Area3D" parent="Checkpoints"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -0.9, 0, 11.7)
+script = ExtResource("cp")
+chapter_id = "young"
+recharge = 0.1
+respawn_charge = 0.7
+fail_below_y = -100
+size = Vector3(1.5, 1.5, 1.5)
+show_light = false
+
+[node name="TvTop" type="Area3D" parent="Checkpoints"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 5.4, 4.5, -22.05)
+script = ExtResource("cp")
+chapter_id = "young"
+recharge = 0.0
+respawn_charge = 0.7
+fail_below_y = -100
+size = Vector3(1.5, 1.5, 1.5)
+show_light = false
+
+[node name="TvExit" type="Area3D" parent="Checkpoints"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 15.12, 0, -16.2)
+script = ExtResource("cp")
+chapter_id = "young"
+recharge = 0.05
+respawn_charge = 0.6
+fail_below_y = -100
+size = Vector3(1.5, 1.5, 1.5)
+show_light = false
+
+[node name="Kitchen" type="Area3D" parent="Checkpoints"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 21.78, 8.1, -19.53)
+script = ExtResource("cp")
+chapter_id = "middle"
+recharge = 0.0
+respawn_charge = 0.5
+fail_below_y = -100
+size = Vector3(1.5, 1.5, 1.5)
+show_light = false
+
+[node name="SpiceShelf" type="Area3D" parent="Checkpoints"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 28.8, 11.97, -23.27)
+script = ExtResource("cp")
+chapter_id = "middle"
+recharge = 0.0
+respawn_charge = 0.5
+fail_below_y = -100
+size = Vector3(1.5, 1.5, 1.5)
+show_light = false
+
+[node name="Kettle" type="Area3D" parent="Checkpoints"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 41.94, 8.1, -13.68)
+script = ExtResource("cp")
+chapter_id = "middle"
+recharge = 0.0
+respawn_charge = 0.45
+fail_below_y = -100
+size = Vector3(1.5, 1.5, 1.5)
+show_light = false
+
+[node name="SinkSouth" type="Area3D" parent="Checkpoints"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.05, 8.1, 7.65)
+script = ExtResource("cp")
+chapter_id = "middle"
+recharge = 0.0
+respawn_charge = 0.4
+fail_below_y = -100
+size = Vector3(1.5, 1.5, 1.5)
+show_light = false
+
+[node name="DeskLampGlow" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -5.04, 9.18, 4.95)
+light_color = Color(1.0, 0.7, 0.4, 1)
+light_energy = 1.8
+omni_range = 12.6
+shadow_enabled = true
+
+[node name="TVGlow" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 9, 6.75, -17.1)
+light_color = Color(0.35, 0.5, 1.0, 1)
+light_energy = 2.0
+omni_range = 19.8
+shadow_enabled = true
+
+[node name="StoveGlow" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 33.3, 9.9, -20.7)
+light_color = Color(1.0, 0.5, 0.2, 1)
+light_energy = 3.5
+omni_range = 25.2
+shadow_enabled = true
+
+[node name="FloodSheen" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 30.6, 3.15, 2.7)
+light_color = Color(0.45, 0.65, 1.0, 1)
+light_energy = 1.2
+omni_range = 23.4
+shadow_enabled = true
+
+[node name="BreakerFaultLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.7, 15.12, 19.17)
+light_color = Color(1.0, 0.1, 0.05, 1)
+light_energy = 0.8
+omni_range = 5.4
+shadow_enabled = true
+
+[node name="MoonShaft" type="SpotLight3D" parent="."]
+transform = Transform3D(1, -0, -0, -0, -0.104528, 0.994522, -0, -0.994522, -0.104528, -27.54, 20.7, -23.4)
+light_color = Color(0.75, 0.82, 1, 1)
+light_energy = 40.0
+light_volumetric_fog_energy = 1.5
+shadow_enabled = true
+spot_range = 31.5
+spot_angle = 17.0
+spot_attenuation = 0.15
+
+[node name="MoonFill" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -27, 12.6, -19.8)
+light_color = Color(0.5, 0.6, 1, 1)
+light_energy = 1.2
+omni_range = 19.8
+omni_attenuation = 0.6
+
+[node name="LooseBook" type="Node3D" parent="Stop0"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -25.74, 6.48, -20.97)
+
+[node name="Book" type="CSGBox3D" parent="Stop0/LooseBook"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -0.27, 0.1575, 0)
+use_collision = true
+size = Vector3(2.16, 0.315, 1.44)
+material = SubResource("m_toy_red")
+
+[node name="Pages" type="CSGBox3D" parent="Stop0/LooseBook/Book"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0.036, 0, 0)
+size = Vector3(2.07, 0.243, 1.458)
+material = SubResource("m_paper")
+
+[node name="PhotoFrame" type="Node3D" parent="Stop0"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -28.08, 6.48, -22.41)
+
+[node name="Frame" type="CSGBox3D" parent="Stop0/PhotoFrame"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0.585, 0.054, 0.81)
+use_collision = true
+size = Vector3(1.17, 0.108, 1.62)
+material = SubResource("m_darkwood")
+
+[node name="Photo" type="CSGBox3D" parent="Stop0/PhotoFrame/Frame"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0, -0.0585, 0)
+size = Vector3(0.99, 0.009, 1.44)
+material = SubResource("m_lampshade")
+
+[node name="FrameInteract" type="Area3D" parent="Stop0"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -27.5, 6.66, -21.6)
+script = ExtResource("ia")
+cost = 0.0
+radius = 1.3
+prompt_offset = Vector3(0, 1.2, 0)
+
+[node name="TrackRing" type="CSGTorus3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -22.68, 0.081, -17.46)
+inner_radius = 0.792
+outer_radius = 1.008
+sides = 48
+ring_sides = 4
+material = SubResource("m_metal")
+
+[node name="Train" type="AnimatableBody3D" parent="Stop1"]
+script = ExtResource("train")
+center = Vector3(-22.68, 0.072, -17.46)
+radius = 0.9
+speed = 0.5
+size = Vector3(0.9, 0.54, 0.45)
+
+[node name="JackHead" type="CSGSphere3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.52, 0.63, -17.55)
+radius = 0.36
+material = SubResource("m_paper")
+
+[node name="BigBotEye1" type="CSGCylinder3D" parent="Stop1"]
+transform = Transform3D(6.12323e-17, -1, 0, 1, 6.12323e-17, -0, 0, 0, 1, -17.57, 4.68, -20.25)
+radius = 0.198
+height = 0.036
+sides = 20
+material = SubResource("m_amber_eye")
+
+[node name="BigBotEye2" type="CSGCylinder3D" parent="Stop1"]
+transform = Transform3D(6.12323e-17, -1, 0, 1, 6.12323e-17, -0, 0, 0, 1, -17.57, 4.68, -19.35)
+radius = 0.198
+height = 0.036
+sides = 20
+material = SubResource("m_amber_eye")
+
+[node name="BigBotEyeLight" type="SpotLight3D" parent="Stop1"]
+transform = Transform3D(6.12323e-17, -0.615661, 0.788011, 0, 0.788011, 0.615661, -1, -3.76984e-17, 4.82517e-17, -17.73, 4.68, -19.8)
+light_color = Color(1, 0.72, 0.35, 1)
+light_energy = 6.0
+shadow_enabled = true
+spot_range = 7.2
+spot_angle = 32.0
+spot_attenuation = 0.5
+
+[node name="Seesaw" type="Node3D" parent="Stop1"]
+transform = Transform3D(0.994522, -0.104528, 0, 0.104528, 0.994522, -0, 0, 0, 1, -19.08, 0.54, -19.8)
+
+[node name="Plank" type="CSGBox3D" parent="Stop1/Seesaw"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0, 0.063, 0)
+use_collision = true
+size = Vector3(3.24, 0.126, 0.72)
+material = SubResource("m_ruler")
+
+[node name="StandHere" type="CSGBox3D" parent="Stop1/Seesaw/Plank"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -1.26, 0.0675, 0)
+size = Vector3(0.675, 0.018, 0.702)
+material = SubResource("m_cyanmark")
+
+[node name="Drum" type="CSGCylinder3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -17.01, 5.625, -19.8)
+use_collision = true
+radius = 0.54
+height = 0.81
+sides = 24
+material = SubResource("m_toy_red")
+
+[node name="DrumSkin" type="CSGCylinder3D" parent="Stop1/Drum"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0, 0.414, 0)
+radius = 0.522
+height = 0.027
+sides = 24
+material = SubResource("m_paper")
+
+[node name="ElectricCar" type="CSGBox3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -15.48, 5.355, -18.81)
+use_collision = true
+size = Vector3(0.45, 0.27, 0.72)
+material = SubResource("m_toy_green")
+
+[node name="CarCharge" type="Area3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -15.48, 5.4, -18.81)
+script = ExtResource("ia")
+cost = 0.08
+hold_time = 1.5
+once = false
+radius = 1.4
+prompt_offset = Vector3(0, 1.0, 0)
+
+[node name="PushBlockLarge" type="CharacterBody3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -19.62, 2.709, -22.23)
+script = ExtResource("push")
+size = Vector3(1.35, 1.35, 1.35)
+color = Color(0.75, 0.3, 0.2, 1)
+letter = "A"
+
+[node name="PushBlockSmall" type="CharacterBody3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -21.42, 2.709, -22.23)
+script = ExtResource("push")
+size = Vector3(0.603, 0.603, 0.603)
+color = Color(0.2, 0.45, 0.7, 1)
+letter = "B"
+
+[node name="Battery1" type="Area3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -24.66, 1.35, -18.54)
+script = ExtResource("bat")
+
+[node name="Battery2" type="Area3D" parent="Stop1"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -21.6, 2.79, -23.22)
+script = ExtResource("bat")
+
+[node name="DeskMaze" type="Node3D" parent="Stop2"]
+script = ExtResource("maze")
+x0 = -1.1600000000000001
+x1 = -0.46
+z0 = -0.55
+z1 = 0.85
+top = 0.75
+seed_pool = PackedInt32Array(0, 7, 22, 49)
+
+[node name="DoorPivot" type="Node3D" parent="Stop2"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -3.42, 0, 16.2)
+
+[node name="Door" type="CSGBox3D" parent="Stop2/DoorPivot"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0, 9.225, -3.825)
+use_collision = true
+size = Vector3(0.36, 18.45, 7.65)
+material = SubResource("m_wood")
+
+[node name="Handle" type="Node3D" parent="Stop2/DoorPivot"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -0.99, 7.2, -6.93)
+
+[node name="Lever" type="CSGBox3D" parent="Stop2/DoorPivot/Handle"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0, 0, -0.63)
+size = Vector3(0.225, 0.18, 1.26)
+material = SubResource("m_brass")
+
+[node name="DoorGapGlow" type="CSGBox3D" parent="Stop2"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -3.618, 0.036, 12.38)
+size = Vector3(0.036, 0.072, 7.65)
+material = SubResource("m_tvscreen")
+
+[node name="DoorHandleUse" type="Area3D" parent="Stop2"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -4.68, 6.93, 7.11)
+script = ExtResource("ia")
+cost = 0.0
+radius = 1.0
+prompt_offset = Vector3(0, 1.2, 0)
+
+[node name="TvScreen" type="Node3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 9, 6.75, -19.59)
+script = ExtResource("tv")
+size = Vector2(4.32, 3.42)
+
+[node name="TvEnter" type="Area3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 9, 4.68, -18.81)
+script = ExtResource("ia")
+cost = 0.0
+radius = 0.8
+prompt_offset = Vector3(0, 1.3, 0)
+
+[node name="TimeBoxLid" type="Node3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 14.4, 0.45, -19.75)
+
+[node name="Lid" type="CSGBox3D" parent="Stop3/TimeBoxLid"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0, 0.054, 0.405)
+size = Vector3(1.116, 0.108, 0.846)
+material = SubResource("m_toy_yellow")
+
+[node name="Drawing" type="CSGBox3D" parent="Stop3"]
+transform = Transform3D(0.978148, 0, 0.207912, 0, 1, -0, -0.207912, 0, 0.978148, 14.4, 0.414, -19.35)
+size = Vector3(0.81, 0.027, 0.585)
+material = SubResource("m_paper")
+
+[node name="TimeBoxGlow" type="OmniLight3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 14.4, 1.26, -19.08)
+light_color = Color(1, 0.72, 0.38, 1)
+light_energy = 0.0
+omni_range = 5.4
+
+[node name="TimeBoxOpen" type="Area3D" parent="Stop3"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 14.4, 0.27, -18.9)
+script = ExtResource("ia")
+cost = 0.0
+radius = 0.9
+prompt_offset = Vector3(0, 1.0, 0)
+
+[node name="MicrowaveDoor" type="Node3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 24.48, 8.1, -20.7)
+
+[node name="Door" type="CSGBox3D" parent="Stop4/MicrowaveDoor"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -1.44, 1.215, 0.072)
+size = Vector3(2.88, 2.43, 0.144)
+material = SubResource("m_glass")
+
+[node name="CuttingBoard" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 23.4, 8.145, -19.53)
+use_collision = true
+size = Vector3(4.5, 0.09, 1.26)
+material = SubResource("m_wood")
+
+[node name="MicrowaveUse" type="Area3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 23.04, 8.28, -19.8)
+script = ExtResource("ia")
+cost = 0.04
+radius = 0.9
+prompt_offset = Vector3(0, 1.2, 0)
+
+[node name="ToasterCoils" type="CSGBox3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 29.7, 9.63, -21.69)
+size = Vector3(1.08, 0.108, 1.44)
+material = SubResource("m_person")
+
+[node name="ToasterUse" type="Area3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 29.7, 9.81, -21.69)
+script = ExtResource("ia")
+cost = 0.06
+radius = 0.75
+prompt_offset = Vector3(0, 1.1, 0)
+
+[node name="WaterFloor" type="Area3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 29.25, -0.765, 1.575)
+script = ExtResource("hazard")
+kind = "water"
+size = Vector3(16.2, 2.07, 40.05)
+
+[node name="WaterGap" type="Area3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 27.23, -0.765, -21.15)
+script = ExtResource("hazard")
+kind = "water"
+size = Vector3(3.15, 2.07, 5.4)
+
+[node name="WaterCounter" type="Area3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.05, 8.1, -6.975)
+script = ExtResource("hazard")
+kind = "water"
+size = Vector3(5.4, 0.36, 9.45)
+
+[node name="StoveFire" type="Area3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 33.3, 8.775, -21.2)
+script = ExtResource("hazard")
+kind = "fire"
+size = Vector3(5.04, 0.81, 4.95)
+
+[node name="WaterCorner" type="Area3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 39.38, 8.1, -19.8)
+script = ExtResource("hazard")
+kind = "water"
+size = Vector3(6.75, 0.36, 8.1)
+
+[node name="KettleUse" type="Area3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 41.4, 8.28, -13.5)
+script = ExtResource("ia")
+cost = 0.05
+once = false
+radius = 0.9
+prompt_offset = Vector3(0, 1.3, 0)
+
+[node name="MugTap" type="Area3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.05, 8.28, 21.24)
+script = ExtResource("ia")
+cost = 0.0
+radius = 0.9
+prompt_offset = Vector3(0, 1.1, 0)
+
+[node name="MugGlow" type="OmniLight3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.05, 9.18, 21.78)
+light_color = Color(1, 0.72, 0.38, 1)
+light_energy = 0.0
+omni_range = 6.3
+
+[node name="FlarePivotW" type="Node3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 31.95, 8.37, -21.6)
+
+[node name="Flame" type="CSGBox3D" parent="Stop4/FlarePivotW"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0, 0.135, 0)
+size = Vector3(1.26, 0.27, 2.7)
+material = SubResource("m_fault")
+
+[node name="FlareW" type="Area3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 31.95, 11.16, -21.6)
+script = ExtResource("hazard")
+kind = "fire"
+enabled = false
+size = Vector3(1.8, 3.96, 3.6)
+
+[node name="FlarePivotE" type="Node3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 34.65, 8.37, -21.6)
+
+[node name="Flame" type="CSGBox3D" parent="Stop4/FlarePivotE"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0, 0.135, 0)
+size = Vector3(1.26, 0.27, 2.7)
+material = SubResource("m_fault")
+
+[node name="FlareE" type="Area3D" parent="Stop4"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 34.65, 11.16, -21.6)
+script = ExtResource("hazard")
+kind = "fire"
+enabled = false
+size = Vector3(1.8, 3.96, 3.6)
+
+[node name="Areas" type="Node3D" parent="."]
+
+[node name="BookTip" type="Area3D" parent="Areas"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -25.34, 7.065, -20.97)
+
+[node name="Shape" type="CollisionShape3D" parent="Areas/BookTip"]
+shape = SubResource("area_BookTip")
+
+[node name="BooksTop" type="Area3D" parent="Areas"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -28.66, 7.92, -22.91)
+
+[node name="Shape" type="CollisionShape3D" parent="Areas/BooksTop"]
+shape = SubResource("area_BooksTop")
+
+[node name="JackTop" type="Area3D" parent="Areas"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.52, 1.17, -17.55)
+
+[node name="Shape" type="CollisionShape3D" parent="Areas/JackTop"]
+shape = SubResource("area_JackTop")
+
+[node name="SeesawEnd" type="Area3D" parent="Areas"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.34, 0.72, -19.8)
+
+[node name="Shape" type="CollisionShape3D" parent="Areas/SeesawEnd"]
+shape = SubResource("area_SeesawEnd")
+
+[node name="KitchenReveal" type="Area3D" parent="Areas"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 15.3, 0.45, -19.08)
+
+[node name="Shape" type="CollisionShape3D" parent="Areas/KitchenReveal"]
+shape = SubResource("area_KitchenReveal")
+
+[node name="SinkPile" type="Area3D" parent="Areas"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.05, 9.27, -0.9)
+
+[node name="Shape" type="CollisionShape3D" parent="Areas/SinkPile"]
+shape = SubResource("area_SinkPile")
+
+[node name="SteamPlume" type="Area3D" parent="Areas"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.59, 10.39, -10.44)
+
+[node name="Shape" type="CollisionShape3D" parent="Areas/SteamPlume"]
+shape = SubResource("area_SteamPlume")
+
+[node name="PlayerStart" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -28.98, 6.48, -20.52)
+
+[node name="FallLanding" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -24.3, 1.098, -22.5)
+
+[node name="MachineLook" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -17.55, 3.15, -19.8)
+
+[node name="BookLanding" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -22.5, 0.18, -20.7)
+
+[node name="DeskLampTarget" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -4.86, 9.9, 4.95)
+
+[node name="DoorLook" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -4.05, 7.65, 8.55)
+
+[node name="OpenPlanDrop" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -0.9, 0.018, 11.7)
+
+[node name="BreakerLook" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -3.24, 13.5, 19.53)
+
+[node name="TvLook" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 9, 6.75, -19.62)
+
+[node name="TvExitLanding" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 15.12, 0.018, -16.2)
+
+[node name="StoveLook" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 33.3, 9, -20.7)
+
+[node name="SinkLook" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 38.7, 8.55, 1.8)
+
+[node name="SillLook" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 35.1, 8.55, 22.5)
+
+[node name="ToasterSlot" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 29.7, 9.09, -21.69)
+
+[node name="SpiceShelfLanding" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 28.8, 11.99, -23.27)
+
+[node name="SinkLanding" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 40.05, 8.118, 7.65)
+
+[node name="SinkCam" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 31.95, 12.15, 3.15)
+
+[node name="FatherHead" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 33.3, 12.78, -16.02)
+
+[node name="ShelfTarget" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.25, 2.718, -23.22)
+
+[node name="DeskLanding" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -9.885, 6.768, -4.425)
+
+[node name="DrumLanding" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -18, 1.08, -19.8)
+
+[node name="CarWay1" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -15.48, 5.355, -20.79)
+
+[node name="CarWay2" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.2, 5.355, -20.79)
+
+[node name="CarWay3" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.2, 5.355, -19.8)
+
+[node name="CarWay4" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.29, 5.355, -19.8)
+
+[node name="PostFX" parent="." instance=ExtResource("post")]
