@@ -3,9 +3,9 @@
   "configurations": [
     {
       "name": "web-build",
-      "runtimeExecutable": "C:/Users/Thunder/jam-test/tools/.venv/Scripts/python.exe",
-      "runtimeArgs": ["-m", "http.server", "8060", "--directory", "C:/Users/Thunder/jam-test/build/web"],
-      "port": 8060
+      "runtimeExecutable": "tools/.venv/Scripts/python.exe",
+      "runtimeArgs": ["-m", "http.server", "8765", "--directory", "build/web"],
+      "port": 8765
     }
   ]
 }
