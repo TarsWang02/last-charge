@@ -3,13 +3,14 @@
     python tools/vo/gen_vo.py OUT_DIR [--ids 0-1,0-3] [--robot mild|silly|both]
 
 Lines come from LINES below (id -> English text, same ids as docs/narrative_monologue_script.md).
-Writes vo_<id>.ogg (or vo_<id>_<robot>.ogg with --robot both, for comparing).
+Writes vo_s<stop>_<nn>.ogg per line (see file_name; _<robot> suffix with --robot both).
 Needs: pip install edge-tts soundfile numpy
 """
 import argparse
 import asyncio
 import io
 import os
+import re
 
 import edge_tts
 import numpy as np
@@ -90,6 +91,23 @@ LINES = {
     "4-16": ("Well. That's one way to do the washing up.", "-22%", "-12Hz"),
     "4-17": ("Lucy's mug. She painted it when she was five.", "-28%", "-14Hz"),
     "4-18": ("Still rings the same. ...She doesn't ring as often.", "-32%", "-18Hz"),  # heavy
+    # ---- stop 5: the clothesline (old age)
+    "5-1": ("A coat hanger... and the line runs right across the room.", "-22%", "-10Hz"),
+    "5-2": ("Maybe... I could ride these over to the breaker.", "-26%", "-12Hz"),          # thinking aloud
+    "5-3": ("Marg's clothesline. Strung it through the house when her knees went.", "-30%", "-16Hz"),  # tender
+    "5-4": ("Who's ready to fly on the zipline? I AM!", "-2%", "+8Hz"),                     # giddy
+    "5-5": ("Lean, you old goat. LEAN!", "-10%", "-2Hz"),
+    "5-6": ("Hop the pegs. HUP!", "-8%", "+0Hz"),
+    "5-7": ("Oh-- sorry, love.", "-22%", "-10Hz"),
+    "5-8": ("Never did like that lamp.", "-18%", "-10Hz"),
+    "5-9": ("Every bit of this place... I could walk it with my eyes shut.", "-32%", "-16Hz"),
+    "5-10": ("That chair's got my shape in it.", "-30%", "-16Hz"),
+    "5-11": ("Whole town's going dark...", "-28%", "-16Hz"),
+    "5-12": ("Lived here all my life. Never once saw it from up here.", "-32%", "-16Hz"),
+    "5-13": ("...Not much left in me now.", "-34%", "-20Hz"),                               # fading
+    "5-14": ("There's the breaker.", "-24%", "-14Hz"),
+    "5-15": ("Nearly there.", "-28%", "-16Hz"),
+    "5-16": ("Losing isn't fun. That's why I don't do it.", "-16%", "-4Hz"),               # stubborn grin
 }
 
 ## How robotic: "mild" = an old man in a tin can; "silly" = cartoon robot buzz on top.
@@ -97,6 +115,14 @@ ROBOT = {
     "mild":  {"ring": 0.18, "ring_hz": 32.0, "crush": 0.0},
     "silly": {"ring": 0.45, "ring_hz": 48.0, "crush": 0.35},
 }
+
+
+def file_name(line_id: str) -> str:
+    """Script id -> asset name, matching the repo's <type>_<desc> lowercase/underscore convention:
+    "0-1" -> vo_s0_01.ogg, "1-2b" -> vo_s1_02b.ogg."""
+    stop, rest = line_id.split("-")
+    num, suffix = re.match(r"(\d+)(\w*)", rest).groups()
+    return f"vo_s{stop}_{int(num):02d}{suffix}.ogg"
 
 
 async def tts(text: str, rate: str = RATE, pitch: str = PITCH) -> tuple[np.ndarray, int]:
@@ -177,7 +203,7 @@ async def main() -> None:
         x = old(x, sr)
         for k in kinds:
             y = tin(robot(x, sr, **ROBOT[k]), sr)
-            name = f"vo_{i}.ogg" if len(kinds) == 1 else f"vo_{i}_{k}.ogg"
+            name = file_name(i) if len(kinds) == 1 else file_name(i).replace(".ogg", f"_{k}.ogg")
             sf.write(os.path.join(a.out, name), finish(y, sr), sr, format="OGG", subtype="VORBIS")
         print("ok", i, f"{len(x) / sr:.1f}s")
 
