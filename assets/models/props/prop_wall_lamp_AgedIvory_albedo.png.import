@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dg246yq4hj1ah"
-path.s3tc="res://.godot/imported/prop_wall_lamp_AgedIvory_albedo.png-f77f13a60f2b548fa8776c7531e10ac7.s3tc.ctex"
+path="res://.godot/imported/prop_wall_lamp_AgedIvory_albedo.png-f77f13a60f2b548fa8776c7531e10ac7.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "863ee550b06ed7ae140e380cd202f11d"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_wall_lamp_AgedIvory_albedo.png"
-dest_files=["res://.godot/imported/prop_wall_lamp_AgedIvory_albedo.png-f77f13a60f2b548fa8776c7531e10ac7.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_wall_lamp_AgedIvory_albedo.png-f77f13a60f2b548fa8776c7531e10ac7.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

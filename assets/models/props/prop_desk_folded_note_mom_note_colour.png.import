@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cnltenfccrq4l"
-path.s3tc="res://.godot/imported/prop_desk_folded_note_mom_note_colour.png-6fd77a7e10c57399ae7657a8449fe153.s3tc.ctex"
+path="res://.godot/imported/prop_desk_folded_note_mom_note_colour.png-6fd77a7e10c57399ae7657a8449fe153.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "ed9c933df41fc15814e787e39737db33"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_desk_folded_note_mom_note_colour.png"
-dest_files=["res://.godot/imported/prop_desk_folded_note_mom_note_colour.png-6fd77a7e10c57399ae7657a8449fe153.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_desk_folded_note_mom_note_colour.png-6fd77a7e10c57399ae7657a8449fe153.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

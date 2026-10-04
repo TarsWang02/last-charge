@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://m6bldnj5k3ki"
-path.s3tc="res://.godot/imported/prop_desk_certificate_certificate_colour.png-1d8e7eaf14be61074e3ba34bc70a2767.s3tc.ctex"
+path="res://.godot/imported/prop_desk_certificate_certificate_colour.png-1d8e7eaf14be61074e3ba34bc70a2767.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "42bf67528d7cc09756599b48088250cd"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_desk_certificate_certificate_colour.png"
-dest_files=["res://.godot/imported/prop_desk_certificate_certificate_colour.png-1d8e7eaf14be61074e3ba34bc70a2767.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_desk_certificate_certificate_colour.png-1d8e7eaf14be61074e3ba34bc70a2767.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

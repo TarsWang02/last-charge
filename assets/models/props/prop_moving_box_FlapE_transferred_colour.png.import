@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ufn53af6n6fl"
-path.s3tc="res://.godot/imported/prop_moving_box_FlapE_transferred_colour.png-f8a54c8168b1744ff81e6b970ac9209a.s3tc.ctex"
+path="res://.godot/imported/prop_moving_box_FlapE_transferred_colour.png-f8a54c8168b1744ff81e6b970ac9209a.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "3ea055dd671f8986980bb391e2a0eb4e"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_moving_box_FlapE_transferred_colour.png"
-dest_files=["res://.godot/imported/prop_moving_box_FlapE_transferred_colour.png-f8a54c8168b1744ff81e6b970ac9209a.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_moving_box_FlapE_transferred_colour.png-f8a54c8168b1744ff81e6b970ac9209a.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

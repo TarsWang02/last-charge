@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d3sg8fqjlfbuq"
-path.s3tc="res://.godot/imported/prop_door_lever_MutedBrass_albedo.png-9548c4a3aa4edd8e9dea4fc34fb2f0b1.s3tc.ctex"
+path="res://.godot/imported/prop_door_lever_MutedBrass_albedo.png-9548c4a3aa4edd8e9dea4fc34fb2f0b1.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "5292639c0051b8f944f0556f2c41a719"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_door_lever_MutedBrass_albedo.png"
-dest_files=["res://.godot/imported/prop_door_lever_MutedBrass_albedo.png-9548c4a3aa4edd8e9dea4fc34fb2f0b1.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_door_lever_MutedBrass_albedo.png-9548c4a3aa4edd8e9dea4fc34fb2f0b1.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

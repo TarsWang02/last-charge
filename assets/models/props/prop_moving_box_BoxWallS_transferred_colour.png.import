@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cn8ldou0kf3we"
-path.s3tc="res://.godot/imported/prop_moving_box_BoxWallS_transferred_colour.png-8839f410308d731e9ed3ca1d425531ee.s3tc.ctex"
+path="res://.godot/imported/prop_moving_box_BoxWallS_transferred_colour.png-8839f410308d731e9ed3ca1d425531ee.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "77bbbb26f522f99b815b98bda4713b9e"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_moving_box_BoxWallS_transferred_colour.png"
-dest_files=["res://.godot/imported/prop_moving_box_BoxWallS_transferred_colour.png-8839f410308d731e9ed3ca1d425531ee.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_moving_box_BoxWallS_transferred_colour.png-8839f410308d731e9ed3ca1d425531ee.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

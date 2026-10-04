@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bna468ilg4liw"
-path.s3tc="res://.godot/imported/prop_soft_landing_cushion_WornLandingCloth_Color.png-98ca95363b32cd0d463cfb5a5e2ccfec.s3tc.ctex"
+path="res://.godot/imported/prop_soft_landing_cushion_WornLandingCloth_Color.png-98ca95363b32cd0d463cfb5a5e2ccfec.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "8575c3c0ae4cd62b24d589b0e2fb6a51"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_soft_landing_cushion_WornLandingCloth_Color.png"
-dest_files=["res://.godot/imported/prop_soft_landing_cushion_WornLandingCloth_Color.png-98ca95363b32cd0d463cfb5a5e2ccfec.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_soft_landing_cushion_WornLandingCloth_Color.png-98ca95363b32cd0d463cfb5a5e2ccfec.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

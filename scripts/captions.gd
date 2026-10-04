@@ -87,6 +87,21 @@ func _ready() -> void:
 
 ## A rounded plate anchored bottom-centre that grows to fit its text; `y` = its bottom edge from the
 ## screen bottom. Starts hidden (faded out).
+## Subtitles at the top of the screen (in the TV's 2D game, where the bottom is the play area) or back down.
+func subtitles_top(on: bool) -> void:
+	if on:
+		_sub_plate.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+		_sub_plate.grow_vertical = Control.GROW_DIRECTION_END
+		_sub_plate.offset_top = 28
+		_sub_plate.offset_bottom = 28
+	else:
+		_sub_plate.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+		_sub_plate.grow_vertical = Control.GROW_DIRECTION_BEGIN
+		_sub_plate.offset_top = -110
+		_sub_plate.offset_bottom = -110
+	_sub_plate.grow_horizontal = Control.GROW_DIRECTION_BOTH
+
+
 func _plate(style: StyleBoxFlat, y: float) -> PanelContainer:
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", style)

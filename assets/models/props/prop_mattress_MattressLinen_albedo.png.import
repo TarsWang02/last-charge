@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ddlwfvl4h8u26"
-path.s3tc="res://.godot/imported/prop_mattress_MattressLinen_albedo.png-9591cabe37e396f15c2f724cfa72189c.s3tc.ctex"
+path="res://.godot/imported/prop_mattress_MattressLinen_albedo.png-9591cabe37e396f15c2f724cfa72189c.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "c56c6388e729f504424cb4b23df5415e"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_mattress_MattressLinen_albedo.png"
-dest_files=["res://.godot/imported/prop_mattress_MattressLinen_albedo.png-9591cabe37e396f15c2f724cfa72189c.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_mattress_MattressLinen_albedo.png-9591cabe37e396f15c2f724cfa72189c.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

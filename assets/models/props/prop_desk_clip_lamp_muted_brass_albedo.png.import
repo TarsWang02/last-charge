@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ey6p1f0qvthw"
-path.s3tc="res://.godot/imported/prop_desk_clip_lamp_muted_brass_albedo.png-859f56865bffd3fc66e231e6d1743ddd.s3tc.ctex"
+path="res://.godot/imported/prop_desk_clip_lamp_muted_brass_albedo.png-859f56865bffd3fc66e231e6d1743ddd.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "fcad8d22af6134190219759c71161103"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_desk_clip_lamp_muted_brass_albedo.png"
-dest_files=["res://.godot/imported/prop_desk_clip_lamp_muted_brass_albedo.png-859f56865bffd3fc66e231e6d1743ddd.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_desk_clip_lamp_muted_brass_albedo.png-859f56865bffd3fc66e231e6d1743ddd.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

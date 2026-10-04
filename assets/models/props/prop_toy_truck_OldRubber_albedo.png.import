@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c0yad56ujesar"
-path.s3tc="res://.godot/imported/prop_toy_truck_OldRubber_albedo.png-2f2b34ea69a82c03ee1a852290104036.s3tc.ctex"
+path="res://.godot/imported/prop_toy_truck_OldRubber_albedo.png-2f2b34ea69a82c03ee1a852290104036.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "6c9ae6946043821e3341f9b51338d080"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_toy_truck_OldRubber_albedo.png"
-dest_files=["res://.godot/imported/prop_toy_truck_OldRubber_albedo.png-2f2b34ea69a82c03ee1a852290104036.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_toy_truck_OldRubber_albedo.png-2f2b34ea69a82c03ee1a852290104036.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

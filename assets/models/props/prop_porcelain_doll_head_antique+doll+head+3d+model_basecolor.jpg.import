@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cnhbytatudd8p"
-path.s3tc="res://.godot/imported/prop_porcelain_doll_head_antique+doll+head+3d+model_basecolor.jpg-6939437f4ce2e7d2bec9bd0418100d68.s3tc.ctex"
+path="res://.godot/imported/prop_porcelain_doll_head_antique+doll+head+3d+model_basecolor.jpg-6939437f4ce2e7d2bec9bd0418100d68.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "9929721a9bc384c07e9a0801558f19e4"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_porcelain_doll_head_antique+doll+head+3d+model_basecolor.jpg"
-dest_files=["res://.godot/imported/prop_porcelain_doll_head_antique+doll+head+3d+model_basecolor.jpg-6939437f4ce2e7d2bec9bd0418100d68.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_porcelain_doll_head_antique+doll+head+3d+model_basecolor.jpg-6939437f4ce2e7d2bec9bd0418100d68.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

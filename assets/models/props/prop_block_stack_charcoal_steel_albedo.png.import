@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cdjl1be2hyrdv"
-path.s3tc="res://.godot/imported/prop_block_stack_charcoal_steel_albedo.png-3170b4173a1acb27929c4b2b85a4e348.s3tc.ctex"
+path="res://.godot/imported/prop_block_stack_charcoal_steel_albedo.png-3170b4173a1acb27929c4b2b85a4e348.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "f0fcaa10f54afc38db3d43cb66cf5f55"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_block_stack_charcoal_steel_albedo.png"
-dest_files=["res://.godot/imported/prop_block_stack_charcoal_steel_albedo.png-3170b4173a1acb27929c4b2b85a4e348.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_block_stack_charcoal_steel_albedo.png-3170b4173a1acb27929c4b2b85a4e348.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

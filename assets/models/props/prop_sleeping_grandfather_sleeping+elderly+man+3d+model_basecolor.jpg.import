@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bm8kpd8nqq8m6"
-path.s3tc="res://.godot/imported/prop_sleeping_grandfather_sleeping+elderly+man+3d+model_basecolor.jpg-04183ad33c5c29b6dbb80d07ae071bce.s3tc.ctex"
+path="res://.godot/imported/prop_sleeping_grandfather_sleeping+elderly+man+3d+model_basecolor.jpg-04183ad33c5c29b6dbb80d07ae071bce.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "e52fb16d0bc13b50c56a409ffffb66db"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_sleeping_grandfather_sleeping+elderly+man+3d+model_basecolor.jpg"
-dest_files=["res://.godot/imported/prop_sleeping_grandfather_sleeping+elderly+man+3d+model_basecolor.jpg-04183ad33c5c29b6dbb80d07ae071bce.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_sleeping_grandfather_sleeping+elderly+man+3d+model_basecolor.jpg-04183ad33c5c29b6dbb80d07ae071bce.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

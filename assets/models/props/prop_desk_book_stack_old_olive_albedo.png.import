@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://br7law8cp3i21"
-path.s3tc="res://.godot/imported/prop_desk_book_stack_old_olive_albedo.png-2daf14f73781bc5ae86179f1c062883d.s3tc.ctex"
+path="res://.godot/imported/prop_desk_book_stack_old_olive_albedo.png-2daf14f73781bc5ae86179f1c062883d.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "4f27ca514bfb7e39e7af765543189dd6"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_desk_book_stack_old_olive_albedo.png"
-dest_files=["res://.godot/imported/prop_desk_book_stack_old_olive_albedo.png-2daf14f73781bc5ae86179f1c062883d.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_desk_book_stack_old_olive_albedo.png-2daf14f73781bc5ae86179f1c062883d.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

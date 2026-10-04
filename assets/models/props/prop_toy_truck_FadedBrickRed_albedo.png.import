@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b7ls0tksb71rv"
-path.s3tc="res://.godot/imported/prop_toy_truck_FadedBrickRed_albedo.png-60d343f368a2773ec4d07a69a578bd09.s3tc.ctex"
+path="res://.godot/imported/prop_toy_truck_FadedBrickRed_albedo.png-60d343f368a2773ec4d07a69a578bd09.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "f32a8c1589176ca42453ced8f1d4ebe8"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_toy_truck_FadedBrickRed_albedo.png"
-dest_files=["res://.godot/imported/prop_toy_truck_FadedBrickRed_albedo.png-60d343f368a2773ec4d07a69a578bd09.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_toy_truck_FadedBrickRed_albedo.png-60d343f368a2773ec4d07a69a578bd09.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

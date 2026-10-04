@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dq3h3o2pgswmv"
-path.s3tc="res://.godot/imported/prop_desk_homework_homework_colour.png-6958347a5d5b49abd7516cfe313dc4c6.s3tc.ctex"
+path="res://.godot/imported/prop_desk_homework_homework_colour.png-6958347a5d5b49abd7516cfe313dc4c6.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "d666320adcdca8fda1c2a1d4006bbc73"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_desk_homework_homework_colour.png"
-dest_files=["res://.godot/imported/prop_desk_homework_homework_colour.png-6958347a5d5b49abd7516cfe313dc4c6.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_desk_homework_homework_colour.png-6958347a5d5b49abd7516cfe313dc4c6.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

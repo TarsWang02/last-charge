@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://buyot0jaq7oxp"
-path.s3tc="res://.godot/imported/prop_seated_teen_IndistinctFaceMarks_Color.png-d95f8363a17d842e1add65cd0f84c8ab.s3tc.ctex"
+path="res://.godot/imported/prop_seated_teen_IndistinctFaceMarks_Color.png-d95f8363a17d842e1add65cd0f84c8ab.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "22b4c41f1e24702213e94f04d4e61fa7"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_seated_teen_IndistinctFaceMarks_Color.png"
-dest_files=["res://.godot/imported/prop_seated_teen_IndistinctFaceMarks_Color.png-d95f8363a17d842e1add65cd0f84c8ab.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_seated_teen_IndistinctFaceMarks_Color.png-d95f8363a17d842e1add65cd0f84c8ab.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

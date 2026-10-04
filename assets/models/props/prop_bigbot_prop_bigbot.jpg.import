@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b7xqexwtw2ao6"
-path.s3tc="res://.godot/imported/prop_bigbot_prop_bigbot.jpg-cf280e5bba97564c0a30dd5c6fb69346.s3tc.ctex"
+path="res://.godot/imported/prop_bigbot_prop_bigbot.jpg-cf280e5bba97564c0a30dd5c6fb69346.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "263e785c23505f728c07c60443c45cef"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_bigbot_prop_bigbot.jpg"
-dest_files=["res://.godot/imported/prop_bigbot_prop_bigbot.jpg-cf280e5bba97564c0a30dd5c6fb69346.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_bigbot_prop_bigbot.jpg-cf280e5bba97564c0a30dd5c6fb69346.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

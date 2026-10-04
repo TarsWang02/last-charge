@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://758ck0ir4n8"
-path.s3tc="res://.godot/imported/prop_seated_teen_PlainBrownShoes_Color.png-5f60a0d26a2229d5e4728a881b610142.s3tc.ctex"
+path="res://.godot/imported/prop_seated_teen_PlainBrownShoes_Color.png-5f60a0d26a2229d5e4728a881b610142.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "53c1ddd845b895af840a37b4e640e785"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_seated_teen_PlainBrownShoes_Color.png"
-dest_files=["res://.godot/imported/prop_seated_teen_PlainBrownShoes_Color.png-5f60a0d26a2229d5e4728a881b610142.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_seated_teen_PlainBrownShoes_Color.png-5f60a0d26a2229d5e4728a881b610142.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

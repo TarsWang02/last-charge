@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b28v01lhnv56t"
-path.s3tc="res://.godot/imported/prop_reading_glasses_vintage+round+glasses+3d+model_basecolor.jpg-d3ecc45765e80898c4d934bf1f13bdd7.s3tc.ctex"
+path="res://.godot/imported/prop_reading_glasses_vintage+round+glasses+3d+model_basecolor.jpg-d3ecc45765e80898c4d934bf1f13bdd7.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "c792dcaa73bd742837f6db84abab1fd7"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_reading_glasses_vintage+round+glasses+3d+model_basecolor.jpg"
-dest_files=["res://.godot/imported/prop_reading_glasses_vintage+round+glasses+3d+model_basecolor.jpg-d3ecc45765e80898c4d934bf1f13bdd7.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_reading_glasses_vintage+round+glasses+3d+model_basecolor.jpg-d3ecc45765e80898c4d934bf1f13bdd7.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

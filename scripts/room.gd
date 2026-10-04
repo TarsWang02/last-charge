@@ -154,6 +154,7 @@ func _ready() -> void:
 	$Areas/JackTop.body_entered.connect(func(b): if b == player: _jack())
 	$Stop0/FrameInteract.activated.connect(_stand_frame_up)
 	$Stop1/CarCharge.activated.connect(_run_machine)
+	$Stop1/CarCharge.hold_progress.connect(func(_f): _car_hold_t = Time.get_ticks_msec())
 	# a small cyan glow on the electric car up on the big robot's head (it's what you power: cyan = interactive)
 	var car_light := OmniLight3D.new()
 	car_light.light_color = Color(0.55, 1.0, 0.95)
@@ -675,6 +676,7 @@ const FINALE_FROM := 29.25        ## 终章_灌电.ogg: the music-box phrase sta
 const FINALE_LAST := 39.38        ## ...and its last note is here: the hold lasts exactly the time between
 var _prev := {}                   ## counters from last frame (the pixel game's events, the magnet, hazards)
 var _hazards: Array = []
+var _car_hold_t := -10000
 var _photo_pos := Vector3.ZERO   ## where the robot stood up the photo (the desk reveal comes a few steps on)
 
 ## Back from the photo's close shot to the robot's own camera, quickly.
@@ -743,6 +745,11 @@ func _audio_events() -> void:
 				audio.sfx("音效/第3站_8bit_跳跃.ogg", -12.0, 0.04)
 			if Input.is_action_just_pressed("attack"):
 				audio.sfx("音效/第3站_8bit_钳子挥击.ogg", -12.0, 0.05)
+	# holding E on the car: the charging hum, only while E is held
+	var charging := Time.get_ticks_msec() - _car_hold_t < 150
+	if charging != bool(_prev.get("car", false)):
+		audio.loop("音效/机器人_按住E分电_循环.ogg", charging, -6.0)
+	_prev["car"] = charging
 	# the magnet
 	var cl := 1 if player.clinging != null else 0
 	if cl != int(_prev.get("cling", 0)):
@@ -1264,6 +1271,7 @@ func _enter_tv() -> void:
 	$PostFX.enabled = false
 	await push.finished
 	tv.game.start()
+	Game.captions.subtitles_top(true)   # the 2D game fills the screen: his words go up top, clear of the play
 	audio.music("音乐/第3站_电视8bit_循环.ogg", 0.6, -10.0)
 	in_tv = true
 
@@ -1312,6 +1320,7 @@ func _open_time_box() -> void:
 ## Out of the game: the robot pops out of the glass and lands on the floor on the kitchen
 ## side; the camera pulls back out to the robot's own camera, which then turns to the stove.
 func _exit_tv() -> void:
+	Game.captions.subtitles_top(false)
 	audio.sfx("音效/第3站_离开电视穿梭.ogg", -4.0)
 	audio.music("音乐/主旋律_探索_循环.ogg", 4.0, -12.0)
 	var tv: TvScreen = $Stop3/TvScreen

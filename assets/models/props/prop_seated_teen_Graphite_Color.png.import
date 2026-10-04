@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bt3ux2kkapkj0"
-path.s3tc="res://.godot/imported/prop_seated_teen_Graphite_Color.png-13c506f5568cd5ded4c722013dd71371.s3tc.ctex"
+path="res://.godot/imported/prop_seated_teen_Graphite_Color.png-13c506f5568cd5ded4c722013dd71371.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "0f8abf821faa10b106cab9cadc46bf33"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_seated_teen_Graphite_Color.png"
-dest_files=["res://.godot/imported/prop_seated_teen_Graphite_Color.png-13c506f5568cd5ded4c722013dd71371.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_seated_teen_Graphite_Color.png-13c506f5568cd5ded4c722013dd71371.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

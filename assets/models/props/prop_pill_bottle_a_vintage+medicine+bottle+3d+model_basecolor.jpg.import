@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c0stob58l6uci"
-path.s3tc="res://.godot/imported/prop_pill_bottle_a_vintage+medicine+bottle+3d+model_basecolor.jpg-bfe2a9c1d08146a2957162dc00e9c5dc.s3tc.ctex"
+path="res://.godot/imported/prop_pill_bottle_a_vintage+medicine+bottle+3d+model_basecolor.jpg-bfe2a9c1d08146a2957162dc00e9c5dc.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "0856ad7cbbf57e054a3c530bfcf8aa92"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_pill_bottle_a_vintage+medicine+bottle+3d+model_basecolor.jpg"
-dest_files=["res://.godot/imported/prop_pill_bottle_a_vintage+medicine+bottle+3d+model_basecolor.jpg-bfe2a9c1d08146a2957162dc00e9c5dc.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_pill_bottle_a_vintage+medicine+bottle+3d+model_basecolor.jpg-bfe2a9c1d08146a2957162dc00e9c5dc.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

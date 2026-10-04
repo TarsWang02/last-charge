@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://mfl28xk3janh"
-path.s3tc="res://.godot/imported/prop_jackbox_body_muted_brass_albedo.png-d85788f90be869ffad698c3ae30d7f9d.s3tc.ctex"
+path="res://.godot/imported/prop_jackbox_body_muted_brass_albedo.png-d85788f90be869ffad698c3ae30d7f9d.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "fcad8d22af6134190219759c71161103"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_jackbox_body_muted_brass_albedo.png"
-dest_files=["res://.godot/imported/prop_jackbox_body_muted_brass_albedo.png-d85788f90be869ffad698c3ae30d7f9d.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_jackbox_body_muted_brass_albedo.png-d85788f90be869ffad698c3ae30d7f9d.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

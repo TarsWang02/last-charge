@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ddusla0avlbjc"
-path.s3tc="res://.godot/imported/prop_desk_pencil_stub_mustard_paint_albedo.png-24fad93b096e9ba7e2b68cad1f2d5d1a.s3tc.ctex"
+path="res://.godot/imported/prop_desk_pencil_stub_mustard_paint_albedo.png-24fad93b096e9ba7e2b68cad1f2d5d1a.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "8eae4fda373e1ab0a8b2589dcf3094e5"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_desk_pencil_stub_mustard_paint_albedo.png"
-dest_files=["res://.godot/imported/prop_desk_pencil_stub_mustard_paint_albedo.png-24fad93b096e9ba7e2b68cad1f2d5d1a.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_desk_pencil_stub_mustard_paint_albedo.png-24fad93b096e9ba7e2b68cad1f2d5d1a.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

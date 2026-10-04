@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://l35ylkbfenut"
-path.s3tc="res://.godot/imported/prop_seesaw_ruler_aged_ivory_albedo.png-af0b83a9101e039ab30bdecc6a184bec.s3tc.ctex"
+path="res://.godot/imported/prop_seesaw_ruler_aged_ivory_albedo.png-af0b83a9101e039ab30bdecc6a184bec.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "ddd026db3c26a4a00d0525961f83824b"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_seesaw_ruler_aged_ivory_albedo.png"
-dest_files=["res://.godot/imported/prop_seesaw_ruler_aged_ivory_albedo.png-af0b83a9101e039ab30bdecc6a184bec.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_seesaw_ruler_aged_ivory_albedo.png-af0b83a9101e039ab30bdecc6a184bec.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

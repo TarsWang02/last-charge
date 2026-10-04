@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://csxdni852bsyj"
-path.s3tc="res://.godot/imported/prop_toy_truck_WornOlivePaint_albedo.png-ee2cb6adff4a0c57740c34bdc75b4c04.s3tc.ctex"
+path="res://.godot/imported/prop_toy_truck_WornOlivePaint_albedo.png-ee2cb6adff4a0c57740c34bdc75b4c04.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "5eff3f8e5151f21616e2571b64b1950c"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_toy_truck_WornOlivePaint_albedo.png"
-dest_files=["res://.godot/imported/prop_toy_truck_WornOlivePaint_albedo.png-ee2cb6adff4a0c57740c34bdc75b4c04.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_toy_truck_WornOlivePaint_albedo.png-ee2cb6adff4a0c57740c34bdc75b4c04.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

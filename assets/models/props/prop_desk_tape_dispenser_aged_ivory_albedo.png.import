@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://uoegrb747jhn"
-path.s3tc="res://.godot/imported/prop_desk_tape_dispenser_aged_ivory_albedo.png-d05fc67c6b6808f25534cd70bd0acf48.s3tc.ctex"
+path="res://.godot/imported/prop_desk_tape_dispenser_aged_ivory_albedo.png-d05fc67c6b6808f25534cd70bd0acf48.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "ddd026db3c26a4a00d0525961f83824b"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_desk_tape_dispenser_aged_ivory_albedo.png"
-dest_files=["res://.godot/imported/prop_desk_tape_dispenser_aged_ivory_albedo.png-d05fc67c6b6808f25534cd70bd0acf48.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_desk_tape_dispenser_aged_ivory_albedo.png-d05fc67c6b6808f25534cd70bd0acf48.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

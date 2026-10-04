@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://th00v8rkrsgd"
-path.s3tc="res://.godot/imported/prop_plush_bear_plush+teddy+bear+3d+model_basecolor.jpg-b7247f164d56c666e813aa148a3e0fd7.s3tc.ctex"
+path="res://.godot/imported/prop_plush_bear_plush+teddy+bear+3d+model_basecolor.jpg-b7247f164d56c666e813aa148a3e0fd7.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "5b4e2a4097dfcafe6f505cc6404c4199"
@@ -15,13 +14,13 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/prop_plush_bear_plush+teddy+bear+3d+model_basecolor.jpg"
-dest_files=["res://.godot/imported/prop_plush_bear_plush+teddy+bear+3d+model_basecolor.jpg-b7247f164d56c666e813aa148a3e0fd7.s3tc.ctex"]
+dest_files=["res://.godot/imported/prop_plush_bear_plush+teddy+bear+3d+model_basecolor.jpg-b7247f164d56c666e813aa148a3e0fd7.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.8
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
