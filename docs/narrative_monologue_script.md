@@ -85,12 +85,35 @@
 | 3-16 | `_open_time_box`（打开时光盒） | My drawing. Me and the robot, beating the dragon. | 我的画。我和机器人，一起打败恶龙。 |
 | 3-17 | 紧接 3-16 | Thought I'd be a hero. Ended up a farmer. Not a bad trade. | 那时候以为自己会当英雄，后来当了农民。也不亏。 |
 
-> 第 4–6 站（厨房、晾衣绳、配电箱）待写。
+## 第 4 站 · 厨房（为人父）
+
+| # | 触发 | English | 中文 |
+|---|---|---|---|
+| 4-1 | `_after_tv_looks`（被吐出电视，镜头找到灶台的火光） | Who left the stove on? | 谁没关灶台？ |
+| 4-2 | ★ 看清灶台前定格的中年男人（`FatherHead`） | ...Ah. Me again. Forty-odd, in Marg's apron. | ……啊，又是我。四十出头，系着 Marg 的围裙。 |
+| 4-3 | 紧接 4-2 | Pancakes every Sunday. Burnt, every Sunday. She never said a word. | 每个礼拜天做煎饼，每个礼拜天都烤糊。她从来没说过一句。 |
+| 4-4 | `_kitchen_reveal`（镜头扫过水龙头和满地的水） | And the tap's running. Marg'd have my hide. | 水龙头也开着。让 Marg 看见，非扒了我的皮不可。 |
+| 4-5 | `_kitchen_reveal`（镜头看到远处的窗台） | The windowsill. That'll take me round to the breaker. | 窗台。顺着它能绕到配电箱。 |
+| 4-6 | ★ 第一次碰到水、短路回检查点 | Water and me don't mix any more. | 我现在可沾不得水了。 |
+| 4-7 | ★ 开始爬杂货堆和椅子 | Sunday's shopping. Never did get put away. | 礼拜天买的东西，一直没收起来。 |
+| 4-8 | `_microwave`（炉门把砧板推过缺口） | Ha. Never thought I'd thank a microwave. | 哈，没想到有一天会感谢一台微波炉。 |
+| 4-9 | `_toaster`（跳进烤面包机的槽里） | Hope I don't come out burnt. | 但愿出来的时候别烤糊了。 |
+| 4-10 | `_toaster`（被弹到调料架上） | Like toast. | 跟吐司一样。 |
+| 4-11 | ★ 第一次出现电磁铁提示（右键） | Got a magnet in me, have I? Handy. | 我身上还有块磁铁？挺管用。 |
+| 4-12 | ★ 吊在抽油烟机下，第一次看到灶火窜起 | That stove's always had a temper. | 这灶台脾气一直不小。 |
+| 4-13 | `_kettle`（给水壶通电） | Kettle's on. Best idea I've had all night. | 烧上水了。今晚最好的主意。 |
+| 4-14 | ★ 第一次被蒸汽托起来 | Up we go— | 起—— |
+| 4-15 | `_sink_collapse`（碗碟一路倒下来） | ...That'll be the dishes. | ……碗碟全完了。 |
+| 4-16 | `_drain_flood`（塞子弹开，积水退去） | Well. That's one way to do the washing up. | 行吧，这也算是洗过碗了。 |
+| 4-17 | `_ring_mug`（敲响女儿的杯子） | Lucy's mug. She painted it when she was five. | Lucy 的杯子，她五岁时画的。 |
+| 4-18 | 紧接，镜头看向灶台前的自己 | Still rings the same. She doesn't ring as often. | 敲起来声音还跟从前一样。只是她现在不常打电话来了。 |
+
+> 第 5–6 站（晾衣绳、配电箱）待写。
 
 ---
 
 ## 需要队里定的
 
 1. **人名和年份**：全家福是 **1953 年圣诞**（按八十来岁的老人算）。全家福贴图是 70 年代风格的服装，对不上的话可以改贴图，或者去掉年份（0-6 改成 "Christmas morning. Mum, Dad... and me..."）。
-2. **★ 标的句子需要新镜头或事件**：开场看老人（0-2 到 0-4，整个设定的关键）、站上小火车（1-2b）、点灯 / 掉缝 / 推橡皮 / 填洞（2-4、2-7 到 2-9）、妈妈纸条的交互界面（2-10）、被动吸进电视（3-5，现在是按 E）、像素游戏里的各个首次事件（3-6 到 3-12）。
+2. **★ 标的句子需要新镜头或事件**：开场看老人（0-2 到 0-4，整个设定的关键）、站上小火车（1-2b）、点灯 / 掉缝 / 推橡皮 / 填洞（2-4、2-7 到 2-9）、妈妈纸条的交互界面（2-10）、被动吸进电视（3-5，现在是按 E）、像素游戏里的各个首次事件（3-6 到 3-12）、厨房的看清自己 / 碰水 / 爬杂货 / 磁铁 / 灶火 / 蒸汽（4-2、4-6、4-7、4-11、4-12、4-14）。
 3. **独白怎么显示**：做成字幕（底部、斜体、白色，表示内心声音），还是旁边配一个小头像？等文本定了再说。
