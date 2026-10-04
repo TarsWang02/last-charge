@@ -108,6 +108,15 @@ LINES = {
     "5-14": ("There's the breaker.", "-24%", "-14Hz"),
     "5-15": ("Nearly there.", "-28%", "-16Hz"),
     "5-16": ("Losing isn't fun. That's why I don't do it.", "-16%", "-4Hz"),               # stubborn grin
+    # ---- stop 6: the breaker box (the end)
+    "6-1": ("Righto. One last job.", "-26%", "-14Hz"),
+    "6-2": ("Come on, old girl...", "-30%", "-16Hz"),
+    "6-3": ("Take it. ...Take the lot.", "-34%", "-18Hz"),
+    "6-4": ("I won't be needing it.", "-38%", "-20Hz"),                   # almost gone
+    "6-5": ("...There.", "-40%", "-20Hz"),
+    "6-6": ("There they all are.", "-34%", "-14Hz"),                      # warm
+    "6-7": ("Sleep tight, old fella.", "-36%", "-16Hz"),
+    "6-8": ("Lucy'll see the light from the road. ...She'll know I'm home.", "-34%", "-16Hz"),
 }
 
 ## How robotic: "mild" = an old man in a tin can; "silly" = cartoon robot buzz on top.
