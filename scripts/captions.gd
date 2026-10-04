@@ -115,6 +115,7 @@ func _label(size: int, col: Color) -> Label:
 
 ## Memory card for Game.restore_memory(id). Queued if one is already showing.
 func show_memory(id: String) -> void:
+	return   # the memories are voiced now (the monologue subtitles); no second, written card
 	if not StoryText.MEMORIES.has(id):
 		return
 	_queue.append(StoryText.MEMORIES[id])
@@ -178,7 +179,7 @@ static func line_time(id: String) -> float:
 	var t := read_time(text)
 	var vo := vo_path(id)
 	if vo != "" and ResourceLoader.exists(vo):
-		t = maxf(t * 0.8, (load(vo) as AudioStream).get_length() + 0.35)
+		t = (load(vo) as AudioStream).get_length() + 0.3   # on screen exactly as long as it's spoken
 	return t
 
 

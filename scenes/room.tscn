@@ -1713,10 +1713,10 @@ size = Vector3(4.5, 0.09, 1.26)
 material = SubResource("m_wood")
 
 [node name="MicrowaveUse" type="Area3D" parent="Stop4"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 23.04, 8.28, -19.8)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 25.2, 8.28, -19.53)
 script = ExtResource("ia")
 cost = 0.04
-radius = 0.9
+radius = 0.6
 prompt_offset = Vector3(0, 1.2, 0)
 
 [node name="ToasterCoils" type="CSGBox3D" parent="Stop4"]

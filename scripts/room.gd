@@ -182,6 +182,7 @@ func _ready() -> void:
 	$Stop6/BreakerCharge.activated.connect(_breaker_done)
 	$Stop6/BreakerOk.visible = false
 	_build_town()
+	preload("res://scripts/kitchen_fx.gd").install(self)   # flames, water, steam, fill light in the kitchen
 	$Areas/SinkPile.body_entered.connect(func(b): if b == player and not sink_done: _sink_collapse())
 	$Stop4/SteamColumn.visible = false
 	# off the rail by the kettle: turn to the dish rack beyond the wet counter (the next goal)
@@ -197,6 +198,14 @@ func _ready() -> void:
 	for n in ["ElectricCar", "Drum", "Seesaw"]:
 		_machine_home[n] = get_node("Stop1/" + n).transform
 	_jack_home = $Stop1/JackHead.position
+	$Stop1/JackHead.rotation_degrees.y -= 50.0   # the clown looks off to the right, towards the way in
+	$Stop0/PhotoFrame.position.y += 0.004 * K   # lying flat it shared the nightstand's surface and flickered
+	_print = $Stop0/PhotoFrame.find_child("FamilyPhoto", true, false)
+	var stand := $Stop0/PhotoFrame.find_child("BackStand", true, false) as Node3D
+	if stand:   # its face sat exactly on the back board's: the two flickered against each other as the camera moved
+		stand.position.y += 0.0008
+	if _print:   # the print is double-sided: face down, it showed through the frame's back. Hidden till it stands.
+		_print.visible = false
 	for n in ["BigBotShoulderN", "BigBotShoulderS", "BigBotTorso", "BigBotHead"]:   # up there only by the blocks
 		get_node("Stop1/" + n).set_meta("no_mantle", true)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -267,10 +276,29 @@ func _process(_d: float) -> void:
 		_note_use.cost = 0.0
 		_note_use.radius = 1.0
 		_note_use.prompt_text = "E  Read"
-		_note_use.prompt_offset = Vector3(0, 0.6, 0)
+		_note_use.prompt_offset = Vector3(0, 0.3, 1.0)   # beside it (screen right from the overhead camera), not on it
 		add_child(_note_use)
 		_note_use.global_position = maze.note.global_position
 		_note_use.activated.connect(_read_note)
+		var np := maze.note.global_position
+		for n in maze.find_children("*", "VisualInstance3D", true, false):   # nothing lying on top of it
+			if n == maze.note or maze.note.is_ancestor_of(n) or n is Light3D:
+				continue
+			var q: Vector3 = n.global_position
+			if Vector2(q.x - np.x, q.z - np.z).length() < 0.075 * K and q.y > np.y - 0.005 * K:
+				n.visible = false
+		var nm := StandardMaterial3D.new()   # a faint warm glow until it's been read
+		nm.albedo_color = Color(1, 0.93, 0.76)
+		nm.emission_enabled = true
+		nm.emission = Color(1, 0.72, 0.38)
+		nm.emission_energy_multiplier = 0.7
+		maze.note.material_override = nm
+		_note_glow = OmniLight3D.new()
+		_note_glow.light_color = Color(1, 0.72, 0.38)
+		_note_glow.light_energy = 0.8
+		_note_glow.omni_range = 0.18 * K
+		add_child(_note_glow)
+		_note_glow.global_position = np + Vector3(0, 0.05 * K, 0)
 	if false:
 		var m := StandardMaterial3D.new()
 		m.albedo_color = Color(1, 0.9, 0.7)
@@ -282,6 +310,7 @@ func _process(_d: float) -> void:
 		Game.restore_memory("mom_note")
 
 var _note_use: Area3D
+var _note_glow: OmniLight3D
 
 ## Mum's note, opened on screen: yellowed paper, her handwriting; the game holds still until E again.
 func _read_note() -> void:
@@ -347,9 +376,7 @@ func _read_note() -> void:
 	Game.restore_memory("mom_note")
 	audio.phrase("音乐/旋律片段2_妈妈的纸条.ogg", -8.0)
 	await _wait(0.6)
-	Game.captions.voice("2-11")
-	await _wait(preload("res://scripts/captions.gd").line_time("2-11"))
-	Game.captions.voice("2-12")
+	Game.captions.say_all(["2-11", "2-12"])
 
 ## Debug: F9 skips to the living room (by the bedroom door), for testing the TV stop.
 func _unhandled_input(event: InputEvent) -> void:
@@ -378,6 +405,9 @@ func _unhandled_input(event: InputEvent) -> void:
 func _skip_to_kitchen() -> void:
 	_skip_to_living_room()
 	tv_done = true
+	time_box_open = true      # (the time box has been opened: the kitchen look may come)
+	_box_lines_done = true
+	_box_pos = Vector3(INF, 0, INF)
 	player.magnet_enabled = false
 	player.teleport($TvExitLanding.global_position + Vector3(0, 0.05, 0))
 	Game.set_checkpoint($Checkpoints/TvExit)
@@ -417,7 +447,7 @@ func _physics_process(_d: float) -> void:
 	elif $Stop4/SteamColumn.visible:
 		$Stop4/SteamColumn.visible = false
 	# after the photo, a few steps on: the robot looks up and sees the desk
-	if frame_up and not revealed and _photo_cam == null and not player.locked 			and Vector2(player.global_position.x - _photo_pos.x, player.global_position.z - _photo_pos.z).length() > 0.06 * K:
+	if frame_up and not revealed and _photo_cam == null and not player.locked and not _photo_talking 			and Vector2(player.global_position.x - _photo_pos.x, player.global_position.z - _photo_pos.z).length() > 0.06 * K:
 		_reveal_desk()
 	if _photo_cam:   # the photo's close shot holds until the robot moves
 		_photo_since += _d
@@ -615,17 +645,27 @@ func _stand_frame_up() -> void:
 	add_child(glow)
 	glow.global_position = (f + Vector3(0, 0.1, 0.08)) * K
 	create_tween().tween_property(glow, "light_energy", 1.2, 1.2)
+	if _print:
+		_print.visible = true
 	Game.restore_memory("family_photo")
-	get_tree().create_timer(0.6).timeout.connect(func(): Game.captions.voice("0-6"))
+	_photo_lines()
 	_shot_if(_op_dir, "op_photo.png", 2.2)
-	await _wait(6.6)
-	Game.captions.say("0-7")
-	await _wait(4.0)
+	await _wait(8.0)
 	create_tween().tween_property(glow, "light_energy", 0.35, 2.0)
+
+func _photo_lines() -> void:
+	_photo_talking = true
+	await _wait(0.6)
+	await Game.captions.say("0-6")
+	await _wait(0.4)
+	await Game.captions.say("0-7")
+	_photo_talking = false
 
 var _photo_cam: Camera3D
 var _photo_tw: Tween
 var _photo_since := 0.0
+var _photo_talking := false
+var _print: Node3D
 var _photo_pos := Vector3.ZERO   ## where the robot stood up the photo (the desk reveal comes a few steps on)
 
 ## Back from the photo's close shot to the robot's own camera, quickly.
@@ -1029,10 +1069,14 @@ func _open_door() -> void:
 	create_tween().tween_property(handle, "rotation_degrees:x", -35.0, 0.2).set_trans(Tween.TRANS_BACK)
 	player.launch_squash()
 	await get_tree().create_timer(0.3).timeout
-	await create_tween().tween_property($Stop2/DoorPivot, "rotation_degrees:y", -75.0, 0.9) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT).finished
-	await _arc(player.global_position, $OpenPlanDrop.global_position, 1.0, 0.8)
-	player.velocity = Vector3(0, -2.0, 0)
+	# one shot from the living-room floor: the door swings open, the robot drops through the gap, lands,
+	# looks up at the breaker box, then over at the blue light of the TV (no cut across the wall between)
+	var cam := Camera3D.new()
+	add_child(cam)
+	cam.fov = 58.0
+	var drop: Vector3 = $OpenPlanDrop.global_position / K
+	cam.global_transform = Transform3D(Basis.IDENTITY, Vector3(drop.x + 0.55, 0.32, drop.z - 0.25) * K).looking_at(Vector3(-0.42, 0.62, 1.32) * K)
+	cam.make_current()
 	in_desk = false
 	player.set_top_down(false)
 	for n in ["WallLampShade", "WallLampArm"]:
@@ -1041,14 +1085,39 @@ func _open_door() -> void:
 	var light := create_tween().set_parallel()
 	light.tween_property(env, "ambient_light_energy", _env_saved[0], 1.5)
 	light.tween_property($Moonlight, "light_energy", _env_saved[1], 1.5)
+	await create_tween().tween_property($Stop2/DoorPivot, "rotation_degrees:y", -75.0, 0.9) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT).finished
+	var follow := create_tween()   # the camera tips down with the fall
+	follow.tween_property(cam, "global_transform", Transform3D(Basis.IDENTITY, Vector3(drop.x + 0.5, 0.26, drop.z - 0.2) * K).looking_at((drop + Vector3(0, 0.05, 0)) * K), 1.0) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	await _arc(player.global_position, $OpenPlanDrop.global_position, 1.0, 0.8)
+	player.velocity = Vector3(0, -2.0, 0)
+	audio.sfx("音效/机器人_落地_02.ogg", -6.0)
 	Game.set_checkpoint($Checkpoints/OpenPlan)
-	await get_tree().create_timer(0.3).timeout
-	_look_at($BreakerLook.global_position, -4.0, 1.5)
+	await _wait(0.5)
+	# up at the breaker box on the wall: that's what's gone
+	var box: Vector3 = $BreakerLook.global_position / K
+	var tw := create_tween()
+	tw.tween_property(cam, "global_transform", Transform3D(Basis.IDENTITY, (drop + Vector3(0.3, 0.16, -0.12)) * K).looking_at(box * K), 1.6) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await _wait(1.0)
 	await Game.captions.say("2-13")
-	_look_at($TvLook.global_position, -6.0, 1.5)  # ...then the blue light of the TV: go there first
+	# ...and over to the blue light of the TV: go there first
+	player._face_yaw = atan2($TvLook.global_position.x - player.global_position.x, $TvLook.global_position.z - player.global_position.z)
+	var tv: Vector3 = $TvLook.global_position / K
+	tw = create_tween()
+	tw.tween_property(cam, "global_transform", Transform3D(Basis.IDENTITY, (drop + Vector3(-0.12, 0.14, 0.18)) * K).looking_at(tv * K), 1.8) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await _wait(1.0)
 	await Game.captions.say("2-14")
+	_look_at($TvLook.global_position, -6.0, 0.01)   # the robot's own camera, behind it, facing the TV
+	await get_tree().process_frame
+	var pcam := _player_cam()
+	var from := cam.global_transform
+	await create_tween().tween_method(func(t: float): cam.global_transform = from.interpolate_with(pcam.global_transform, t), 0.0, 1.0, 1.0) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).finished
+	pcam.make_current()
+	cam.queue_free()
 	player.locked = false
 	await _wait(0.6)
 	Game.captions.say_all(["3-1", "3-2"])
@@ -2106,15 +2175,17 @@ func _train_smoothness() -> Dictionary:
 func _autotest_kitchen(dir: String) -> Dictionary:
 	var s4 := {}
 	_skip_to_kitchen()
-	await _wait(1.2)
-	await _wait(1.0)
+	var t0 := Time.get_ticks_msec()   # the stove, him at forty, the tap, the way home: with their lines (~25 s)
+	while not kitchen_revealed and Time.get_ticks_msec() - t0 < 40000:
+		await get_tree().process_frame
 	s4["reveal"] = kitchen_revealed
-	await _wait(1.9)
+	await _wait(2.0)
 	await _shot(dir, "room_s4_reveal_sink.png")
 	s4["yaw_sink"] = snappedf(rad_to_deg(player.cam_pivot.rotation.y), 1.0)
-	await _wait(2.4)
+	while player.locked and Time.get_ticks_msec() - t0 < 70000:
+		await get_tree().process_frame
 	await _shot(dir, "room_s4_reveal_sill.png")
-	await _wait(1.5)
+	await _wait(0.5)
 	s4["control_back_after_reveal"] = not player.locked and get_viewport().get_camera_3d() == _player_cam()
 	s4["yaw_sill"] = snappedf(rad_to_deg(player.cam_pivot.rotation.y), 1.0)
 	s4["robot_at"] = str((player.global_position / K).snapped(Vector3.ONE * 0.01))
@@ -2135,7 +2206,7 @@ func _autotest_kitchen(dir: String) -> Dictionary:
 	s4["gap_too_wide"] = y_gap < 0.0 or y_gap < KC_U - 0.5
 	s4["water_shorts_out"] = $Stop4/WaterGap.hits >= 1 and player.charge < c0 and player.global_position.distance_to($Checkpoints/Kitchen.global_position) < 1.0
 	# the microwave: the door shoves the cutting board over the gap
-	player.teleport(Vector3(2.56 * K, KC_U + 0.25, -2.19 * K))
+	player.teleport(Vector3(2.80 * K, KC_U + 0.25, -2.17 * K))   # the far end of the board, clear of the door
 	await _wait(0.5)
 	c0 = player.charge
 	_act("interact", true)
@@ -2273,6 +2344,10 @@ func _autotest_kitchen(dir: String) -> Dictionary:
 	await _wait(1.8)
 	s4["mug_rung"] = mug_rung and "daughter_mug" in Game.memories
 	await _shot(dir, "room_s4_mug.png")
+	var tm := Time.get_ticks_msec()   # his lines, then the clothesline reveal
+	while player.locked and Time.get_ticks_msec() - tm < 40000:
+		await get_tree().process_frame
+	await _wait(0.3)
 	s4["to_sill_respawns"] = await _walk_path([Vector2(4.28, 2.3), Vector2(4.22, 2.52), Vector2(3.9, 2.52)])
 	s4["on_windowsill"] = player.is_on_floor() and player.global_position.x < 4.15 * K and absf(player.global_position.y - 0.9 * K) < 0.15
 	s4["charge"] = snappedf(player.charge, 0.01)
@@ -2469,6 +2544,49 @@ func _autotest() -> void:
 		print("ROOMTEST ", JSON.stringify({"highest_m": best, "reached_shoulder": best > 0.49}))
 		get_tree().quit()
 		return
+	if "--note-view" in OS.get_cmdline_user_args():  # debug: Mum's note as the player sees it in the maze
+		player.teleport($DeskLanding.global_position)
+		await _enter_desk()
+		player.teleport(maze.note.global_position + Vector3(0.9, 0.3, 0.0))
+		await _wait(1.5)
+		await _shot(dir, "note_view.png")
+		var near := []
+		for n in maze.find_children("*", "Node3D", true, false):
+			if n != maze.note and n is VisualInstance3D and n.is_visible_in_tree() and n.global_position.distance_to(maze.note.global_position) < 0.6:
+				near.append("%s %.2f" % [n.name, (n.global_position.y - maze.note.global_position.y) / K])
+		print("ROOMTEST ", JSON.stringify({"note_at": str(maze.note.global_position / K), "note_class": maze.note.get_class(), "near": near}))
+		get_tree().quit()
+		return
+	if "--kitchen-views" in OS.get_cmdline_user_args():  # debug: the kitchen as the player sees it
+		_skip_to_kitchen()
+		await _wait(2.0)
+		var cam := Camera3D.new()
+		add_child(cam)
+		cam.fov = 62.0
+		for v in [["k_overview.png", Vector3(2.3, 1.5, 0.3), Vector3(3.6, 0.9, -2.2)],
+				["k_stove.png", Vector3(3.2, 1.25, -1.4), Vector3(3.7, 1.0, -2.4)],
+				["k_sink.png", Vector3(3.6, 1.3, 0.2), Vector3(4.4, 0.9, -0.6)],
+				["k_floor.png", Vector3(2.6, 0.35, 0.4), Vector3(4.0, 0.2, -1.2)],
+				["k_counter_low.png", Vector3(2.45, 1.0, -1.85), Vector3(3.6, 1.0, -2.3)]]:
+			cam.global_transform = Transform3D(Basis.IDENTITY, v[1] * K).looking_at(v[2] * K)
+			cam.make_current()
+			await _wait(0.6)
+			await _shot(dir, v[0])
+		get_tree().quit()
+		return
+	if "--photo-view" in OS.get_cmdline_user_args():  # debug: the photo frame lying on the nightstand, close
+		var cam := Camera3D.new()
+		add_child(cam)
+		cam.fov = 40.0
+		var f: Vector3 = $Stop0/PhotoFrame.global_position
+		for i in 3:
+			cam.global_transform = Transform3D(Basis.IDENTITY, f + Vector3(0.6 - i * 0.6, 0.35, 0.9)).looking_at(f)
+			cam.make_current()
+			await _wait(0.4)
+			await _shot(dir, "photo_%d.png" % i)
+		print("ROOMTEST ", JSON.stringify({"frame": str($Stop0/PhotoFrame.global_transform)}))
+		get_tree().quit()
+		return
 	if "--note-test" in OS.get_cmdline_user_args():  # debug: Mum's note, opened
 		_read_note()
 		await get_tree().create_timer(0.6, true).timeout
@@ -2497,6 +2615,11 @@ func _autotest() -> void:
 		await _wait(0.9)
 		_act("move_fwd", false)
 		r["photo_cam_released"] = _photo_cam == null and _player_cam().current
+		while _photo_talking:
+			await get_tree().process_frame
+		_act("move_fwd", true)
+		await _wait(0.6)
+		_act("move_fwd", false)
 		await _wait(0.5)
 		r["desk_reveal_after_photo"] = revealed
 		await _wait(6.0)

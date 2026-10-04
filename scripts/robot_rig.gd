@@ -82,8 +82,26 @@ func _init(model: Node) -> void:
 		var belt := model.find_child("Belt_" + side, true, false) as MeshInstance3D
 		if belt:
 			belts[side] = _belt_material(belt)
+	_paint(model)
 	_make_eyes()
 	_make_cells()
+
+## Smooth tin-toy enamel over every painted part (not the belts, which have their own scrolling shader).
+func _paint(model: Node) -> void:
+	var shader := preload("res://shaders/tin_paint.gdshader")
+	for mi in model.find_children("*", "MeshInstance3D", true, false):
+		if mi.name.begins_with("Belt_") or mi.material_override != null:
+			continue
+		var src := (mi as MeshInstance3D).get_active_material(0) as BaseMaterial3D
+		if src == null or src.albedo_texture == null:
+			continue
+		var m := ShaderMaterial.new()
+		m.shader = shader
+		m.set_shader_parameter("albedo_tex", src.albedo_texture)
+		var rubber: bool = mi.name.begins_with("Wheel") or mi.name.begins_with("Track")
+		m.set_shader_parameter("roughness", 0.7 if rubber else 0.52)
+		m.set_shader_parameter("metallic", 0.0 if rubber else 0.05)
+		mi.material_override = m
 
 func _belt_material(mi: MeshInstance3D) -> ShaderMaterial:
 	var src := mi.get_active_material(0) as BaseMaterial3D
