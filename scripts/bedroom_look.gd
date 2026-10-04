@@ -110,10 +110,13 @@ func _dust(label: String,center: Vector3,extent: Vector3,color: Color,count: int
     dust.append(particles)
 func _set_active(value: bool) -> void:
     active=value
-    for key in ENV:env.set(key,ENV[key] if active else original_env[key])
-    for key in GRADE:post.set_shader_parameter(key,GRADE[key] if active else original_post[key])
-    room.get_node("Moonlight").light_color=Color(.16,.20,.34) if active else moon_color
-    get_viewport().msaa_3d=Viewport.MSAA_4X if active else previous_msaa
+    # One coherent grade across the house; the room still owns power and ending light levels.
+    if not room.has_meta("shared_miniature_grade"):
+        for key in ENV:env.set(key,ENV[key])
+        for key in GRADE:post.set_shader_parameter(key,GRADE[key])
+        room.get_node("Moonlight").light_color=Color(.16,.20,.34)
+        get_viewport().msaa_3d=Viewport.MSAA_4X
+        room.set_meta("shared_miniature_grade",true)
     if not active:post.set_shader_parameter("tilt_shift_enabled",original_post["tilt_shift_enabled"])
 func _process(_delta: float) -> void:
     if not is_instance_valid(room.player):return

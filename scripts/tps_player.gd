@@ -61,6 +61,7 @@ var magnet_enabled := false  ## the kitchen switches this on
 var updraft_top := -INF      ## set each physics frame by the level while the robot is in rising steam (units)
 var hanging := false         ## scripted hanging (the clothesline): claws up, like the magnet
 var head_look := NAN         ## scripted head turn (degrees, + = to the robot's left); NAN = normal
+var pose_override := []      ## cutscenes: [yaw, tilt, nod, l_lift, r_lift, l_swing, r_swing] for the rig; [] = normal
 var powered_down := false    ## the ending: it has given its last charge; eyes and cells go dark
 var clinging: Node3D = null  ## the steel piece the robot hangs under
 var magnet_seconds := 0.0    ## time spent hanging (for tuning / the self test)
@@ -487,7 +488,10 @@ func _animate(delta: float, yaw_rate: float) -> void:
 	if not rig.ok:
 		return
 	var turn := clampf(rad_to_deg(yaw_rate) * 0.25, -35.0, 35.0)  # head leads into turns
-	if not alive:
+	if not pose_override.is_empty():
+		var o := pose_override
+		rig.set_targets(o[0], o[1], o[2], o[3], o[4], o[5], o[6])
+	elif not alive:
 		rig.set_targets(0.0, 8.0, 32.0, -18.0, -18.0, 8.0, 8.0)
 	elif clinging != null or hanging:  # hanging by both claws, body swinging a little as it moves
 		var sway := sin(_t * 6.0) * 6.0 * move

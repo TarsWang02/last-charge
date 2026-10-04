@@ -23,6 +23,7 @@ const PROPS := {
 const LID_SCRIPT := preload("res://scripts/jack_lid_art.gd")
 const FLOOR_TEX := preload("res://assets/textures/tex_floor_boards.png")
 const WALL_TEX := preload("res://assets/textures/tex_wall_boards.png")
+const CEILING_TEX := preload("res://assets/textures/tex_ceiling_painted_boards.png")
 
 static func _invisible() -> StandardMaterial3D:
     var m := StandardMaterial3D.new()
@@ -79,6 +80,8 @@ static func install(room: Node3D) -> void:
         _add(coin, "coin", Vector3(0, -0.0015, 0))
     var shell := room.get_node("Shell")
     shell.get_node("Floor").material = _surface(FLOOR_TEX, 0.8)
+    shell.get_node("Ceiling").material = _surface(CEILING_TEX, 0.8)
+    shell.get_node("BedroomCeiling").material_override = _surface(CEILING_TEX, 0.8)
     for key in ["WallN", "WallNHigh", "WallNWest", "WallNEast", "WallS", "WallSHigh", "WallSWest", "WallSBedLow", "WallSBedHigh", "WallSMid", "WallSEast", "WallW", "WallE", "BedroomWallN", "BedroomWallS", "DoorLintel"]:
         shell.get_node(key).material = _surface(WALL_TEX, 0.8)
     # The wall has a real opening now: keep the wood frame, drop its opaque panes (the clear glass is the shell's).

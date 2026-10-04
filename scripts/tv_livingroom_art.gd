@@ -62,7 +62,7 @@ static func install(room: Node3D) -> void:
  lead.name="Art_ControllerCable"
  var lead_mesh:=ImmediateMesh.new()
  lead_mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
- var path: Array[Vector3]=[Vector3(1.30,.64,-1.28),Vector3(1.30,.47,-1.33),Vector3(1.33,.08,-1.46),Vector3(1.40,.004,-1.64),Vector3(1.48,.004,-1.91),Vector3(1.49,.12,-1.98),Vector3(1.48,.44,-2.01),Vector3(1.428,.525,-2.049)]
+ var path: Array[Vector3]=[Vector3(1.30,.64,-1.46),Vector3(1.30,.47,-1.48),Vector3(1.33,.08,-1.52),Vector3(1.40,.004,-1.64),Vector3(1.48,.004,-1.91),Vector3(1.49,.12,-1.98),Vector3(1.48,.44,-2.01),Vector3(1.428,.525,-2.049)]
  for index in range(path.size()-1):
   var a:=path[index]*K
   var b:=path[index+1]*K

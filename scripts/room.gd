@@ -91,6 +91,15 @@ var ending_stage := -1          ## which point of the ending's camera path it ha
 var ending_done := false
 var _finale_c0 := 0.0
 var _spark: OmniLight3D
+var opening_done := false
+var tv_pulling := false
+var _fp_desk: Camera3D
+var _op_skip := false
+var _op_tweens: Array[Tween] = []
+var _op_cam: Camera3D
+var _op_dir := ""                ## --opening-test: where its screenshots go
+var _said := {}                  ## monologue lines that only play once
+var _night_light: OmniLight3D
 var _end_cam: Camera3D
 var _end_curve: Curve3D
 var _end_seg := 0
@@ -127,7 +136,6 @@ func _ready() -> void:
 	Game.register_player(player)
 	Game.set_checkpoint($Checkpoints/Opening)
 	$Areas/BookTip.body_entered.connect(func(b): if b == player and fall_armed: _fall())
-	$Areas/BooksTop.body_entered.connect(func(b): if b == player and not revealed: _reveal_desk())
 	$Areas/JackTop.body_entered.connect(func(b): if b == player: _jack())
 	$Stop0/FrameInteract.activated.connect(_stand_frame_up)
 	$Stop1/CarCharge.activated.connect(_run_machine)
@@ -139,7 +147,10 @@ func _ready() -> void:
 	car_light.position = Vector3(0, 0.1 * K, 0)
 	$Stop1/ElectricCar.add_child(car_light)
 	$Stop2/DoorHandleUse.activated.connect(_open_door)
-	$Stop3/TvEnter.activated.connect(_enter_tv)
+	$Stop3/TvEnter.done = true   # no E prompt: walking up to the screen is enough (see _process)
+	maze.visible = false         # until the lamp goes out it is just a desk
+	if maze.hole_fill:
+		maze.hole_fill.filled.connect(func(_b): _say_once("2-9"))
 	$Stop3/TvScreen.game.rescued.connect(_tv_finale)
 	$Stop3/TimeBoxOpen.activated.connect(_open_time_box)
 	$Areas/KitchenReveal.body_entered.connect(func(b): if b == player and not kitchen_revealed: _kitchen_reveal())
@@ -171,7 +182,9 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	if "--autotest" in OS.get_cmdline_user_args():
 		_autotest()
-	elif "--f9test" in OS.get_cmdline_user_args():
+	elif not "--f9test" in OS.get_cmdline_user_args():
+		_opening()
+	if "--f9test" in OS.get_cmdline_user_args():
 		await _wait(1.0)
 		var e := InputEventKey.new()
 		e.physical_keycode = KEY_F9
@@ -241,6 +254,8 @@ func _process(_d: float) -> void:
 
 ## Debug: F9 skips to the living room (by the bedroom door), for testing the TV stop.
 func _unhandled_input(event: InputEvent) -> void:
+	if _photo_cam and _photo_since > 0.6 and event is InputEventMouseMotion and event.relative.length() > 3.0:
+		_photo_release()  # turning the camera ends the photo's close shot
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F9:
 		_skip_to_living_room()
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F10:
@@ -302,6 +317,43 @@ func _physics_process(_d: float) -> void:
 		col.scale = Vector3(1.0 + sin(_fire_t * 5.0) * 0.06, minf(1.0, steam_left) * (0.9 + sin(_fire_t * 3.3) * 0.1), 1.0)
 	elif $Stop4/SteamColumn.visible:
 		$Stop4/SteamColumn.visible = false
+	# after the photo, a few steps on: the robot looks up and sees the desk
+	if frame_up and not revealed and _photo_cam == null and not player.locked 			and Vector2(player.global_position.x - _photo_pos.x, player.global_position.z - _photo_pos.z).length() > 0.06 * K:
+		_reveal_desk()
+	if _photo_cam:   # the photo's close shot holds until the robot moves
+		_photo_since += _d
+		if _photo_since > 0.6 and (Input.get_vector("move_left", "move_right", "move_fwd", "move_back").length() > 0.2 or Input.is_action_just_pressed("jump")):
+			_photo_release()
+	# the TV: walk up to the screen on the cabinet and it pulls you in (after a look back at him)
+	if not tv_pulling and not in_tv and not tv_done and not player.locked \
+			and player.global_position.distance_to($Stop3/TvEnter.global_position) < 0.14 * K:
+		_tv_approach()
+	# monologue, once each: the desk (first old light, first crack, the eraser), the TV stop
+	if in_desk:
+		if Game.is_respawning():
+			_say_once("2-7")
+		if maze.eraser and maze.eraser.grabbed:
+			_say_once("2-8")
+		if not _said.has("2-4"):
+			for l in maze.lights:
+				if l.lit and l != maze.lights[0]:
+					_said["2-4"] = true
+					Game.captions.say_all(["2-4", "2-5", "2-6"])
+					break
+	if door_open and not tv_done and player.is_on_floor():
+		for i in player.get_slide_collision_count():
+			var c := player.get_slide_collision(i).get_collider()
+			if c is Node and c.name in ["GameBoxes", "MagStack"]:
+				_say_once("3-3")
+	if tv_done and not _said.has("3-15") and player.global_position.distance_to($Stop3/TimeBoxOpen.global_position) < 0.4 * K:
+		_say_once("3-15")
+	# monologue: the first fall into the dark of the toy box, the first ride on the train
+	if fell and not launched and Game.is_respawning():
+		_say_once("1-2")
+	if fell and not launched and player.is_on_floor():
+		for i in player.get_slide_collision_count():
+			if player.get_slide_collision(i).get_collider() == $Stop1/Train:
+				_say_once("1-2b")
 	# a block pushed off the shoebox goes back where it started
 	for n in _block_home:
 		var blk: CharacterBody3D = get_node("Stop1/" + n)
@@ -332,17 +384,83 @@ func _look_at(target: Vector3, pitch_deg: float, time := 1.4) -> void:
 
 func _reveal_desk() -> void:
 	revealed = true
-	_look_at($DeskLampTarget.global_position, -6.0)
+	_look_at($DeskLampTarget.global_position, -6.0, 0.01)  # the robot's own camera ends up facing the desk
+	var p := player.global_position / K
+	var lamp: Vector3 = $DeskLampTarget.global_position / K
+	var d := Vector3(lamp.x - p.x, 0, lamp.z - p.z).normalized()
+	var desk := Vector3(-0.8, 0.92, 0.35)   # the boy at the desk, under the lamp
+	get_tree().create_timer(1.8).timeout.connect(func(): Game.captions.say("0-5"))
+	await _cinematic([
+		[p - d * 0.14 + Vector3(0, 0.08, 0), lamp, 1.0, 0.2],      # up behind the robot's shoulder
+		[p + d * 0.75 + Vector3(0, 0.28, 0), desk, 2.6, 1.8],      # drift across the dark towards the lamp
+	])
 
+## E at the photo: the camera leaves the normal view for a close shot over the robot's right shoulder and
+## stays there, the frame stands up, a warm glow, the memory. Moving (or turning the camera) brings the
+## normal view back.
 func _stand_frame_up() -> void:
 	frame_up = true
-	create_tween().tween_property($Stop0/PhotoFrame, "rotation_degrees:x", -102.0, 0.7) \
-		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_photo_pos = player.global_position
+	var p := player.global_position / K
+	var f: Vector3 = $Stop0/PhotoFrame.global_position / K
+	var d := Vector3(f.x - p.x, 0, f.z - p.z).normalized()
+	var right := d.cross(Vector3.UP)
+	player._face_yaw = atan2(d.x, d.z)   # turn to the photo
+	var pcam := _player_cam()
+	_photo_cam = Camera3D.new()
+	add_child(_photo_cam)
+	_photo_cam.fov = pcam.fov
+	_photo_cam.global_transform = pcam.global_transform
+	_photo_cam.make_current()
+	_photo_since = 0.0
+	var look := f + Vector3(0, 0.06, 0)
+	var to := Transform3D(Basis.IDENTITY, (p - d * 0.16 + right * 0.05 + Vector3(0, 0.1, 0)) * K).looking_at(look * K)
+	_photo_tw = create_tween()
+	_photo_tw.set_parallel()
+	_photo_tw.tween_property(_photo_cam, "global_transform", to, 1.1).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_photo_tw.tween_property(_photo_cam, "fov", 40.0, 1.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_photo_tw.chain().tween_property(_photo_cam, "global_transform", to.translated(-d * 0.03 * K), 7.0)  # a slow creep in
+	await _wait(0.5)
+	create_tween().tween_property($Stop0/PhotoFrame, "rotation_degrees:x", -102.0, 0.7) 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	var glow := OmniLight3D.new()   # warm amber: a memory
+	glow.light_color = Color(1, 0.72, 0.38)
+	glow.omni_range = 0.35 * K
+	add_child(glow)
+	glow.global_position = (f + Vector3(0, 0.1, 0.08)) * K
+	create_tween().tween_property(glow, "light_energy", 1.2, 1.2)
 	Game.restore_memory("family_photo")
+	_shot_if(_op_dir, "op_photo.png", 2.2)
+	await _wait(6.6)
+	Game.captions.say("0-7")
+	await _wait(4.0)
+	create_tween().tween_property(glow, "light_energy", 0.35, 2.0)
+
+var _photo_cam: Camera3D
+var _photo_tw: Tween
+var _photo_since := 0.0
+var _photo_pos := Vector3.ZERO   ## where the robot stood up the photo (the desk reveal comes a few steps on)
+
+## Back from the photo's close shot to the robot's own camera, quickly.
+func _photo_release() -> void:
+	if _photo_cam == null:
+		return
+	var cam := _photo_cam
+	_photo_cam = null
+	if _photo_tw and _photo_tw.is_valid():
+		_photo_tw.kill()
+	var pcam := _player_cam()
+	var from := cam.global_transform
+	var fov0 := cam.fov
+	await create_tween().tween_method(func(t: float):
+		cam.global_transform = from.interpolate_with(pcam.global_transform, t)
+		cam.fov = lerpf(fov0, pcam.fov, t), 0.0, 1.0, 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).finished
+	pcam.make_current()
+	cam.queue_free()
 
 func _fall() -> void:
 	fall_armed = false
 	player.locked = true
+	Game.captions.say("0-8", 1.4)
 	var book: Node3D = $Stop0/LooseBook
 	var wob := create_tween()  # the book creaks: two small dips, then it tips over the edge
 	for a in [-5.0, -1.5, -9.0]:
@@ -365,6 +483,193 @@ func _fall() -> void:
 	fell = true
 	Game.set_checkpoint($Checkpoints/ToyBox)
 	_look_at($MachineLook.global_position, -14.0)  # show the goal: the big robot, the drum, the seesaw
+	await Game.captions.say("1-1")
+	Game.captions.say("1-4")
+
+## A monologue line that only plays the first time.
+func _say_once(id: String) -> void:
+	if not _said.has(id):
+		_said[id] = true
+		Game.captions.say(id)
+
+# ------------------------------------------------------------------ the opening
+## 2:14 a.m.: the old man asleep, a night light on, the living room lit. Cut to the breaker box: a spark, the
+## lever drops, the lights go out. Back in the bedroom the night light dies; moonlight only. The camera
+## pushes in on the tin robot on the nightstand: its eyes flicker on, its cells fill. It looks at the bed -
+## at itself, asleep - then down at its own tin hands. It turns to the desk; the camera settles behind it.
+## Jump or E skips it. ~30 s.
+func _opening() -> void:
+	player.locked = true
+	player.powered_down = true
+	player.charge = 0.0
+	player.charge_changed.emit(0.0)
+	player.pose_override = [0.0, 6.0, 34.0, -14.0, -14.0, 4.0, 4.0]   # slumped, switched off
+	$PostFX.loss_cap = 0.0          # the house still has its power: no low-power look yet
+	_night_light = OmniLight3D.new()
+	_night_light.light_color = Color(1, 0.72, 0.42)
+	_night_light.omni_range = 1.6 * K
+	_night_light.omni_attenuation = 1.4
+	add_child(_night_light)
+	_night_light.global_position = Vector3(-3.05, 0.98, -2.5) * K
+	_night_light.light_energy = 1.3
+	for i in range(1, 7):           # the living room's lights, still on
+		get_node("HouseLight%d" % i).light_energy = 1.1
+	$Stop6/BreakerLever.rotation_degrees.z = 180.0
+	$Stop6/BreakerFault.visible = false
+	$Stop6/BreakerOk.visible = true
+	$BreakerFaultLight.visible = false
+	var pcam := _player_cam()
+	_op_cam = Camera3D.new()
+	add_child(_op_cam)
+	_op_cam.fov = 50.0
+	_op_cam.make_current()
+	var robot := Vector3(-3.22, 0.795, -2.28)
+	var face := Vector3(-3.93, 0.8, -2.34)   # the old man's face on the pillow
+	# 1. the bedroom at night, the old man asleep
+	_op_pose(Vector3(-2.2, 1.42, -0.7), Vector3(-3.5, 0.72, -2.25))
+	_op_move(Vector3(-2.3, 1.38, -0.85), Vector3(-3.5, 0.72, -2.25), 6.0)
+	Game.fade_in(1.2)
+	Game.captions.show_line(StoryText.OPENING[0][0], StoryText.OPENING[0][1])
+	await _op_wait(4.2, "op_1_bedroom.png")
+	# 2. the breaker box in the living room: a spark, the lever drops, the house goes dark
+	_op_pose(Vector3(0.5, 1.47, 1.62), Vector3(-0.36, 1.3, 2.2))
+	_op_cam.fov = 40.0
+	_op_move(Vector3(0.4, 1.45, 1.72), Vector3(-0.36, 1.3, 2.2), 2.6)
+	await _op_wait(0.7, "op_2_breaker_on.png")
+	var spark := OmniLight3D.new()
+	spark.light_color = Color(0.85, 0.95, 1.0)
+	spark.omni_range = 0.5 * K
+	add_child(spark)
+	spark.global_position = Vector3(-0.28, 1.36, 2.24) * K
+	_op_track(create_tween()).tween_property(spark, "light_energy", 0.0, 0.35).from(7.0)
+	_op_track(create_tween()).tween_property($Stop6/BreakerLever, "rotation_degrees:z", 0.0, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	await _op_wait(0.12)
+	_power_cut()
+	await _op_wait(1.5, "op_3_breaker_tripped.png")
+	# 3. back in the bedroom: the night light dies, moonlight only
+	_op_cam.fov = 50.0
+	_op_pose(Vector3(-2.3, 1.38, -0.85), Vector3(-3.5, 0.72, -2.25))
+	await _op_wait(0.5)
+	var fl := _op_track(create_tween())
+	for e in [0.2, 1.1, 0.05, 0.7, 0.0]:
+		fl.tween_property(_night_light, "light_energy", e, 0.07)
+	_op_track(create_tween()).tween_property($PostFX, "loss_cap", 1.0, 2.0)
+	await _op_wait(2.0, "op_4_dark.png")
+	# 4. push in on the tin robot, slumped on the nightstand
+	_op_move(Vector3(-3.0, 0.84, -2.21), robot, 4.5)
+	await _op_wait(4.6, "op_5_robot_off.png")
+	# 5. it wakes: the eyes flicker on, the cells fill, the head comes up
+	for t in [0.1, 0.25, 0.08, 0.45]:
+		player.powered_down = not player.powered_down
+		await _op_wait(t)
+	player.powered_down = false
+	_op_track(create_tween()).tween_method(_op_charge, 0.0, 1.0, 2.2)
+	_op_move(Vector3(-3.04, 0.82, -2.235), robot, 3.0)
+	await _op_wait(1.2)
+	player.pose_override = [0.0, 0.0, -6.0, 3.0, 3.0, 0.0, 0.0]
+	await _op_wait(1.2, "op_6_awake.png")
+	await _op_say("0-1")
+	# 6. it turns to the bed: the old man asleep. That's me.
+	player._face_yaw = atan2(face.x - robot.x, face.z - robot.z)
+	_op_move(Vector3(-3.05, 0.86, -2.2), face, 1.6)
+	await _op_wait(1.8)
+	await _op_say("0-2", "op_7_bed.png")
+	_op_move(Vector3(-3.45, 0.84, -2.3), face, 3.2)
+	await _op_wait(0.6)
+	await _op_say("0-3", "op_8_face.png")
+	# 7. ...then who's this? It looks down at its own tin hands
+	_op_pose(Vector3(-3.37, 0.9, -2.25), robot + Vector3(0, -0.02, 0))
+	player.pose_override = [0.0, 0.0, 30.0, 10.0, 10.0, 80.0, 80.0]
+	await _op_say("0-4", "op_9_hands.png")
+	# 8. it turns to the desk; the camera settles behind it, and it's yours
+	player.pose_override = []
+	player._face_yaw = PI / 2
+	await _op_wait(0.6)
+	_end_opening(pcam)
+
+## A line of the opening: on screen for as long as it takes to read, then a short beat.
+func _op_say(id: String, shot := "") -> void:
+	var text: String = StoryText.MONOLOGUE[id]
+	Game.captions.say(id)
+	await _op_wait(0.9, shot)
+	await _op_wait(preload("res://scripts/captions.gd").read_time(text) + 0.4)
+
+func _op_charge(c: float) -> void:
+	player.charge = c
+	player.charge_changed.emit(c)
+
+## Skip / end of the opening: every light and switch in its after-the-blackout state, control back.
+func _end_opening(pcam: Camera3D) -> void:
+	if opening_done:
+		return
+	opening_done = true
+	for t in _op_tweens:
+		if t.is_valid():
+			t.kill()
+	if _op_skip:
+		_power_cut()
+		$Stop6/BreakerLever.rotation_degrees.z = 0.0
+		_night_light.light_energy = 0.0
+		$PostFX.loss_cap = 1.0
+		player.powered_down = false
+		player.pose_override = []
+		player._face_yaw = PI / 2
+		Game.fade_in(0.4)
+	_op_charge(1.0)
+	var from := _op_cam.global_transform
+	await create_tween().tween_method(func(t: float): _op_cam.global_transform = from.interpolate_with(pcam.global_transform, t), 0.0, 1.0, 0.3 if _op_skip else 1.4) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).finished
+	pcam.make_current()
+	_op_cam.queue_free()
+	player.locked = false
+	Game.captions.show_controls()
+
+func _power_cut() -> void:
+	for i in range(1, 11):
+		get_node("HouseLight%d" % i).light_energy = 0.0
+	$Stop6/BreakerFault.visible = true
+	$Stop6/BreakerOk.visible = false
+	$BreakerFaultLight.visible = true
+
+func _op_track(t: Tween) -> Tween:
+	_op_tweens.append(t)
+	return t
+
+var _op_cam_tw: Tween
+
+func _op_pose(pos: Vector3, look: Vector3) -> void:
+	if _op_cam_tw and _op_cam_tw.is_valid():
+		_op_cam_tw.kill()
+	_op_cam.global_transform = Transform3D(Basis.IDENTITY, pos * K).looking_at(look * K)
+
+func _op_move(pos: Vector3, look: Vector3, time: float) -> void:
+	var to := Transform3D(Basis.IDENTITY, pos * K).looking_at(look * K)
+	if _op_cam_tw and _op_cam_tw.is_valid():
+		_op_cam_tw.kill()
+	_op_cam_tw = _op_track(create_tween())
+	_op_cam_tw.tween_property(_op_cam, "global_transform", to, time).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+## A beat of the opening; returns at once once it has been skipped (jump or E). Takes a test shot if asked.
+func _op_wait(t: float, shot := "") -> void:
+	var left := t
+	while left > 0.0 and not _op_skip:
+		await get_tree().process_frame
+		left -= get_process_delta_time()
+		if Input.is_action_just_pressed("jump") or Input.is_action_just_pressed("interact"):
+			_op_skip = true
+	if _op_skip:
+		if not opening_done:
+			_end_opening(_player_cam())
+		while not opening_done:
+			await get_tree().process_frame
+		return
+	if shot != "" and _op_dir != "":
+		await _shot(_op_dir, shot)
+
+func _shot_if(dir: String, n: String, after: float) -> void:
+	await _wait(after)
+	if dir != "":
+		await _shot(dir, n)
 
 # ------------------------------------------------------------------ stop 1
 ## Jack-in-the-box: the clown head bursts out (a little scare) and flings the robot onto the shoebox.
@@ -379,6 +684,7 @@ func _jack() -> void:
 	var pop := create_tween().set_parallel()
 	pop.tween_property(head, "position", h0 + Vector3(0, 0.22 * K, 0), 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	pop.tween_property(head, "scale", Vector3.ONE * 1.6, 0.12)
+	_say_once("1-3")
 	player.launch_squash()
 	await _arc(player.global_position, $ShelfTarget.global_position, 2.2, 0.9)
 	player.velocity = Vector3.ZERO
@@ -397,6 +703,7 @@ func _run_machine() -> void:
 	if machine_busy:
 		return
 	machine_busy = true
+	_say_once("1-5")
 	var car: Node3D = $Stop1/ElectricCar
 	var drum: Node3D = $Stop1/Drum
 	var saw: Node3D = $Stop1/Seesaw
@@ -419,6 +726,7 @@ func _run_machine() -> void:
 	create_tween().tween_property(saw, "rotation_degrees:z", -12.0, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	if on_end:
 		player.launch_squash()
+		Game.captions.say("1-6", 1.4)
 		await _arc(player.global_position, $DeskLanding.global_position, 5.0, 1.7)
 		player.velocity = Vector3.ZERO
 		player.locked = false
@@ -436,10 +744,32 @@ func _run_machine() -> void:
 # ------------------------------------------------------------------ stop 2
 ## Landing on the desk: show the goal (the door handle), the desk lamp dies, the room goes dark,
 ## the camera rises overhead. W walks south, towards the door.
+## Landing on the desk. Through the robot's own eyes: the boy doing his homework - me, at fifteen - the
+## desk, the door handle at the far end. Then the lamp dies, and in the dark the desk is a maze.
 func _enter_desk() -> void:
 	player.locked = true
-	_look_at($DoorLook.global_position, -12.0, 1.3)
-	await get_tree().create_timer(1.6).timeout
+	_look_at($DoorLook.global_position, -12.0, 0.01)   # the robot's camera, for after
+	player._face_yaw = PI   # facing the boy (south)
+	var eye := player.global_position + Vector3(0, 0.085 * K, 0)
+	var boy := Vector3(-1.36, 1.16, 0.5) * K          # his face, bent over the homework
+	var page := Vector3(-1.3, 0.78, 0.15) * K         # the homework on the desk
+	var door: Vector3 = $DoorLook.global_position
+	_fp_desk = Camera3D.new()
+	add_child(_fp_desk)
+	_fp_desk.fov = 62.0
+	_fp_desk.global_transform = Transform3D(Basis.IDENTITY, eye).looking_at(page)
+	_fp_desk.make_current()
+	player.visual.visible = false   # we're inside its head
+	# it looks up from the desk to his face
+	await _fp_turn(eye, boy, 1.6)
+	await _wait(0.3)
+	await Game.captions.say("2-1")
+	_fp_turn(eye + Vector3(0, 0.01 * K, 0.03 * K), boy, 2.4)   # a little lean in
+	await Game.captions.say("2-2")
+	# along the desk, to the door handle at the far end
+	await _fp_turn(eye, page.lerp(door, 0.5), 1.4)
+	await _fp_turn(eye, door, 1.2)
+	await _wait(1.0)
 	var g: OmniLight3D = $DeskLampGlow
 	for e in [0.3, 2.2, 0.15, 1.6, 0.05, 0.9, 0.0]:
 		g.light_energy = e
@@ -449,12 +779,27 @@ func _enter_desk() -> void:
 	var dark := create_tween().set_parallel()
 	dark.tween_property(env, "ambient_light_energy", 0.07, 1.2)
 	dark.tween_property($Moonlight, "light_energy", 0.04, 1.2)
+	maze.visible = true   # in the dark, the desk becomes the maze
+	await Game.captions.say("2-3")
 	for n in ["WallLampShade", "WallLampArm"]:  # it would sit between the overhead camera and the desk
 		get_node("Stop2/" + n).visible = false
 	player.set_top_down(true, -PI / 2)  # desk lies across the screen: D walks right, towards the door
-	await get_tree().create_timer(1.4).timeout
+	player.visual.visible = true
+	await get_tree().process_frame
+	var pcam := _player_cam()
+	var from := _fp_desk.global_transform
+	await create_tween().tween_method(func(t: float): _fp_desk.global_transform = from.interpolate_with(pcam.global_transform, t), 0.0, 1.0, 1.4) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).finished
+	pcam.make_current()
+	_fp_desk.queue_free()
+	_fp_desk = null
 	player.locked = false
 	in_desk = true
+
+## The desk's first-person look: turn the eye to `at` over `time`.
+func _fp_turn(eye: Vector3, at: Vector3, time: float) -> void:
+	var to := Transform3D(Basis.IDENTITY, eye).looking_at(at)
+	await create_tween().tween_property(_fp_desk, "global_transform", to, time).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).finished
 
 ## The lever handle: the robot steps onto it, its weight presses it down, the door swings open,
 ## the robot drops onto the living-room floor; the camera comes back down and finds the breaker box.
@@ -483,10 +828,15 @@ func _open_door() -> void:
 	light.tween_property($Moonlight, "light_energy", _env_saved[1], 1.5)
 	Game.set_checkpoint($Checkpoints/OpenPlan)
 	await get_tree().create_timer(0.3).timeout
-	player.locked = false
 	_look_at($BreakerLook.global_position, -4.0, 1.5)
-	await _wait(2.2)
+	await _wait(1.0)
+	await Game.captions.say("2-13")
 	_look_at($TvLook.global_position, -6.0, 1.5)  # ...then the blue light of the TV: go there first
+	await _wait(1.0)
+	await Game.captions.say("2-14")
+	player.locked = false
+	await _wait(0.6)
+	Game.captions.say_all(["3-1", "3-2"])
 
 # ------------------------------------------------------------------ stop 3
 func _player_cam() -> Camera3D:
@@ -494,6 +844,53 @@ func _player_cam() -> Camera3D:
 
 ## E at the screen: the camera pushes into the glass, the robot hops at it and shrinks into it,
 ## static + flash, and the pixel robot drops into the game.
+## On the cabinet in front of the screen: it turns round and looks back at him on the sofa, twenty-two,
+## controller in his hands. Then the screen crackles and pulls it in.
+func _tv_approach() -> void:
+	tv_pulling = true
+	player.locked = true
+	var tv: TvScreen = $Stop3/TvScreen
+	var p := player.global_position / K
+	var him := Vector3(1.3, 1.0, -1.15)   # his face, lit by the screen
+	player._face_yaw = atan2(him.x - p.x, him.z - p.z)
+	await _cinematic_hold([
+		# from beside the screen, over the robot's shoulder, to him
+		[p + Vector3(-0.1, 0.12, -0.06), him, 1.3, 0.4],
+		[p + Vector3(-0.06, 0.1, 0.05), him, 2.6, 0.0],
+	], ["3-4"])
+	player._face_yaw = atan2(tv.global_position.x / K - p.x, tv.global_position.z / K - p.z)
+	tv.zap(0.4)
+	Game.captions.say("3-5")
+	await _wait(0.7)
+	_enter_tv()
+
+## Like _cinematic, but holds on the last pose until the given lines have been said; leaves the camera
+## on the last pose (the caller takes it from there).
+func _cinematic_hold(poses: Array, lines: Array) -> void:
+	var pcam := _player_cam()
+	var cam := Camera3D.new()
+	add_child(cam)
+	cam.fov = pcam.fov
+	cam.global_transform = pcam.global_transform
+	cam.make_current()
+	for p in poses:
+		var to := Transform3D(Basis.IDENTITY, p[0] * K).looking_at(p[1] * K)
+		var tw := create_tween()
+		tw.tween_property(cam, "global_transform", to, p[2]).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		if p == poses[poses.size() - 1]:
+			await _wait(0.4)
+			await Game.captions.say_all(lines)
+			if tw.is_valid() and tw.is_running():
+				await tw.finished
+		else:
+			await tw.finished
+			await _wait(p[3])
+	var from := cam.global_transform
+	await create_tween().tween_method(func(t: float): cam.global_transform = from.interpolate_with(pcam.global_transform, t), 0.0, 1.0, 0.8) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).finished
+	pcam.make_current()
+	cam.queue_free()
+
 func _enter_tv() -> void:
 	var tv: TvScreen = $Stop3/TvScreen
 	player.locked = true
@@ -523,6 +920,7 @@ func _enter_tv() -> void:
 func _tv_finale() -> void:
 	var tv: TvScreen = $Stop3/TvScreen
 	tv_finale = true
+	Game.captions.say("3-13")
 	var fade := create_tween().set_parallel()
 	fade.tween_method(func(v): tv.mat.set_shader_parameter("desat", v), 0.0, 1.0, 2.2)
 	fade.tween_method(func(v): tv.mat.set_shader_parameter("glow", v), 1.5, 0.9, 2.2)
@@ -534,6 +932,7 @@ func _tv_finale() -> void:
 	create_tween().tween_method(func(v): tv.mat.set_shader_parameter("power", v), 1.0, 0.0, 0.5) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	create_tween().tween_property($TVGlow, "light_energy", 0.0, 0.5)
+	Game.captions.say("3-14")
 
 ## The childhood time box beside the cabinet: the lid lifts, a warm light; inside, his drawing.
 func _open_time_box() -> void:
@@ -1271,7 +1670,10 @@ func _tv_pilot(g: TvGame, x_goal: float, timeout: float) -> void:
 func _autotest_tv(dir: String) -> Dictionary:
 	# ---- stop 3: the TV, part 1 (climb, into the screen, out again)
 	var s3 := {}
-	await _wait(3.8)
+	await _wait(1.0)
+	while player.locked:
+		await get_tree().process_frame
+	await _wait(0.3)
 	var to_tv: Vector3 = ($TvLook.global_position - _player_cam().global_position).normalized()
 	s3["reveal_looks_at_tv"] = -_player_cam().global_basis.z.dot(to_tv) > 0.9
 	await _shot(dir, "room_s3_reveal_tv.png")
@@ -1281,11 +1683,13 @@ func _autotest_tv(dir: String) -> Dictionary:
 	s3["sub_to_speaker(3.51)"] = await _hop(Vector3(0.38, 0, -2.20), 2.66, 0.0)
 	s3["speaker_to_cabinet(4.5)"] = await _hop(Vector3(0.40, 0, -2.45), 3.56, -PI / 2)
 	s3["walk_respawns"] = await _walk_path([Vector2(0.6, -2.09), Vector2(1.0, -2.09)])
-	s3["at_screen"] = player.global_position.distance_to(Vector3(1.0 * K, 0.5 * K, -2.09 * K)) < 0.5
+	s3["at_screen"] = tv_pulling
 	await _shot(dir, "room_s3_cabinet.png")
-	_act("interact", true)
-	await _wait(0.1)
-	_act("interact", false)
+	s3["pulled_in_passively"] = tv_pulling
+	await _wait(2.4)
+	await _shot(dir, "room_s3_look_back.png")
+	while _tv_cam == null:
+		await get_tree().process_frame
 	await _wait(1.2)
 	await _shot(dir, "room_s3_push_in.png")
 	await _wait(1.6)
@@ -1777,6 +2181,34 @@ func _autotest() -> void:
 		print("ROOMTEST ", JSON.stringify(r))
 		get_tree().quit()
 		return
+	if "--opening-test" in OS.get_cmdline_user_args():  # the opening cutscene, the desk reveal, the photo
+		_op_dir = dir
+		var t0 := Time.get_ticks_msec()
+		await _opening()
+		while not opening_done or player.locked:
+			await get_tree().process_frame
+		r["opening_seconds"] = (Time.get_ticks_msec() - t0) / 1000.0
+		r["charge_full"] = player.charge > 0.98
+		r["lights_out"] = $HouseLight1.light_energy == 0.0 and $Stop6/BreakerFault.visible
+		r["control_back"] = not player.locked
+		await _wait(1.0)
+		await _shot(dir, "op_10_control.png")
+		player.teleport($Stop0/FrameInteract.global_position + Vector3(0.05, 0, 0.1) * K)
+		await _wait(0.5)
+		await _stand_frame_up()
+		r["photo_cam_holds"] = _photo_cam != null and _photo_cam.current
+		_act("move_fwd", true)
+		await _wait(0.9)
+		_act("move_fwd", false)
+		r["photo_cam_released"] = _photo_cam == null and _player_cam().current
+		await _wait(0.5)
+		r["desk_reveal_after_photo"] = revealed
+		await _wait(6.0)
+		r["frame_up"] = frame_up
+		r["memory"] = Game.memories.has("family_photo")
+		print("ROOMTEST ", JSON.stringify(r))
+		get_tree().quit()
+		return
 	if "--from=views" in OS.get_cmdline_user_args():  # debug: the outside, as seen from the windows and the ending
 		await _wait(1.5)
 		await _views(dir)
@@ -1819,7 +2251,6 @@ func _autotest() -> void:
 	s0["table_to_pill(7.2)"] = await _hop(Vector3(-3.07, 0, -2.445), top + 0.05, 0.0, 0.3, 0.0)
 	s0["pill_to_books(7.74)"] = await _hop(Vector3(-3.07, 0, -2.55), top + 0.8, PI / 2)
 	await _wait(1.6)
-	s0["reveal"] = revealed
 	player.teleport($Stop0/FrameInteract.global_position + Vector3(0, .04, .45))
 	await _wait(0.4)
 	_act("interact", true)
@@ -1827,6 +2258,11 @@ func _autotest() -> void:
 	_act("interact", false)
 	await _wait(1.0)
 	s0["frame_up"] = frame_up
+	_act("move_right", true)   # a few steps away from the photo: the desk reveal
+	await _wait(1.2)
+	_act("move_right", false)
+	await _wait(6.5)
+	s0["reveal"] = revealed
 	player.teleport($Stop0/LooseBook.global_position + Vector3(-.14 * K, .05, 0))
 	player.cam_pivot.rotation.y = -PI / 2
 	await _wait(0.4)
@@ -1907,7 +2343,14 @@ func _autotest() -> void:
 	r["stop1"] = s1
 	# ---- stop 2: the random desk maze
 	var s2 := {"seed": maze.used_seed, "route_cells": maze.path.size(), "holes": maze.holes.size(), "lights": maze.lights.size()}
-	await _wait(3.6)
+	await _wait(3.0)
+	s2["desk_first_person"] = _fp_desk != null and _fp_desk.current and not maze.visible
+	await _shot(dir, "room_s2_pov_boy.png")
+	var t0 := Time.get_ticks_msec()
+	while not in_desk and Time.get_ticks_msec() - t0 < 30000:
+		await get_tree().process_frame
+	s2["desk_intro_seconds"] = 3.0 + (Time.get_ticks_msec() - t0) / 1000.0
+	await _wait(0.3)
 	s2["top_down"] = player.top_down
 	s2["room_dark"] = $WorldEnvironment.environment.ambient_light_energy < 0.12
 	await _shot(dir, "room_s2_dark.png")

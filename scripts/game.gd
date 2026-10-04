@@ -64,9 +64,7 @@ func change_scene(path: String) -> void:
 
 func start_game() -> void:
 	memories.clear()
-	await change_scene(GAME_SCENE)
-	if not "--autotest" in OS.get_cmdline_user_args():
-		captions.play_opening()
+	await change_scene(GAME_SCENE)   # (the opening cutscene and its lines are played by room.gd)
 
 func to_title() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

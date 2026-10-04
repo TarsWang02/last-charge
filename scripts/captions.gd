@@ -9,6 +9,8 @@ var _memory_title: Label
 var _memory_body: Label
 var _center: Label
 var _controls: Label
+var _sub: Label             ## the old man's inner voice: bottom, white italic
+var _sub_token := 0
 var _queue: Array = []
 var _busy := false
 
@@ -51,6 +53,20 @@ func _ready() -> void:
 	_controls.offset_right = 640
 	_controls.modulate.a = 0.0
 	add_child(_controls)
+
+	_sub = _label(26, Color(1, 1, 1))
+	var italic := FontVariation.new()
+	italic.base_font = ThemeDB.fallback_font
+	italic.variation_transform = Transform2D(Vector2(1, 0), Vector2(0.2, 1), Vector2.ZERO)
+	_sub.add_theme_font_override("font", italic)
+	_sub.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	_sub.anchor_top = 0.74
+	_sub.anchor_bottom = 0.84
+	_sub.offset_top = 0
+	_sub.offset_bottom = 0
+	_sub.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_sub.modulate.a = 0.0
+	add_child(_sub)
 
 	Game.memory_restored.connect(show_memory)
 
@@ -100,6 +116,43 @@ func show_line(text: String, seconds: float) -> void:
 	await _fade(_center, 1.0, 0.9)
 	await _hold(seconds)
 	await _fade(_center, 0.0, 0.9)
+
+
+## A line of the old man's inner monologue (StoryText.MONOLOGUE id or plain text). A newer line replaces
+## an older one. Await it to know when it has faded out.
+func say(id_or_text: String, seconds := -1.0) -> void:
+	var text: String = StoryText.MONOLOGUE.get(id_or_text, id_or_text)
+	if seconds < 0.0:
+		seconds = read_time(text)
+	_sub_token += 1
+	var token := _sub_token
+	_sub.text = text
+	await _fade(_sub, 1.0, 0.35)
+	await _hold(seconds)
+	if token == _sub_token:
+		await _fade(_sub, 0.0, 0.6)
+
+
+## How long a line stays up: a calm reading pace (~2.6 words a second) plus a beat, a little longer for
+## every pause written into it ("...", a dash, a full stop mid-line). Cutscenes await say() to follow it.
+static func read_time(text: String) -> float:
+	var words := text.split(" ", false).size()
+	var pauses := text.count("...") + text.count("—") + text.count(". ") + text.count("? ") + text.count("! ")
+	return maxf(1.8, 0.9 + words / 2.6 + pauses * 0.35)
+
+
+## Several lines one after another (each waits for the last to fade).
+func say_all(ids: Array) -> void:
+	for id in ids:
+		await say(id)
+
+
+## The controls card, once, when the player first gets control.
+func show_controls() -> void:
+	_controls.text = StoryText.CONTROLS
+	await _fade(_controls, 1.0, 0.8)
+	await _hold(8.0)
+	await _fade(_controls, 0.0, 1.5)
 
 
 ## Opening of a new game: the two lines, then the controls card for a while.

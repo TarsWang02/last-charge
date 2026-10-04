@@ -93,7 +93,9 @@ static func install(room: Node3D) -> void:
 		_attach(proxy, entry[1], Vector3(0, entry[2], 0))
 	STRUCTURE_ART.install(room)
 	load("res://scripts/tv_livingroom_art.gd").install(room)
+	load("res://scripts/kitchen_art.gd").install(room)
 	load("res://scripts/bedroom_layout_art.gd").install(room)
+	load("res://scripts/livingroom_finale_art.gd").install(room)
 	room.set_meta("room_art_installed", true)
 	if not "--bedroom-look-before" in OS.get_cmdline_user_args():
 		var look := Node.new()
@@ -101,3 +103,8 @@ static func install(room: Node3D) -> void:
 		look.set_script(load("res://scripts/bedroom_look.gd"))
 		room.add_child(look)
 
+
+	var whole_look := Node.new()
+	whole_look.name = "WholeGameLook"
+	whole_look.set_script(load("res://scripts/whole_game_look.gd"))
+	room.add_child(whole_look)
