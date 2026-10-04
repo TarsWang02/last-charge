@@ -1,7 +1,7 @@
 extends CanvasLayer
 ## Quiet story captions (child of the Game autoload, reach it as Game.captions):
 ##   - memory cards: title + one or two lines, bottom centre, when Game.memory_restored fires
-##   - centred lines over black/the scene for the opening and the ending (play_lines)
+##   - centred lines over the scene for the opening (play_lines; reusable for any later lines)
 ## Non-blocking: never pauses the game or takes input. Text lives in scripts/story_text.gd.
 
 var _memory_box: VBoxContainer

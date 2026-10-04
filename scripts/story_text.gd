@@ -30,26 +30,6 @@ const MEMORIES := {
 		"title": "Lucy's mug",
 		"body": "She painted it when she was five.\nIt still rings the same.",
 	},
-	# stop 5 (windowsill / armchair / radio) - not wired yet; use Game.restore_memory("radio")
-	"radio": {
-		"title": "The old radio",
-		"body": "Sunday mornings, their song.\nHe still turns it on. He just doesn't turn it up.",
-	},
 }
 
-## Stop 6 - the breaker box. Lines while holding E (shown as the charge drains, by progress 0..1).
-const BREAKER_HOLD := [
-	[0.0, "Hold on."],
-	[0.5, "Just a little more."],
-	[0.9, "There."],
-]
-
-## After the lights come back on. [line, seconds on screen]
-const ENDING := [
-	["The lights came back on at 3:02 a.m.", 3.5],
-	["The fridge hummed. The clock on the oven blinked 12:00.", 4.0],
-	["In the morning, he found you by the breaker box.\nOut of charge.", 4.5],
-	["He put you back on the nightstand, next to the photo.", 4.5],
-	["LAST CHARGE", 3.0],
-	["Thank you for playing.", 3.0],
-]
+## No ending text on purpose: the finale and the one-take ending (room.gd) are wordless.
