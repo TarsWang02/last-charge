@@ -47,22 +47,21 @@ func _ready() -> void:
 	add_child(_center)
 
 	# the controls card: a small dark pill at the bottom (UiKit look)
-	_controls_plate = _plate(UiKit.paper(12, 0.92), -28)
-	_controls = _label(18, UiKit.INK)
+	_controls_plate = _plate(UiKit.card(0.6, 12), -28)
+	_controls = _label(17, Color(UiKit.CREAM, 0.85))
 	_controls.autowrap_mode = TextServer.AUTOWRAP_OFF
 	_controls.add_theme_constant_override("outline_size", 0)
 	_controls_plate.add_child(_controls)
 
 	# the old man's inner voice: Nunito on a soft rounded plate, bottom centre (It Takes Two-style subtitles)
-	_sub_plate = _plate(UiKit.paper(0, 0.94), -110)
+	_sub_plate = _plate(UiKit.card(0.55, 0), -110)
 	var sb: StyleBoxFlat = _sub_plate.get_theme_stylebox("panel")
 	sb.content_margin_left = 30
 	sb.content_margin_right = 30
 	sb.content_margin_top = 12
 	sb.content_margin_bottom = 14
-	_sub_plate.rotation_degrees = -0.7   # a slip of paper, not quite straight
-	_sub_plate.resized.connect(func(): _sub_plate.pivot_offset = _sub_plate.size / 2.0)
-	_sub = _label(28, UiKit.INK)
+	sb.shadow_size = 12
+	_sub = _label(28, UiKit.CREAM)
 	_sub.autowrap_mode = TextServer.AUTOWRAP_OFF
 	_sub.add_theme_font_override("font", UiKit.body(700))
 	_sub.add_theme_constant_override("outline_size", 0)

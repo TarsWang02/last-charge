@@ -143,10 +143,7 @@ func _build_pause_menu() -> Control:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(center)
 	var cardp := PanelContainer.new()
-	cardp.add_theme_stylebox_override("panel", UiKit.paper(40))
-	cardp.theme = UiKit.paper_theme()
-	cardp.rotation_degrees = -0.8
-	cardp.resized.connect(func(): cardp.pivot_offset = cardp.size / 2.0)
+	cardp.add_theme_stylebox_override("panel", UiKit.card(0.88, 44))
 	center.add_child(cardp)
 	var cols := HBoxContainer.new()
 	cols.add_theme_constant_override("separation", 48)
@@ -155,14 +152,16 @@ func _build_pause_menu() -> Control:
 	box.custom_minimum_size = Vector2(340, 0)
 	box.add_theme_constant_override("separation", 16)
 	cols.add_child(box)
-	var title := UiKit.title_label("Paused", 60, UiKit.MUSTARD)
+	var title := UiKit.title_label("Paused", 52)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	box.add_child(title)
 	for b in [["Resume", func(): set_paused(false)], ["Restart checkpoint", func(): set_paused(false); respawn(false)],
 			["Quit to title", func(): to_title()]]:
 		var btn := Button.new()
 		btn.text = b[0]
+		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.pressed.connect(b[1])
+		btn.mouse_entered.connect(btn.grab_focus)
 		box.add_child(btn)
 	cols.add_child(make_settings_panel())
 	UiKit.juice_all(root)
@@ -175,9 +174,9 @@ func make_settings_panel() -> Control:
 	v.add_theme_constant_override("separation", 14)
 	var head := Label.new()
 	head.text = "Settings"
-	head.add_theme_font_override("font", UiKit.display(600))
-	head.add_theme_font_size_override("font_size", 30)
-	head.add_theme_color_override("font_color", UiKit.BRICK)
+	head.add_theme_font_override("font", UiKit.display(500, 2))
+	head.add_theme_font_size_override("font_size", 26)
+	head.add_theme_color_override("font_color", UiKit.AMBER)
 	v.add_child(head)
 	for s in [["Master volume", "master", 0.0, 1.0, 0.05], ["Music", "music", 0.0, 1.0, 0.05],
 			["Sound effects", "sfx", 0.0, 1.0, 0.05], ["Render scale", "render_scale", 0.5, 1.0, 0.05],
