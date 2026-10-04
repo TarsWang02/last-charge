@@ -1129,6 +1129,7 @@ func _open_door() -> void:
 	var lever_end: Vector3 = handle.global_position + Vector3(0, 0.15, -0.12 * K)
 	await _arc(player.global_position, lever_end, 0.6, 0.45)
 	audio.sfx("音效/门_扭把手加开门_完整.ogg", -4.0)
+	create_tween().tween_property($Stop2/DoorGapGlow, "transparency", 1.0, 0.6)   # the light under the door: gone once it's open
 	audio.ambience("环境声/阶段混音2_青年_窗外_循环.ogg")
 	create_tween().tween_property(handle, "rotation_degrees:x", -35.0, 0.2).set_trans(Tween.TRANS_BACK)
 	player.launch_squash()
@@ -2706,6 +2707,22 @@ func _autotest() -> void:
 			await _wait(0.4)
 			await _shot(dir, "photo_%d.png" % i)
 		print("ROOMTEST ", JSON.stringify({"frame": str($Stop0/PhotoFrame.global_transform)}))
+		get_tree().quit()
+		return
+	if "--door-view" in OS.get_cmdline_user_args():  # debug: where the robot lands from the bedroom door
+		$Stop2/DoorPivot.rotation_degrees.y = -75.0
+		var cam := Camera3D.new()
+		add_child(cam)
+		cam.fov = 58.0
+		var drop: Vector3 = $OpenPlanDrop.global_position / K
+		var views := [[Vector3(drop.x + 0.55, 0.32, drop.z - 0.25), Vector3(-0.42, 0.62, 1.32)],
+			[Vector3(drop.x + 0.5, 0.26, drop.z - 0.2), drop + Vector3(0, 0.05, 0)],
+			[Vector3(drop.x + 0.2, 0.08, drop.z + 0.3), Vector3(-0.42, 0.02, 1.2)]]
+		for i in views.size():
+			cam.global_transform = Transform3D(Basis.IDENTITY, views[i][0] * K).looking_at(views[i][1] * K)
+			cam.make_current()
+			await _wait(0.5)
+			await _shot(dir, "door_%d.png" % i)
 		get_tree().quit()
 		return
 	if "--note-test" in OS.get_cmdline_user_args():  # debug: Mum's note, opened

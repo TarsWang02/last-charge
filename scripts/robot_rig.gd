@@ -148,12 +148,34 @@ func _make_cells() -> void:
 	cyl.top_radius = cell_radius
 	cyl.bottom_radius = cell_radius
 	cyl.height = cell_height
+	# a tidy row: evenly spaced on the straight line from the first measured cell to the last, all at one
+	# height, in a dark recessed tray that sits flush on the (slanted) back panel
+	var a: Vector3 = cell_surfaces[0]
+	var z: Vector3 = cell_surfaces[CELL_COUNT - 1]
+	var y := 0.0
+	for p in cell_surfaces:
+		y += p.y / CELL_COUNT
+	a.y = y
+	z.y = y
+	var along := (z - a).normalized()
+	var yaw := atan2(-along.z, along.x)   # the panel's slant
+	var tray := MeshInstance3D.new()
+	var tb := BoxMesh.new()
+	tb.size = Vector3(a.distance_to(z) + cell_radius * 2.0 + 0.022, cell_height + 0.022, 0.012)
+	tray.mesh = tb
+	var tm := StandardMaterial3D.new()
+	tm.albedo_color = Color(0.05, 0.06, 0.07)
+	tm.roughness = 0.5
+	tm.metallic = 0.4
+	tray.material_override = tm
+	tray.position = (a + z) / 2.0 + Vector3(0, 0, cell_radius * 0.6)
+	tray.rotation.y = yaw
+	body.add_child(tray)
 	for i in CELL_COUNT:
 		var c := MeshInstance3D.new()
 		c.mesh = cyl
 		c.material_override = _emissive(CYAN, 1.15)
-		# axis sits one radius inside the measured surface, so the cylinder wraps the modelled cell
-		var p := cell_surfaces[i]
+		var p := a.lerp(z, float(i) / (CELL_COUNT - 1))
 		c.position = Vector3(p.x, p.y, p.z + cell_radius - 0.003)
 		body.add_child(c)
 		cells.append(c)

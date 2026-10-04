@@ -66,7 +66,7 @@ func _light(p: Vector3, c: Color, e: float, r: float) -> void:
 	l.light_energy = e
 	l.omni_range = r * K
 	l.omni_attenuation = 1.4
-	l.light_specular = 0.6
+	l.light_specular = 0.15   # (the water mirrored these as hot spots)
 	room.add_child(l)
 	l.global_position = p * K
 

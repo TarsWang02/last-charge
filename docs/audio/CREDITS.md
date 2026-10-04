@@ -33,3 +33,5 @@ All music and almost all sound effects were generated procedurally with code wri
 - Tools: FluidSynth, ffmpeg, pretty_midi, pyloudnorm.
 
 AI tools used for audio: Claude (code for music, SFX and voice processing), Piper (text-to-speech).
+
+- `音乐/第2站_书桌迷宫_恐怖_循环.ogg`: "Scary Ambient Horror Music (long)" by audio_dread, Freesound #528880 (https://freesound.org/s/528880/). Converted to OGG with a 2 s fade at each end. **Check the licence on Freesound before release** (CC0 or CC BY needs the credit above).

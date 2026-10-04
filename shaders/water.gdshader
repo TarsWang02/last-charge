@@ -6,7 +6,7 @@ render_mode blend_mix, depth_draw_opaque, cull_back, specular_schlick_ggx;
 uniform vec3 deep : source_color = vec3(0.04, 0.09, 0.16);
 uniform float ripple_scale = 1.2;
 uniform float ripple_speed = 0.6;
-uniform float ripple_strength = 0.35;
+uniform float ripple_strength = 0.2;
 
 float wave(vec2 p, vec2 d, float f, float s) { return sin(dot(p, d) * f + TIME * s); }
 
@@ -21,8 +21,8 @@ void fragment() {
 	NORMAL = normalize((VIEW_MATRIX * vec4(n, 0.0)).xyz);
 	float fres = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 3.0);
 	ALBEDO = deep;
-	ROUGHNESS = 0.04;
+	ROUGHNESS = 0.22;
 	METALLIC = 0.0;
-	SPECULAR = 0.9;
-	ALPHA = clamp(0.55 + fres * 0.4, 0.0, 0.95);
+	SPECULAR = 0.35;
+	ALPHA = clamp(0.5 + fres * 0.25, 0.0, 0.85);
 }
