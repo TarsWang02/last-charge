@@ -63,12 +63,34 @@
 
 实现：现在纸条是靠近自动触发（`room.gd` 的 `note_found`），要改成 Interactable + 一个纸条展开界面。纸条上的 "Back soon"、"Finish your maths" 与现有贴图 `prop_desk_folded_note_mom_note_colour.png` 一致，美术不用改。
 
-> 第 3–6 站（电视、厨房、晾衣绳、配电箱）待写。
+## 第 3 站 · 电视（青年）
+
+| # | 触发 | English | 中文 |
+|---|---|---|---|
+| 3-1 | 落到客厅地板上，看到电视前坐着的青年 | There I am again. | 又是我。 |
+| 3-2 | 紧接 3-1 | Twenty-two. Hair down to my collar. Thought I was something. | 二十二岁，头发留到领口。那时候还觉得自己挺了不起。 |
+| 3-3 | ★ 第一次跳上游戏盒 / 杂志堆 | Every game I ever owned. Never chucked one out. | 我买过的每一盘游戏，一盘都没扔。 |
+| 3-4 | ★ 爬上电视柜，站到屏幕前 | Haven't played this since... well. Since. | 好久没玩这个了，自从……唉，自从那以后。 |
+| 3-5 | `_enter_tv`（★ 改成被动：靠近屏幕就被吸进去，不再按 E） | Oi— what's— it's pulling me in—! | 哎——怎么——它在把我往里吸——！ |
+| 3-6 | ★ 进入游戏，第 1 屏开头 | Well, I'll be. I'm in the game. | 嘿，我进游戏里来了。 |
+| 3-7 | ★ 第 1 屏，低矮隧道里的史莱姆（跳不过，要用爪子：J / 左键） | Can't hop this one. Give it a whack. | 这个跳不过去，给它一下子。 |
+| 3-8 | ★ 第一次被打中，或掉坑"投币"续关 | Twenty cents a go, back then. Now it's me paying. | 那时候一局两毛钱。现在得拿我自己来付。 |
+| 3-9 | ★ 第一次捡到像素电池 | Ha. They've got batteries in here too. | 哈，这里头也有电池。 |
+| 3-10 | ★ 第 3 屏，持盾骑士出现（等他出招、躲开、再反击） | Let him have a go first. Then get him. | 让他先出手，再收拾他。 |
+| 3-11 | ★ 恶龙出现 | Never could beat this one. Not once. | 这一关我从来没打过去，一次都没有。 |
+| 3-12 | ★ 恶龙进入第二阶段（咆哮） | Oh, now he's cranky. | 哟，这下它火了。 |
+| 3-13 | `_tv_finale`（救到公主，画面开始褪色） | Got there in the end. Only took me sixty years. | 总算打通了。也就花了六十年。 |
+| 3-14 | `_tv_finale` 里电视自己关掉（呼应 2-14） | ...And there goes the telly. | ……电视也没电了。 |
+| 3-15 | `_exit_tv` 后，看到旁边的时光盒 | My old time box. | 我的时光盒。 |
+| 3-16 | `_open_time_box`（打开时光盒） | My drawing. Me and the robot, beating the dragon. | 我的画。我和机器人，一起打败恶龙。 |
+| 3-17 | 紧接 3-16 | Thought I'd be a hero. Ended up a farmer. Not a bad trade. | 那时候以为自己会当英雄，后来当了农民。也不亏。 |
+
+> 第 4–6 站（厨房、晾衣绳、配电箱）待写。
 
 ---
 
 ## 需要队里定的
 
 1. **人名和年份**：全家福是 **1953 年圣诞**（按八十来岁的老人算）。全家福贴图是 70 年代风格的服装，对不上的话可以改贴图，或者去掉年份（0-6 改成 "Christmas morning. Mum, Dad... and me..."）。
-2. **★ 标的句子需要新镜头或事件**：开场看老人（0-2 到 0-4，整个设定的关键）、站上小火车（1-2b）、点灯 / 掉缝 / 推橡皮 / 填洞（2-4、2-7 到 2-9）、妈妈纸条的交互界面（2-10）。
+2. **★ 标的句子需要新镜头或事件**：开场看老人（0-2 到 0-4，整个设定的关键）、站上小火车（1-2b）、点灯 / 掉缝 / 推橡皮 / 填洞（2-4、2-7 到 2-9）、妈妈纸条的交互界面（2-10）、被动吸进电视（3-5，现在是按 E）、像素游戏里的各个首次事件（3-6 到 3-12）。
 3. **独白怎么显示**：做成字幕（底部、斜体、白色，表示内心声音），还是旁边配一个小头像？等文本定了再说。
