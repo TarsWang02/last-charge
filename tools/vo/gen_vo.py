@@ -71,6 +71,25 @@ LINES = {
     "3-15": ("My old time box.", "-28%", "-14Hz"),
     "3-16": ("My drawing. Me and the robot... beating the dragon.", "-26%", "-12Hz"),
     "3-17": ("Thought I'd be a hero. Ended up a farmer. ...Not a bad trade.", "-26%", "-14Hz"),
+    # ---- stop 4: the kitchen (father)
+    "4-1": ("Who left the stove on?", "-18%", "-8Hz"),
+    "4-2": ("...Ah. Me again. Forty-odd... in Marg's apron.", "-24%", "-12Hz"),
+    "4-3": ("Pancakes every Sunday. Burnt, every Sunday. ...She never said a word.", "-28%", "-16Hz"),  # fond
+    "4-4": ("And the tap's running! Marg'd have my hide.", "-18%", "-8Hz"),
+    "4-5": ("The windowsill. That'll take me round to the breaker.", "-22%", "-12Hz"),
+    "4-6": ("Ooh-- water and me don't mix any more.", "-20%", "-10Hz"),
+    "4-7": ("Sunday's shopping. Never did get put away.", "-22%", "-14Hz"),
+    "4-8": ("Ha! Never thought I'd thank a microwave.", "-16%", "-6Hz"),
+    "4-9": ("Hope I don't come out burnt...", "-20%", "-8Hz"),
+    "4-10": ("Like toast!", "-10%", "-2Hz"),
+    "4-11": ("Got a magnet in me, have I? ...Handy.", "-20%", "-8Hz"),
+    "4-12": ("That stove's always had a temper.", "-22%", "-12Hz"),
+    "4-13": ("Kettle's on. Best idea I've had all night.", "-20%", "-10Hz"),
+    "4-14": ("Up we go--!", "-8%", "+0Hz"),
+    "4-15": ("...That'll be the dishes.", "-26%", "-14Hz"),       # wince
+    "4-16": ("Well. That's one way to do the washing up.", "-22%", "-12Hz"),
+    "4-17": ("Lucy's mug. She painted it when she was five.", "-28%", "-14Hz"),
+    "4-18": ("Still rings the same. ...She doesn't ring as often.", "-32%", "-18Hz"),  # heavy
 }
 
 ## How robotic: "mild" = an old man in a tin can; "silly" = cartoon robot buzz on top.
