@@ -10,7 +10,7 @@ extends CharacterBody3D
 
 var grabbed := false
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
-var _prompt: Label3D
+var _prompt: Node3D
 
 func _ready() -> void:
 	add_to_group("pushable")
@@ -42,15 +42,7 @@ func _ready() -> void:
 				l.position = Vector3(0, size.y / 2.0, 0) + dir * Vector3(0, 0, size.z / 2.0 + 0.01)
 				l.rotation.y = deg_to_rad(rot)
 				add_child(l)
-	_prompt = Label3D.new()
-	_prompt.text = "hold E"
-	_prompt.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_prompt.no_depth_test = true
-	_prompt.fixed_size = true
-	_prompt.pixel_size = 0.0012
-	_prompt.font_size = 30
-	_prompt.outline_size = 10
-	_prompt.modulate = Color(1, 0.88, 0.6)
+	_prompt = UiKit.make_prompt("E", "Hold to push")
 	_prompt.position = Vector3(0, size.y + 0.4, 0)
 	_prompt.visible = false
 	add_child(_prompt)
