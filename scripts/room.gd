@@ -178,6 +178,7 @@ func _ready() -> void:
 	$Stop5/ZiplineGrab.activated.connect(_zipline_grab)
 	$Stop5/Zipline.reached.connect(func(mu): _slow_look("out" if mu >= $Stop5/Zipline.mark_u else "in"))
 	$Stop5/Zipline.finished.connect(_zipline_end)
+	$Stop6/BreakerCharge.hold_time = FINALE_LAST - FINALE_FROM   # the hold lasts the finale's last phrase
 	$Stop6/BreakerCharge.hold_progress.connect(_breaker_progress)
 	$Stop6/BreakerCharge.activated.connect(_breaker_done)
 	$Stop6/BreakerOk.visible = false
@@ -266,6 +267,7 @@ func _process(_d: float) -> void:
 			if u.name.begins_with("HangingUtensil") and not u.has_meta("swinging") \
 					and Vector2(u.global_position.x - player.global_position.x, u.global_position.z - player.global_position.z).length() < 0.7:
 				u.set_meta("swinging", true)
+				audio.sfx("音效/第4站_碰到餐具_0%d.ogg" % randi_range(1, 4), -10.0, 0.06)
 				var tw := create_tween()
 				for a in [14.0, -10.0, 6.0, -3.0, 0.0]:
 					tw.tween_property(u, "rotation_degrees:x", a, 0.22).set_trans(Tween.TRANS_SINE)
@@ -515,6 +517,7 @@ func _physics_process(_d: float) -> void:
 			_look_at($Stop3/TimeBoxGlow.global_position, -20.0, 1.0)   # nudge the camera back to it now and then
 	if _box_lines_done and not kitchen_revealed and not player.locked 			and Vector2(player.global_position.x - _box_pos.x, player.global_position.z - _box_pos.z).length() > 0.08 * K:
 		_after_tv_looks()
+	_audio_events()
 	# monologue, once each: the pixel game
 	if in_tv:
 		var tg: TvGame = $Stop3/TvScreen.game
@@ -666,6 +669,12 @@ var _photo_tw: Tween
 var _photo_since := 0.0
 var _photo_talking := false
 var _print: Node3D
+var _finale_music: AudioStreamPlayer
+var _pour_t := 0
+const FINALE_FROM := 29.25        ## 终章_灌电.ogg: the music-box phrase starts here...
+const FINALE_LAST := 39.38        ## ...and its last note is here: the hold lasts exactly the time between
+var _prev := {}                   ## counters from last frame (the pixel game's events, the magnet, hazards)
+var _hazards: Array = []
 var _photo_pos := Vector3.ZERO   ## where the robot stood up the photo (the desk reveal comes a few steps on)
 
 ## Back from the photo's close shot to the robot's own camera, quickly.
@@ -716,6 +725,60 @@ func _fall() -> void:
 	_look_at($MachineLook.global_position, -14.0)  # show the goal: the big robot, the drum, the seesaw
 	await Game.captions.say("1-1")
 	Game.captions.say("1-4")
+
+## Sounds for things that happen inside other scripts: read their counters each frame, play on change.
+func _audio_events() -> void:
+	if in_tv:
+		var tg: TvGame = $Stop3/TvScreen.game
+		_on_up("hits", tg.hits_taken, "音效/第3站_8bit_受伤扣电.ogg")
+		_on_up("cont", tg.continues, "音效/第3站_8bit_投币续关.ogg")
+		_on_up("bat", tg.batteries, "音效/第3站_8bit_拾取.ogg")
+		_on_up("kills", tg.kills, "音效/第3站_8bit_打败小怪.ogg")
+		_on_up("blocked", tg.blocked_hits, "音效/第3站_8bit_打在盾上.ogg")
+		_on_up("gate", 1 if tg.boss_started else 0, "音效/第3站_8bit_城门关上.ogg")
+		_on_up("roar", 1 if tg.dragon and tg.dragon.phase2 else 0, "音效/第3站_8bit_恶龙吼叫.ogg")
+		_on_up("boss", 1 if tg.boss_beaten else 0, "音效/第3站_8bit_恶龙被打败.ogg")
+		if tg.active and not tg.frozen:
+			if Input.is_action_just_pressed("jump") and tg.bot.is_on_floor():
+				audio.sfx("音效/第3站_8bit_跳跃.ogg", -12.0, 0.04)
+			if Input.is_action_just_pressed("attack"):
+				audio.sfx("音效/第3站_8bit_钳子挥击.ogg", -12.0, 0.05)
+	# the magnet
+	var cl := 1 if player.clinging != null else 0
+	if cl != int(_prev.get("cling", 0)):
+		audio.sfx("音效/第4站_电磁铁吸住.ogg" if cl else "音效/第4站_电磁铁松开.ogg", -6.0)
+		audio.loop("音效/第4站_电磁铁嗡嗡_循环.ogg", cl == 1, -14.0)
+	_prev["cling"] = cl
+	if player.updraft_top > -INF and not _prev.get("lift", false):
+		audio.sfx("音效/第4站_蒸汽托举.ogg", -6.0)
+	_prev["lift"] = player.updraft_top > -INF
+	# the burners flaring up
+	if kitchen_revealed and not sink_done:
+		for i in 2:
+			var on := 1 if flare_state(i)[0] == "on" else 0
+			if on and not int(_prev.get("flare%d" % i, 0)):
+				audio.sfx("音效/第4站_灶火蹿起_0%d.ogg" % randi_range(1, 5), -8.0, 0.05)
+			_prev["flare%d" % i] = on
+	# hazards: water shorts it out, fire burns
+	var wet := 0
+	var burnt := 0
+	if _hazards.is_empty():
+		_hazards = find_children("*", "Area3D", true, false).filter(func(n): return n is Hazard)
+	for h in _hazards:
+		if h.kind == "water":
+			wet += h.hits
+		else:
+			burnt += h.hits
+	_on_up("wet", wet, "音效/第4站_碰水短路.ogg")
+	_on_up("burnt", burnt, "音效/第4站_被火烫.ogg")
+	# the finale's music only plays while E is held
+	if _finale_music and not finale_done:
+		_finale_music.stream_paused = Time.get_ticks_msec() - _pour_t > 150
+
+func _on_up(key: String, v: int, path: String) -> void:
+	if v > int(_prev.get(key, v)):
+		audio.sfx(path, -8.0, 0.04)
+	_prev[key] = v
 
 ## A monologue line that only plays the first time.
 func _say_once(id: String) -> void:
@@ -1048,6 +1111,7 @@ func _enter_desk() -> void:
 	_fp_desk = null
 	player.locked = false
 	in_desk = true
+	audio.music("音乐/第2站_书桌迷宫_恐怖_循环.ogg", 3.0, -12.0)
 
 ## The desk's first-person look: turn the eye to `at` over `time`.
 func _fp_turn(eye: Vector3, at: Vector3, time: float) -> void:
@@ -1079,6 +1143,7 @@ func _open_door() -> void:
 	cam.make_current()
 	in_desk = false
 	player.set_top_down(false)
+	audio.music("音乐/主旋律_探索_循环.ogg", 3.0, -12.0)
 	for n in ["WallLampShade", "WallLampArm"]:
 		get_node("Stop2/" + n).visible = true
 	var env: Environment = $WorldEnvironment.environment
@@ -1176,6 +1241,7 @@ func _cinematic_hold(poses: Array, lines: Array) -> void:
 	cam.queue_free()
 
 func _enter_tv() -> void:
+	audio.sfx("音效/第3站_进入电视穿梭.ogg", -4.0)
 	var tv: TvScreen = $Stop3/TvScreen
 	player.locked = true
 	Game.set_checkpoint($Checkpoints/TvTop)
@@ -1197,6 +1263,7 @@ func _enter_tv() -> void:
 	$PostFX.enabled = false
 	await push.finished
 	tv.game.start()
+	audio.music("音乐/第3站_电视8bit_循环.ogg", 0.6, -10.0)
 	in_tv = true
 
 ## The tin box at the top of the dragon's tower: the game loses its colour (and its power) and lets go
@@ -1204,6 +1271,8 @@ func _enter_tv() -> void:
 func _tv_finale() -> void:
 	var tv: TvScreen = $Stop3/TvScreen
 	tv_finale = true
+	audio.sfx("音效/第3站_8bit_救出公主.ogg", -6.0)
+	audio.music("", 2.0)
 	Game.captions.say("3-13")
 	var fade := create_tween().set_parallel()
 	fade.tween_method(func(v): tv.mat.set_shader_parameter("desat", v), 0.0, 1.0, 2.2)
@@ -1216,6 +1285,7 @@ func _tv_finale() -> void:
 	create_tween().tween_method(func(v): tv.mat.set_shader_parameter("power", v), 1.0, 0.0, 0.5) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	create_tween().tween_property($TVGlow, "light_energy", 0.0, 0.5)
+	audio.sfx("音效/第3站_电视关机.ogg", -6.0)
 	Game.captions.say("3-14")
 
 ## The childhood time box beside the cabinet: the lid lifts, a warm light; inside, his drawing.
@@ -1225,6 +1295,8 @@ func _open_time_box() -> void:
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	create_tween().tween_property($Stop3/TimeBoxGlow, "light_energy", 2.0, 1.2)
 	Game.restore_memory("time_box")
+	audio.sfx("音效/第3站_时光盒打开.ogg", -6.0)
+	audio.phrase("音乐/旋律片段3_答录机.ogg", -8.0)
 	await _wait(0.8)
 	await Game.captions.say_all(["3-16", "3-17"])
 	_box_pos = player.global_position
@@ -1233,6 +1305,8 @@ func _open_time_box() -> void:
 ## Out of the game: the robot pops out of the glass and lands on the floor on the kitchen
 ## side; the camera pulls back out to the robot's own camera, which then turns to the stove.
 func _exit_tv() -> void:
+	audio.sfx("音效/第3站_离开电视穿梭.ogg", -4.0)
+	audio.music("音乐/主旋律_探索_循环.ogg", 4.0, -12.0)
 	var tv: TvScreen = $Stop3/TvScreen
 	in_tv = false
 	tv_done = true
@@ -1319,6 +1393,8 @@ func _cinematic(poses: Array) -> void:
 
 ## Powered microwave: beep, the door pops open and shoves the cutting board across the gap.
 func _microwave() -> void:
+	audio.sfx("音效/第4站_微波炉开门推砧板.ogg", -4.0)
+	get_tree().create_timer(0.9).timeout.connect(func(): audio.sfx("音效/第4站_微波炉叮.ogg", -8.0))
 	Game.captions.say("4-8")
 	board_pushed = true
 	var door: Node3D = $Stop4/MicrowaveDoor
@@ -1333,6 +1409,8 @@ func _toaster() -> void:
 	toaster_busy = true
 	player.locked = true
 	Game.captions.say("4-9")
+	audio.sfx("音效/第4站_面包机压杆.ogg", -6.0)
+	audio.loop("音效/第4站_面包机计时_循环.ogg", true, -10.0)
 	await _arc(player.global_position, $ToasterSlot.global_position, 0.25, 0.3)
 	var m := StandardMaterial3D.new()
 	m.albedo_color = Color(0.2, 0.08, 0.05)
@@ -1343,6 +1421,8 @@ func _toaster() -> void:
 	await create_tween().tween_property(m, "emission_energy_multiplier", 4.0, 1.6).finished
 	player.launch_squash()
 	Game.captions.say("4-10")
+	audio.loop("音效/第4站_面包机计时_循环.ogg", false)
+	audio.sfx("音效/第4站_面包机弹起.ogg", -4.0)
 	await _arc(player.global_position, $SpiceShelfLanding.global_position, 1.4, 0.7)
 	player.velocity = Vector3.ZERO
 	player.locked = false
@@ -1360,6 +1440,11 @@ func _kettle_look(b: Node) -> void:
 
 ## The kettle: E powers it, the switch light comes on, it rumbles, then steam for a few seconds (whistling).
 func _kettle() -> void:
+	audio.sfx("音效/第4站_水壶加热震动.ogg", -6.0)
+	get_tree().create_timer(1.6).timeout.connect(func():
+		audio.sfx("音效/第4站_水壶鸣笛.ogg", -8.0)
+		audio.loop("音效/第4站_水壶烧开_循环.ogg", true, -12.0))
+	get_tree().create_timer(14.0).timeout.connect(func(): audio.loop("音效/第4站_水壶烧开_循环.ogg", false))
 	Game.captions.say("4-13")
 	if kettle_busy:
 		return
@@ -1389,6 +1474,7 @@ func _glow_mat(c: Color, e: float) -> StandardMaterial3D:
 ## and faster (all clatter). The robot rides the lid off onto the counter, the plug pops, the flood
 ## drains away; the last lid spins in the basin, slower, and stops. Then quiet.
 func _sink_collapse() -> void:
+	audio.sfx("音效/第4站_水槽崩塌.ogg", -2.0)
 	get_tree().create_timer(2.5).timeout.connect(func(): Game.captions.say("4-15"))
 	sink_done = true
 	player.locked = true
@@ -1443,6 +1529,8 @@ func _sink_collapse() -> void:
 
 ## The flood goes: the water on the floor, in the gap, on the counter and in the basin sinks away.
 func _drain_flood() -> void:
+	audio.sfx("音效/第4站_塞子弹开.ogg", -4.0)
+	get_tree().create_timer(0.4).timeout.connect(func(): audio.sfx("音效/第4站_积水流走.ogg", -6.0))
 	Game.captions.say("4-16")
 	for n in ["WaterFloor", "WaterGap", "WaterCounter"]:
 		get_node("Stop4/" + n).enabled = false
@@ -1457,6 +1545,8 @@ func _drain_flood() -> void:
 ## The daughter's mug by the window: one tap - a single clear note and a warm glow - and the camera finds
 ## the frozen father at the stove for a moment.
 func _ring_mug() -> void:
+	audio.sfx("音效/第4站_敲杯子一声.ogg", -2.0)
+	audio.phrase("音乐/旋律片段4_八音盒.ogg", -8.0)
 	mug_rung = true
 	player.rig.kick_arms(-250.0, 0.0)
 	var g: OmniLight3D = $Stop4/MugGlow
@@ -1493,6 +1583,17 @@ func _build_town() -> void:
 
 ## E at the coat hanger by the mug: up onto it, then the ride, seen through the robot's eyes.
 func _zipline_grab() -> void:
+	if not has_node("RadioVoice"):
+		var radio := AudioStreamPlayer3D.new()
+		radio.name = "RadioVoice"
+		radio.stream = load("res://assets/audio/广播/第5站_广播连播.ogg")
+		radio.bus = "SFX"
+		radio.volume_db = -6.0
+		radio.unit_size = 1.2 * K
+		add_child(radio)
+		radio.global_position = $Stop5/Radio.global_position
+		radio.play()
+		audio.sfx("音效/第5站_收音机调频.ogg", -12.0)
 	var zip: Zipline = $Stop5/Zipline
 	player.locked = true
 	player.hanging = true
@@ -1602,6 +1703,17 @@ func _zipline_end() -> void:
 # ------------------------------------------------------------------ stop 6: the finale and the ending
 ## Holding E at the breaker: the last charge flows out of the robot into the box; the lever creeps up.
 func _breaker_progress(f: float) -> void:
+	_pour_t = Time.get_ticks_msec()
+	if _finale_music == null:
+		_finale_music = AudioStreamPlayer.new()
+		_finale_music.stream = load("res://assets/audio/音乐/终章_灌电.ogg")
+		_finale_music.bus = "Music"
+		_finale_music.volume_db = -6.0
+		add_child(_finale_music)
+		_finale_music.play(FINALE_FROM)   # the last phrase (the music box): its last note lands on the CLICK
+		audio.music("", 2.0)
+		audio.loop("音效/给机关充电_循环.ogg", true, -10.0)
+	_finale_music.stream_paused = false
 	if f >= 0.02:
 		_say_once("6-2")
 	if f >= 0.5:
@@ -1637,6 +1749,11 @@ func _breaker_progress(f: float) -> void:
 ## the robot's eyes go dark. Then the ending.
 func _breaker_done() -> void:
 	finale_done = true
+	audio.loop("音效/给机关充电_循环.ogg", false)
+	audio.sfx("音效/终章_空气开关合上.ogg", 0.0)
+	get_tree().create_timer(0.7).timeout.connect(func():
+		audio.sfx("音效/终章_全屋亮灯.ogg", -2.0)
+		audio.music("音乐/结局_亮灯之后.ogg", 2.5, -6.0))
 	get_tree().create_timer(0.8).timeout.connect(func(): Game.captions.say("6-5"))
 	var lever := create_tween()
 	lever.tween_property($Stop6/BreakerLever, "rotation_degrees:z", 180.0, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -2483,10 +2600,10 @@ func _autotest_finale(dir: String) -> Dictionary:
 	s6["prompt_in_range"] = $Stop6/BreakerCharge.player_in_range()
 	await _shot(dir, "room_s6_before.png")
 	_act("interact", true)
-	await _wait(2.2)
+	await _wait(5.0)
 	s6["charge_mid"] = snappedf(player.charge, 0.01)
 	await _shot(dir, "room_s6_pouring.png")
-	await _wait(2.2)
+	await _wait(5.6)
 	_act("interact", false)
 	s6["breaker_on"] = finale_done
 	s6["charge_zero"] = player.charge <= 0.001

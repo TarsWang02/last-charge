@@ -14,6 +14,12 @@ var _settings_card: Control
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	var theme_music := AudioStreamPlayer.new()   # the main theme, the full version, under the title
+	theme_music.stream = load("res://assets/audio/音乐/主旋律_完整版.ogg")
+	theme_music.bus = "Music"
+	theme_music.volume_db = -8.0
+	add_child(theme_music)
+	theme_music.play()
 	var base := ColorRect.new()
 	base.color = Color.BLACK
 	base.set_anchors_preset(Control.PRESET_FULL_RECT)
