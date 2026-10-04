@@ -518,8 +518,6 @@ func _physics_process(_d: float) -> void:
 		$Stop3/TimeBoxGlow.light_energy = 0.6 + 0.9 * (0.5 + 0.5 * sin(_box_hint_t * 3.0))
 		if _box_hint_t > 9.0 and fmod(_box_hint_t, 9.0) < _d and not player.locked:
 			_look_at($Stop3/TimeBoxGlow.global_position, -20.0, 1.0)   # nudge the camera back to it now and then
-	if _box_lines_done and not kitchen_revealed and not player.locked 			and Vector2(player.global_position.x - _box_pos.x, player.global_position.z - _box_pos.z).length() > 0.08 * K:
-		_after_tv_looks()
 	_audio_events()
 	# monologue, once each: the pixel game
 	if in_tv:

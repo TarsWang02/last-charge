@@ -373,7 +373,7 @@ AREAS = {  # trigger boxes: name -> (centre m, size m)
     "BooksTop": ((-3.185, NT + 0.16, -2.545), (0.15, 0.04, 0.13)),
     "JackTop": ((-2.28, 0.13, -1.95), (0.09, 0.05, 0.09)),
     "SeesawEnd": ((-2.26, 0.08, -2.20), (0.08, 0.08, 0.08)),
-    "KitchenReveal": ((1.7, 0.05, -2.12), (0.36, 0.1, 0.4)),
+    "KitchenReveal": ((1.85, 0.05, -2.25), (0.26, 0.12, 0.22)),   # at the foot of the climb up to the microwave counter (clear of the time box)
     "SinkPile": ((4.45, 1.03, -0.1), (0.3, 0.07, 0.3)),
     "SteamPlume": ((4.51, 1.155, -1.16), (0.42, 0.41, 0.9)),
 }

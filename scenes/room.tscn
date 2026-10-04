@@ -192,7 +192,7 @@ size = Vector3(0.81, 0.45, 0.81)
 size = Vector3(0.72, 0.72, 0.72)
 
 [sub_resource type="BoxShape3D" id="area_KitchenReveal"]
-size = Vector3(3.24, 0.9, 3.6)
+size = Vector3(2.34, 1.08, 1.98)
 
 [sub_resource type="BoxShape3D" id="area_SinkPile"]
 size = Vector3(2.7, 0.63, 2.7)
@@ -1956,7 +1956,7 @@ transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -17.7, 0.72, -19.8)
 shape = SubResource("area_SeesawEnd")
 
 [node name="KitchenReveal" type="Area3D" parent="Areas"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 15.3, 0.45, -19.08)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 16.65, 0.45, -20.25)
 
 [node name="Shape" type="CollisionShape3D" parent="Areas/KitchenReveal"]
 shape = SubResource("area_KitchenReveal")
