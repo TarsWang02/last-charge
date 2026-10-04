@@ -1274,11 +1274,14 @@ func _tv_finale() -> void:
 	audio.sfx("音效/第3站_8bit_救出公主.ogg", -6.0)
 	audio.music("", 2.0)
 	Game.captions.say("3-13")
+	var said_by := Time.get_ticks_msec() + int(preload("res://scripts/captions.gd").line_time("3-13") * 1000.0)
 	var fade := create_tween().set_parallel()
 	fade.tween_method(func(v): tv.mat.set_shader_parameter("desat", v), 0.0, 1.0, 2.2)
 	fade.tween_method(func(v): tv.mat.set_shader_parameter("glow", v), 1.5, 0.9, 2.2)
 	await fade.finished
 	await _wait(0.4)
+	while Time.get_ticks_msec() < said_by + 300:   # stay in the game till he's said it
+		await get_tree().process_frame
 	tv.game.stop()
 	await _exit_tv()
 	await _wait(0.6)
@@ -1286,7 +1289,10 @@ func _tv_finale() -> void:
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	create_tween().tween_property($TVGlow, "light_energy", 0.0, 0.5)
 	audio.sfx("音效/第3站_电视关机.ogg", -6.0)
-	Game.captions.say("3-14")
+	await Game.captions.say("3-14")
+	await _wait(0.3)
+	_look_at($Stop3/TimeBoxGlow.global_position, -20.0, 1.2)   # then: the old time box beside the cabinet
+	_say_once("3-15")
 
 ## The childhood time box beside the cabinet: the lid lifts, a warm light; inside, his drawing.
 func _open_time_box() -> void:
@@ -1333,8 +1339,6 @@ func _exit_tv() -> void:
 	$PostFX.enabled = true
 	Game.set_checkpoint($Checkpoints/TvExit)
 	player.locked = false
-	_look_at($Stop3/TimeBoxGlow.global_position, -20.0, 1.2)   # first: the old time box beside the cabinet
-	_say_once("3-15")
 
 # ------------------------------------------------------------------ stop 4
 ## Burner i (0 = west, 1 = east): ["warn" | "on" | "off", seconds into that state]. They alternate.
@@ -1398,7 +1402,7 @@ func _microwave() -> void:
 	Game.captions.say("4-8")
 	board_pushed = true
 	var door: Node3D = $Stop4/MicrowaveDoor
-	await create_tween().tween_property(door, "rotation_degrees:y", 100.0, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).finished
+	await create_tween().tween_property(door, "rotation_degrees:y", 72.0, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).finished
 	var board: Node3D = $Stop4/CuttingBoard
 	create_tween().tween_property(board, "position:x", board.position.x + 0.39 * K, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 

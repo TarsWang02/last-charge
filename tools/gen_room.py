@@ -565,7 +565,7 @@ L += ['[node name="MicrowaveDoor" type="Node3D" parent="Stop4"]', f'transform = 
       f'size = Vector3({0.32 * K:.4g}, {0.27 * K:.4g}, {0.016 * K:.4g})', 'material = SubResource("m_glass")', '',
       '[node name="CuttingBoard" type="CSGBox3D" parent="Stop4"]', f'transform = {tr((2.6, KC + 0.005, -2.17))}', 'use_collision = true',
       f'size = Vector3({0.5 * K:.4g}, {0.01 * K:.4g}, {0.14 * K:.4g})', 'material = SubResource("m_wood")', '',
-      '[node name="MicrowaveUse" type="Area3D" parent="Stop4"]', f'transform = {tr((2.80, KC + 0.02, -2.17))}', 'script = ExtResource("ia")',
+      '[node name="MicrowaveUse" type="Area3D" parent="Stop4"]', f'transform = {tr((2.83, KC + 0.02, -2.15))}', 'script = ExtResource("ia")',
       'cost = 0.04', 'radius = 0.6', 'prompt_offset = Vector3(0, 1.2, 0)', '',
       '[node name="ToasterCoils" type="CSGBox3D" parent="Stop4"]', f'transform = {tr((3.3, KC + 0.17, -2.41))}',
       f'size = Vector3({0.12 * K:.4g}, {0.012 * K:.4g}, {0.16 * K:.4g})', 'material = SubResource("m_person")', '',

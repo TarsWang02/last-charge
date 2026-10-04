@@ -347,7 +347,7 @@ func _magnet_physics(delta: float) -> bool:
 	if not magnet_enabled:
 		_magnet_hint.visible = false
 		return false
-	var held := Input.is_action_pressed("magnet") and alive and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+	var held := Input.is_action_pressed("magnet") and alive
 	if clinging == null:
 		var near := _find_metal(global_position, -0.3, magnet_reach)
 		_magnet_hint.visible = near != null
@@ -365,9 +365,9 @@ func _magnet_physics(delta: float) -> bool:
 	var want := global_position + dir * speed * magnet_speed * delta
 	want.y = lerpf(global_position.y, _cling_y, 1.0 - exp(-14.0 * delta))
 	var b := metal_box(clinging)
-	var g := 0.4
+	var g := 0.5
 	if want.x < b.position.x - g or want.x > b.end.x + g or want.z < b.position.z - g or want.z > b.end.z + g:
-		var next := _find_metal(Vector3(want.x, _cling_y, want.z), -1.8, 1.8, clinging, 0.35)
+		var next := _find_metal(Vector3(want.x, _cling_y, want.z), -2.2, 2.2, clinging, 0.6)   # forgiving hand-over at corners
 		if next != null:
 			clinging = next
 			_cling_y = metal_box(next).position.y - robot_height - 0.01
