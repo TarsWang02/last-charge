@@ -1,0 +1,597 @@
+{
+  "bot": {
+    "size": [
+      12,
+      13
+    ],
+    "category": "sprite"
+  },
+  "bot_idle_0": {
+    "size": [
+      12,
+      13
+    ],
+    "category": "animation"
+  },
+  "bot_idle_1": {
+    "size": [
+      12,
+      13
+    ],
+    "category": "animation"
+  },
+  "bot_walk_0": {
+    "size": [
+      12,
+      13
+    ],
+    "category": "animation"
+  },
+  "bot_walk_1": {
+    "size": [
+      12,
+      13
+    ],
+    "category": "animation"
+  },
+  "bot_walk_2": {
+    "size": [
+      12,
+      13
+    ],
+    "category": "animation"
+  },
+  "bot_walk_3": {
+    "size": [
+      12,
+      13
+    ],
+    "category": "animation"
+  },
+  "bot_jump_0": {
+    "size": [
+      12,
+      13
+    ],
+    "category": "animation"
+  },
+  "bot_fall_0": {
+    "size": [
+      12,
+      13
+    ],
+    "category": "animation"
+  },
+  "bot_hurt_0": {
+    "size": [
+      12,
+      13
+    ],
+    "category": "animation"
+  },
+  "bot_claw": {
+    "size": [
+      20,
+      6
+    ],
+    "category": "sprite"
+  },
+  "bot_claw_attack_0": {
+    "size": [
+      20,
+      6
+    ],
+    "category": "animation"
+  },
+  "bot_claw_attack_1": {
+    "size": [
+      20,
+      6
+    ],
+    "category": "animation"
+  },
+  "bot_claw_attack_2": {
+    "size": [
+      20,
+      6
+    ],
+    "category": "animation"
+  },
+  "slime": {
+    "size": [
+      12,
+      8
+    ],
+    "category": "sprite"
+  },
+  "slime_crawl_0": {
+    "size": [
+      12,
+      8
+    ],
+    "category": "animation"
+  },
+  "slime_crawl_1": {
+    "size": [
+      12,
+      8
+    ],
+    "category": "animation"
+  },
+  "bat": {
+    "size": [
+      12,
+      6
+    ],
+    "category": "sprite"
+  },
+  "bat_flap_0": {
+    "size": [
+      12,
+      6
+    ],
+    "category": "animation"
+  },
+  "bat_flap_1": {
+    "size": [
+      12,
+      6
+    ],
+    "category": "animation"
+  },
+  "turret": {
+    "size": [
+      12,
+      10
+    ],
+    "category": "sprite"
+  },
+  "turret_idle_0": {
+    "size": [
+      12,
+      10
+    ],
+    "category": "animation"
+  },
+  "turret_charge_0": {
+    "size": [
+      12,
+      10
+    ],
+    "category": "animation"
+  },
+  "orb": {
+    "size": [
+      6,
+      6
+    ],
+    "category": "sprite"
+  },
+  "orb_pulse_0": {
+    "size": [
+      6,
+      6
+    ],
+    "category": "animation"
+  },
+  "orb_pulse_1": {
+    "size": [
+      6,
+      6
+    ],
+    "category": "animation"
+  },
+  "knight": {
+    "size": [
+      14,
+      17
+    ],
+    "category": "sprite"
+  },
+  "knight_walk_0": {
+    "size": [
+      14,
+      17
+    ],
+    "category": "animation"
+  },
+  "knight_walk_1": {
+    "size": [
+      14,
+      17
+    ],
+    "category": "animation"
+  },
+  "knight_windup_0": {
+    "size": [
+      14,
+      17
+    ],
+    "category": "animation"
+  },
+  "knight_thrust_0": {
+    "size": [
+      14,
+      17
+    ],
+    "category": "animation"
+  },
+  "knight_recover_0": {
+    "size": [
+      14,
+      17
+    ],
+    "category": "animation"
+  },
+  "knight_sword": {
+    "size": [
+      16,
+      3
+    ],
+    "category": "sprite"
+  },
+  "princess": {
+    "size": [
+      13,
+      19
+    ],
+    "category": "sprite"
+  },
+  "princess_wait_0": {
+    "size": [
+      13,
+      19
+    ],
+    "category": "animation"
+  },
+  "princess_wait_1": {
+    "size": [
+      13,
+      19
+    ],
+    "category": "animation"
+  },
+  "princess_wave_0": {
+    "size": [
+      13,
+      19
+    ],
+    "category": "animation"
+  },
+  "princess_wave_1": {
+    "size": [
+      13,
+      19
+    ],
+    "category": "animation"
+  },
+  "princess_rescued_0": {
+    "size": [
+      13,
+      19
+    ],
+    "category": "animation"
+  },
+  "princess_rescued_1": {
+    "size": [
+      13,
+      19
+    ],
+    "category": "animation"
+  },
+  "battery": {
+    "size": [
+      6,
+      9
+    ],
+    "category": "sprite"
+  },
+  "battery_shine_0": {
+    "size": [
+      6,
+      9
+    ],
+    "category": "animation"
+  },
+  "battery_shine_1": {
+    "size": [
+      6,
+      9
+    ],
+    "category": "animation"
+  },
+  "heart": {
+    "size": [
+      5,
+      4
+    ],
+    "category": "sprite"
+  },
+  "dragon_head": {
+    "size": [
+      24,
+      14
+    ],
+    "category": "sprite"
+  },
+  "dragon_head_open": {
+    "size": [
+      24,
+      15
+    ],
+    "category": "sprite"
+  },
+  "dragon_head_dazed": {
+    "size": [
+      24,
+      14
+    ],
+    "category": "sprite"
+  },
+  "dragon_wing": {
+    "size": [
+      30,
+      13
+    ],
+    "category": "sprite"
+  },
+  "dragon_wing_down": {
+    "size": [
+      30,
+      13
+    ],
+    "category": "sprite"
+  },
+  "dragon_neck": {
+    "size": [
+      10,
+      10
+    ],
+    "category": "sprite"
+  },
+  "dragon_tail": {
+    "size": [
+      12,
+      12
+    ],
+    "category": "sprite"
+  },
+  "dragon_tail_tip": {
+    "size": [
+      10,
+      8
+    ],
+    "category": "sprite"
+  },
+  "fireball": {
+    "size": [
+      8,
+      8
+    ],
+    "category": "sprite"
+  },
+  "fireball_roll_0": {
+    "size": [
+      8,
+      8
+    ],
+    "category": "animation"
+  },
+  "fireball_roll_1": {
+    "size": [
+      8,
+      8
+    ],
+    "category": "animation"
+  },
+  "tile_grass": {
+    "size": [
+      16,
+      16
+    ],
+    "category": "tile"
+  },
+  "tile_dirt": {
+    "size": [
+      16,
+      16
+    ],
+    "category": "tile"
+  },
+  "tile_rock": {
+    "size": [
+      16,
+      16
+    ],
+    "category": "tile"
+  },
+  "tile_stone": {
+    "size": [
+      16,
+      16
+    ],
+    "category": "tile"
+  },
+  "tile_tower_top": {
+    "size": [
+      8,
+      8
+    ],
+    "category": "sprite"
+  },
+  "tile_gate": {
+    "size": [
+      8,
+      96
+    ],
+    "category": "tile"
+  },
+  "plank": {
+    "size": [
+      24,
+      6
+    ],
+    "category": "sprite"
+  },
+  "plank_shake_0": {
+    "size": [
+      24,
+      6
+    ],
+    "category": "animation"
+  },
+  "plank_shake_1": {
+    "size": [
+      24,
+      6
+    ],
+    "category": "animation"
+  },
+  "plank_shake": {
+    "size": [
+      24,
+      6
+    ],
+    "category": "sprite"
+  },
+  "platform": {
+    "size": [
+      26,
+      8
+    ],
+    "category": "sprite"
+  },
+  "spikes": {
+    "size": [
+      6,
+      6
+    ],
+    "category": "sprite"
+  },
+  "bg_sky": {
+    "size": [
+      320,
+      240
+    ],
+    "category": "background"
+  },
+  "bg_stars": {
+    "size": [
+      320,
+      240
+    ],
+    "category": "background"
+  },
+  "bg_hills": {
+    "size": [
+      320,
+      40
+    ],
+    "category": "background"
+  },
+  "bg_castle_far": {
+    "size": [
+      320,
+      240
+    ],
+    "category": "background"
+  },
+  "bg_princess_tower": {
+    "size": [
+      44,
+      140
+    ],
+    "category": "background"
+  },
+  "hud_battery": {
+    "size": [
+      36,
+      12
+    ],
+    "category": "hud"
+  },
+  "hud_cell_on": {
+    "size": [
+      4,
+      6
+    ],
+    "category": "hud"
+  },
+  "hud_cell_off": {
+    "size": [
+      4,
+      6
+    ],
+    "category": "hud"
+  },
+  "hud_boss_pip_on": {
+    "size": [
+      6,
+      6
+    ],
+    "category": "sprite"
+  },
+  "hud_boss_pip_off": {
+    "size": [
+      6,
+      6
+    ],
+    "category": "hud"
+  },
+  "key_A": {
+    "size": [
+      13,
+      10
+    ],
+    "category": "hud"
+  },
+  "key_D": {
+    "size": [
+      13,
+      10
+    ],
+    "category": "hud"
+  },
+  "key_J": {
+    "size": [
+      13,
+      10
+    ],
+    "category": "hud"
+  },
+  "key_SPACE": {
+    "size": [
+      25,
+      10
+    ],
+    "category": "hud"
+  },
+  "key_mouse": {
+    "size": [
+      9,
+      13
+    ],
+    "category": "sprite"
+  },
+  "coin_cell": {
+    "size": [
+      8,
+      10
+    ],
+    "category": "hud"
+  },
+  "coin_slot": {
+    "size": [
+      40,
+      30
+    ],
+    "category": "hud"
+  },
+  "dragon_body": {
+    "size": [
+      48,
+      31
+    ],
+    "category": "sprite"
+  }
+}

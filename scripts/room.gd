@@ -27,11 +27,26 @@ extends Node3D
 ##            in it to the dish rack (it only lasts a few seconds). Step down onto the lid in the sink: the
 ##            whole pile comes down (a cutscene, all clatter), the plug pops, the flood drains away. Tap the
 ##            daughter's mug by the window (E): one clear note. The windowsill starts there.
+##   stop 5 - the clothesline (scripts/zipline.gd), hooked across the living room. Grab the coat hanger by
+##            the mug (E) and ride it: over the room, back to the window, along it to the breaker box. A / D
+##            swing to dodge things hanging from the ceiling; jump just before a peg to hop it; crash through
+##            the washing hung across the line. Seen in FIRST PERSON, from the robot's eyes. Outside, the
+##            town's lights go out as you pass. Behind the old man in the armchair, time slows: the robot
+##            turns its head to the window (the town it lived in all its life), then to the room (all the
+##            familiar things). Back to third person at the end: it lands on the sill by the breaker box's
+##            wire with its last cell, red.
+##   stop 6 - the finale: on the little shelf under the breaker box, hold E: the robot's last charge flows
+##            into the box (cells go out one by one, the lever creeps up), then CLICK - the lights come back
+##            on from the breaker outwards, the grey low-power look lifts, the old things glow, and the
+##            robot's eyes go dark. The ending, one take: the robot by the box, back through the bedroom
+##            door to the old man asleep, out of the bedroom window, up over the dark town - only this
+##            house is lit. The title, then back to the title screen.
 ##   godot --path . res://scenes/room.tscn -- --autotest --shots=DIR
 
 const PLAYER := preload("res://scenes/tps_player.tscn")
 const K := 9.0
 const KC_U := 0.9 * 9.0   ## kitchen counter top (units)
+const BW_M := -0.4        ## the bedroom's east wall (m): the breaker box hangs on it
 const ROOM_ART := preload("res://scripts/room_art.gd")
 
 var player: CharacterBody3D
@@ -63,6 +78,34 @@ var steam_left := 0.0
 var kettle_busy := false
 var sink_done := false
 var mug_rung := false
+var zip_done := false
+var slow_look_done := false
+var slow_looks := 0
+var min_time_scale := 1.0
+var _zip_charge0 := 0.0
+var _arm_len0 := 0.0
+var town: Town
+var finale_started := false
+var finale_done := false
+var ending_stage := -1          ## which point of the ending's camera path it has reached
+var ending_done := false
+var _finale_c0 := 0.0
+var _spark: OmniLight3D
+var _end_cam: Camera3D
+var _end_curve: Curve3D
+var _end_seg := 0
+var _end_la := Vector3.ZERO
+var _end_lb := Vector3.ZERO
+var _fp_cam: Camera3D           ## first-person camera on the clothesline
+var _fp_from := Transform3D()
+var _fp_blend := 1.0            ## 0 -> 1: from _fp_from to the robot's eyes (and back at the end)
+var _fp_yaw := 0.0              ## head turn, degrees (+ = left, towards the window)
+var _fp_shake := 0.0
+var fp_phase := ""
+var _fp_fwd := Vector3.ZERO
+var _speed_fx: ColorRect          ## speed lines over the first-person view
+var _speed_t := 0.0
+var _fp_buzz := 0.0              ## "" / "out" (looking at the town) / "in" (looking into the room)
 var time_box_open := false
 var _tv_cam: Camera3D
 var _env_saved := []
@@ -88,6 +131,13 @@ func _ready() -> void:
 	$Areas/JackTop.body_entered.connect(func(b): if b == player: _jack())
 	$Stop0/FrameInteract.activated.connect(_stand_frame_up)
 	$Stop1/CarCharge.activated.connect(_run_machine)
+	# a small cyan glow on the electric car up on the big robot's head (it's what you power: cyan = interactive)
+	var car_light := OmniLight3D.new()
+	car_light.light_color = Color(0.55, 1.0, 0.95)
+	car_light.light_energy = 1.6
+	car_light.omni_range = 0.3 * K
+	car_light.position = Vector3(0, 0.1 * K, 0)
+	$Stop1/ElectricCar.add_child(car_light)
 	$Stop2/DoorHandleUse.activated.connect(_open_door)
 	$Stop3/TvEnter.activated.connect(_enter_tv)
 	$Stop3/TvScreen.game.rescued.connect(_tv_finale)
@@ -97,6 +147,13 @@ func _ready() -> void:
 	$Stop4/ToasterUse.activated.connect(_toaster)
 	$Stop4/KettleUse.activated.connect(_kettle)
 	$Stop4/MugTap.activated.connect(_ring_mug)
+	$Stop5/ZiplineGrab.activated.connect(_zipline_grab)
+	$Stop5/Zipline.reached.connect(func(mu): _slow_look("out" if mu >= $Stop5/Zipline.mark_u else "in"))
+	$Stop5/Zipline.finished.connect(_zipline_end)
+	$Stop6/BreakerCharge.hold_progress.connect(_breaker_progress)
+	$Stop6/BreakerCharge.activated.connect(_breaker_done)
+	$Stop6/BreakerOk.visible = false
+	_build_town()
 	$Areas/SinkPile.body_entered.connect(func(b): if b == player and not sink_done: _sink_collapse())
 	$Stop4/SteamColumn.visible = false
 	# off the rail by the kettle: turn to the dish rack beyond the wet counter (the next goal)
@@ -125,6 +182,23 @@ func _ready() -> void:
 		get_tree().quit()
 
 func _process(_d: float) -> void:
+	# first person on the clothesline: the robot's eyes, facing down the line; wider with speed
+	if _fp_cam != null:
+		if not _fp_cam.current:  # nothing else may take the view while the robot rides the line
+			_fp_cam.make_current()
+		$Stop5/Zipline.bar.visible = absf(_fp_yaw) < 25.0  # the bar over its head would cut across a sideways look
+		var eye := _fp_eye()
+		_fp_cam.global_transform = eye if _fp_blend >= 1.0 else _fp_from.interpolate_with(eye, _fp_blend)
+		var zp: Zipline = $Stop5/Zipline
+		var fast := clampf((zp.profile(zp.u) * zp._mult - zp.v_min) / (zp.v_max - zp.v_min), 0.0, 1.0) * (1.0 if fp_phase == "" and absf(_fp_yaw) < 10.0 else 0.0)
+		_fp_cam.fov = lerpf(_fp_cam.fov, 70.0 + fast * 30.0, 1.0 - exp(-4.0 * _d))  # wide angle at speed
+		if _speed_fx:
+			_speed_t += _d
+			var m: ShaderMaterial = _speed_fx.material
+			m.set_shader_parameter("amount", lerpf(float(m.get_shader_parameter("amount")), fast, 1.0 - exp(-5.0 * _d)))
+			m.set_shader_parameter("t", _speed_t)
+		_fp_buzz = fast
+		_fp_shake = maxf(_fp_shake - _d * 3.0, 0.0)
 	# the stove fire is alive (only the people are frozen)
 	_fire_t += _d
 	var f := 0.75 + 0.2 * sin(_fire_t * 13.0) * sin(_fire_t * 7.3) + randf() * 0.08
@@ -171,6 +245,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		_skip_to_living_room()
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F10:
 		_skip_to_kitchen()
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F12:
+		kitchen_revealed = true  # debug: straight to the shelf under the breaker box, last cell left
+		_skip_to_kitchen()
+		town.set_all(false)
+		zip_done = true
+		player.revive(0.12)
+		player.teleport($FinaleStand.global_position + Vector3(0, 0.05, 0))
+		Game.set_checkpoint($Checkpoints/SillEnd)
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F11:
+		kitchen_revealed = true  # debug: straight to the coat hanger on the clothesline, with a normal ~35% charge
+		_skip_to_kitchen()
+		player.revive(0.35)
+		player.teleport(Vector3(4.35 * K, 0.9 * K + 0.05, 2.33 * K))
+		Game.set_checkpoint($Checkpoints/SinkSouth)
 
 ## Debug: F10 = out of the TV, on the floor by the kitchen.
 func _skip_to_kitchen() -> void:
@@ -196,6 +284,15 @@ func _skip_to_living_room() -> void:
 	_look_at($TvLook.global_position, -6.0, 0.8)
 
 func _physics_process(_d: float) -> void:
+	# the clothesline ride: the battery runs down to its last cell; the town's lights go out as you pass
+	var zip: Zipline = $Stop5/Zipline
+	if zip.riding:
+		player.charge = lerpf(_zip_charge0, 0.12, minf(zip.u / zip.mark_u, 1.0))
+		player.charge_changed.emit(player.charge)
+		# before the slow look only the far east goes dark (the town it turns to see is still lit); then the rest
+		var edge := lerpf(19.0, 6.0, zip.u / zip.mark_u) if zip.u < zip.mark_u else lerpf(6.0, -17.0, (zip.u - zip.mark_u) / (1.0 - zip.mark_u))
+		town.lights_off_east_of(edge)
+	min_time_scale = minf(min_time_scale, Engine.time_scale)
 	# the kettle's steam: inside the plume while it lasts = carried up
 	steam_left = maxf(steam_left - _d, 0.0)
 	player.updraft_top = STEAM_TOP if steam_left > 0.0 and $Areas/SteamPlume.overlaps_body(player) and not player.locked else -INF
@@ -239,7 +336,7 @@ func _reveal_desk() -> void:
 
 func _stand_frame_up() -> void:
 	frame_up = true
-	create_tween().tween_property($Stop0/PhotoFrame, "rotation_degrees:x", -78.0, 0.7) \
+	create_tween().tween_property($Stop0/PhotoFrame, "rotation_degrees:x", -102.0, 0.7) \
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	Game.restore_memory("family_photo")
 
@@ -308,7 +405,7 @@ func _run_machine() -> void:
 	for w in [$CarWay1, $CarWay2, $CarWay3, $CarWay4]:
 		var to: Vector3 = w.position
 		var dir := to - from
-		drive.tween_property(car, "rotation:y", atan2(-dir.z, dir.x), 0.15)  # turn at the corner
+		drive.tween_property(car, "rotation:y", atan2(-dir.x, -dir.z), 0.15)  # turn at the corner
 		drive.tween_property(car, "position", to, dir.length() / (0.15 * K)).set_trans(Tween.TRANS_LINEAR)
 		from = to
 	await drive.finished
@@ -665,6 +762,280 @@ func _ring_mug() -> void:
 	Game.restore_memory("daughter_mug")
 	_look_at($FatherHead.global_position, -2.0, 1.6)
 
+# ------------------------------------------------------------------ stop 5
+## The town outside (scripts/town.gd): cheap MultiMeshes; its lights go out as the robot rides past.
+func _build_town() -> void:
+	town = Town.new()
+	add_child(town)
+	town.build()
+
+## E at the coat hanger by the mug: up onto it, then the ride, seen through the robot's eyes.
+func _zipline_grab() -> void:
+	var zip: Zipline = $Stop5/Zipline
+	player.locked = true
+	player.hanging = true
+	player._face_yaw = -PI / 2  # facing west, down the line
+	_zip_charge0 = player.charge
+	player.launch_squash()
+	await _arc(player.global_position, zip.rider_pos(), 0.5, 0.45)
+	_fp_cam = Camera3D.new()
+	add_child(_fp_cam)
+	_fp_cam.fov = _player_cam().fov
+	_fp_from = _player_cam().global_transform
+	_fp_cam.global_transform = _fp_from
+	_fp_cam.make_current()
+	_fp_blend = 0.0
+	_fp_yaw = 0.0
+	await create_tween().tween_property(self, "_fp_blend", 1.0, 0.7).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).finished
+	player.visual.visible = false  # we are inside its head now
+	var layer := CanvasLayer.new()
+	layer.layer = 5
+	add_child(layer)
+	_speed_fx = ColorRect.new()
+	_speed_fx.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_speed_fx.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sm := ShaderMaterial.new()
+	sm.shader = preload("res://shaders/speed_lines.gdshader")
+	sm.set_shader_parameter("amount", 0.0)
+	_speed_fx.material = sm
+	layer.add_child(_speed_fx)
+	for w in zip.wires:
+		w.visible = false
+	zip.clacked.connect(func(): _fp_shake = 1.0)
+	zip.ride(player)
+
+## The robot's eyes on the line: facing the way it travels, a touch down; head turn, sway, shake.
+func _fp_eye() -> Transform3D:
+	var zip: Zipline = $Stop5/Zipline
+	var fwd := zip.direction(zip.u)
+	_fp_fwd = _fp_fwd.slerp(fwd, 0.08) if _fp_fwd != Vector3.ZERO else fwd  # turn smoothly at the corner hooks
+	var yaw := atan2(-_fp_fwd.x, -_fp_fwd.z) + deg_to_rad(_fp_yaw)
+	var pitch := deg_to_rad(-7.0 + sin(_fire_t * 2.3) * 1.0)
+	var level := clampf(1.0 - absf(_fp_yaw) / 60.0, 0.0, 1.0)  # the frame levels out while it turns to look around
+	var roll := (-zip.swing * 0.55 + deg_to_rad(sin(_fire_t * 1.7) * 1.5)) * level + randf_range(-1.0, 1.0) * 0.03 * _fp_shake
+	var eye := player.global_position + Vector3(0, 0.8, 0) + Vector3(randf_range(-1, 1), randf_range(-1, 1), 0) * (0.04 * _fp_shake + 0.012 * _fp_buzz * _fp_buzz)
+	return Transform3D(Basis.from_euler(Vector3(pitch, yaw, roll), EULER_ORDER_YXZ), eye)
+
+## Two slow looks. Crossing the room: time slows and the robot turns its head to the room - the kitchen,
+## the stove, all the familiar things. On the last stretch along the window: it turns to the town outside,
+## where it has lived all its life. Then time runs on.
+func _slow_look(kind: String) -> void:
+	slow_looks += 1
+	slow_look_done = slow_looks >= 2
+	create_tween().set_ignore_time_scale(true).tween_property(Engine, "time_scale", 0.2, 0.6).set_trans(Tween.TRANS_SINE)
+	# one last clear look: the grey low-power veil lifts while it looks around, and comes back after
+	create_tween().set_ignore_time_scale(true).tween_property($PostFX, "loss_cap", 0.12, 1.2)
+	var steps := [["in", -70.0, 1.6, 2.4]] if kind == "in" else [["out", 80.0, 1.6, 2.6]]
+	var env: Environment = $WorldEnvironment.environment
+	var fog0 := [env.fog_density, env.volumetric_fog_density]
+	if kind == "out":  # the room's haze thins so the town's roofs read against the sky
+		create_tween().set_ignore_time_scale(true).tween_property(env, "fog_density", 0.0008, 1.4)
+		create_tween().set_ignore_time_scale(true).tween_property(env, "volumetric_fog_density", 0.0006, 1.4)
+	for step in steps:  # what, head turn (deg; + = left), turn s, hold s (real time)
+		await create_tween().set_ignore_time_scale(true).tween_property(self, "_fp_yaw", step[1], step[2]) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).finished
+		fp_phase = step[0]
+		await get_tree().create_timer(step[3], true, false, true).timeout
+		fp_phase = ""
+	create_tween().set_ignore_time_scale(true).tween_property(Engine, "time_scale", 1.0, 1.2).set_trans(Tween.TRANS_SINE)
+	create_tween().set_ignore_time_scale(true).tween_property($PostFX, "loss_cap", 1.0, 2.5)
+	if kind == "out":
+		create_tween().set_ignore_time_scale(true).tween_property(env, "fog_density", fog0[0], 2.5)
+		create_tween().set_ignore_time_scale(true).tween_property(env, "volumetric_fog_density", fog0[1], 2.5)
+	await create_tween().set_ignore_time_scale(true).tween_property(self, "_fp_yaw", 0.0, 1.3) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).finished
+	Engine.time_scale = 1.0
+
+## The end of the line, by the bedroom door: back to third person, let go onto the sill, last cell left.
+func _zipline_end() -> void:
+	player.visual.visible = true
+	if _speed_fx:
+		_speed_fx.get_parent().queue_free()
+		_speed_fx = null
+	for w in $Stop5/Zipline.wires:
+		w.visible = true
+	player.hanging = false
+	var d: Vector3 = $BreakerLook.global_position - player.global_position
+	player.cam_pivot.rotation.y = atan2(-d.x, -d.z)  # the robot's own camera, facing the breaker box
+	player.spring.rotation.x = deg_to_rad(-8.0)
+	await get_tree().process_frame
+	_fp_from = _fp_cam.global_transform
+	var cam := _fp_cam
+	_fp_cam = null
+	var pcam := _player_cam()
+	await create_tween().tween_method(func(t: float): cam.global_transform = _fp_from.interpolate_with(pcam.global_transform, t), 0.0, 1.0, 0.9) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).finished
+	pcam.make_current()
+	cam.queue_free()
+	player.velocity = Vector3.ZERO
+	player.locked = false
+	zip_done = true
+	await _wait(0.6)
+	Game.set_checkpoint($Checkpoints/SillEnd)
+
+# ------------------------------------------------------------------ stop 6: the finale and the ending
+## Holding E at the breaker: the last charge flows out of the robot into the box; the lever creeps up.
+func _breaker_progress(f: float) -> void:
+	if not finale_started:
+		finale_started = true
+		player.locked = true  # no way back now
+		_finale_c0 = player.charge
+		player._face_yaw = -PI / 2  # facing the box on the wall
+		$Stop5/Zipline.hanger.visible = false
+		var fc := Camera3D.new()  # from the room side: the robot, the box, the wire running up the wall
+		fc.name = "FinaleCam"
+		add_child(fc)
+		fc.fov = 55.0
+		var from_t := _player_cam().global_transform
+		var to_t := Transform3D(Basis.IDENTITY, Vector3(BW_M + 0.62, 1.32, 2.62) * K).looking_at(Vector3(BW_M + 0.05, 1.2, 2.24) * K)
+		fc.global_transform = from_t
+		fc.make_current()
+		create_tween().tween_method(func(t: float): fc.global_transform = from_t.interpolate_with(to_t, t), 0.0, 1.0, 1.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		_spark = OmniLight3D.new()
+		_spark.light_color = Color(0.5, 1.0, 0.95)
+		_spark.omni_range = 0.4 * K
+		add_child(_spark)
+		_spark.global_position = (player.global_position + $BreakerLook.global_position) / 2.0 + Vector3(0, 0.3, 0)
+	player.charge = lerpf(_finale_c0, 0.0, f)
+	player.charge_changed.emit(player.charge)
+	$Stop6/BreakerLever.rotation_degrees.z = lerpf(0.0, 120.0, f * f)
+	_spark.light_energy = (1.0 + 2.5 * f) * randf_range(0.6, 1.0)
+
+## CLICK. The power is back: lights on from the breaker outwards, the grey veil lifts, the old things glow,
+## the robot's eyes go dark. Then the ending.
+func _breaker_done() -> void:
+	finale_done = true
+	var lever := create_tween()
+	lever.tween_property($Stop6/BreakerLever, "rotation_degrees:z", 180.0, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	$Stop6/BreakerFault.visible = false
+	$BreakerFaultLight.light_energy = 0.0
+	$Stop6/BreakerOk.visible = true
+	if _spark:
+		_spark.light_color = Color(1, 1, 1)
+		var flash := create_tween()
+		flash.tween_property(_spark, "light_energy", 8.0, 0.05)
+		flash.tween_property(_spark, "light_energy", 0.0, 0.5)
+	player.charge = 0.0
+	player.charge_changed.emit(0.0)
+	player.powered_down = true
+	player.alive = false  # slumps against the box (no "died": nothing respawns any more)
+	create_tween().tween_property($PostFX, "loss_cap", 0.0, 2.5)
+	town.set_all(false)
+	_lights_on()
+	await _wait(5.0)
+	_ending_camera()
+
+func _lights_on() -> void:
+	await _wait(0.6)
+	var bp: Vector3 = $BreakerLook.global_position
+	var lamps := []
+	for i in range(1, 11):
+		lamps.append(get_node("HouseLight%d" % i))
+	lamps.sort_custom(func(x, y): return x.global_position.distance_to(bp) < y.global_position.distance_to(bp))
+	var env: Environment = $WorldEnvironment.environment
+	create_tween().tween_property(env, "ambient_light_energy", 0.5, 3.0)
+	for l in lamps:  # one by one, outwards: each flickers on
+		var tw := create_tween()
+		tw.tween_property(l, "light_energy", 1.6, 0.06)
+		tw.tween_property(l, "light_energy", 0.3, 0.06)
+		tw.tween_property(l, "light_energy", 1.3, 0.25)
+		await _wait(0.28)
+	for n in ["WindowSpill1", "WindowSpill2", "WindowSpill3"]:
+		create_tween().tween_property(get_node(n), "light_energy", 4.0, 1.5)
+	# the old things the robot found on its way glow warm
+	create_tween().tween_property($Stop3/TimeBoxGlow, "light_energy", 1.6, 1.5)
+	create_tween().tween_property($Stop4/MugGlow, "light_energy", 1.4, 1.5)
+	create_tween().tween_property($DeskLampGlow, "light_energy", 1.8, 1.5)
+	for pos in [$Stop0/PhotoFrame.global_position + Vector3(0, 0.6, 0), maze.note.global_position + Vector3(0, 0.6, 0)]:
+		var g := OmniLight3D.new()
+		g.light_color = Color(1, 0.72, 0.38)
+		g.omni_range = 0.6 * K
+		add_child(g)
+		g.global_position = pos
+		create_tween().tween_property(g, "light_energy", 1.4, 1.5)
+
+## The ending, one take: the robot by the box; back through the bedroom door; the old man asleep; out of
+## the bedroom window; up over the town, all dark - only this house is lit. Fade, title.
+func _ending_camera() -> void:
+	var pc: Camera3D = get_node_or_null("FinaleCam") if has_node("FinaleCam") else _player_cam()
+	var cam := Camera3D.new()
+	add_child(cam)
+	cam.fov = 62.0
+	cam.global_transform = pc.global_transform
+	cam.make_current()
+	var start := pc.global_position / K
+	var pts := [start, Vector3(-0.02, 1.2, 2.45), Vector3(0.5, 1.35, 1.55), Vector3(-0.6, 1.25, 1.35),
+		Vector3(-3.0, 1.15, -1.0), Vector3(-3.2, 1.45, 1.7), Vector3(-3.2, 1.55, 3.5), Vector3(-2.0, 6.0, 12.0), Vector3(6.0, 11.0, 34.0), Vector3(11.0, 16.0, 62.0)]
+	var looks := [start - pc.global_basis.z, Vector3(-0.32, 1.12, 2.22), Vector3(-0.4, 1.0, 1.35), Vector3(-2.6, 0.9, -0.8),
+		Vector3(-4.05, 0.72, -2.35), Vector3(-3.2, 1.55, 2.65), Vector3(-3.2, 2.2, 14.0), Vector3(0.3, 0.9, 0.0), Vector3(0.2, 3.0, 0.0), Vector3(0.0, 13.0, 0.0)]
+	var secs := [2.5, 3.0, 2.6, 3.6, 3.6, 2.6, 4.5, 5.0, 6.5]
+	var holds := [0.0, 1.6, 0.0, 0.0, 2.4, 0.0, 0.0, 0.0, 0.0, 3.5]
+	var curve := Curve3D.new()
+	for i in pts.size():
+		var prev: Vector3 = pts[maxi(i - 1, 0)]
+		var next: Vector3 = pts[mini(i + 1, pts.size() - 1)]
+		var tan := (next - prev) * 0.22 * K
+		curve.add_point(pts[i] * K, -tan, tan)
+	var roof := _roof()
+	for i in secs.size():
+		if i == 5:
+			roof.visible = true  # from here on we see the house from outside
+			var env: Environment = $WorldEnvironment.environment
+			create_tween().tween_property(env, "fog_density", 0.0004, 3.0)
+			create_tween().tween_property(env, "volumetric_fog_density", 0.0004, 3.0)
+		_end_cam = cam
+		_end_curve = curve
+		_end_seg = i
+		_end_la = looks[i] * K
+		_end_lb = looks[i + 1] * K
+		await create_tween().tween_method(_ending_frame, 0.0, 1.0, secs[i]).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).finished
+		ending_stage = i + 1
+		if holds[i + 1] > 0.0:
+			await _wait(holds[i + 1] if i + 1 < pts.size() - 1 else 0.3)
+	# the title over the lit house in the dark town
+	var layer := CanvasLayer.new()
+	layer.layer = 50
+	add_child(layer)
+	var title := Label.new()
+	title.text = "Last Charge"
+	title.add_theme_font_size_override("font_size", 64)
+	title.add_theme_color_override("font_color", Color(1.0, 0.88, 0.65))
+	title.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)  # under the lit house, not over it
+	title.offset_top = -190.0
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	title.grow_vertical = Control.GROW_DIRECTION_BOTH
+	title.modulate.a = 0.0
+	layer.add_child(title)
+	await create_tween().tween_property(title, "modulate:a", 1.0, 2.0).finished
+	ending_stage = 99
+	await _wait(3.5)
+	ending_done = true
+	if not "--autotest" in OS.get_cmdline_user_args():
+		Game.to_title()
+
+func _ending_frame(t: float) -> void:
+	var pos := _end_curve.sample(_end_seg, t)
+	_end_cam.global_transform = Transform3D(Basis.IDENTITY, pos).looking_at(_end_la.lerp(_end_lb, smoothstep(0.0, 1.0, t)))
+
+## A plain pitched roof over the whole house, only for the ending's shots from outside (the bedroom has no
+## ceiling, and the overhead debug shots look into it).
+func _roof() -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var pm := PrismMesh.new()
+	pm.size = Vector3(5.75, 1.1, 9.75) * K   # across x after the turn below: the ridge runs east-west
+	mi.mesh = pm
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color(0.34, 0.24, 0.2)
+	m.roughness = 0.9
+	mi.material_override = m
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+	mi.global_position = Vector3(0, 2.76 + 0.55, 0) * K
+	mi.rotation.y = PI / 2
+	mi.visible = false
+	return mi
+
 # ------------------------------------------------------------------ self test
 func _wait(s: float) -> void:
 	await get_tree().create_timer(s).timeout
@@ -680,6 +1051,38 @@ func _shot(dir: String, n: String) -> void:
 		return
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(dir.path_join(n))
+
+## Shots of the outside with the game's own lighting, fog and post effects (no debug brightening).
+func _views(dir: String) -> void:
+	var cam := Camera3D.new()
+	add_child(cam)
+	cam.fov = 62.0
+	var views := [
+		["view_north_nightstand.png", Vector3(-3.0, 0.8, -2.15), Vector3(-2.95, 1.75, -4.0), Vector3(-3.0, 0.75, -2.0)],
+		["view_north_bed.png", Vector3(-2.1, 1.25, -0.6), Vector3(-3.1, 1.45, -2.7), Vector3(-2.1, 0.6, -0.6)],
+		["view_south_sill.png", Vector3(1.4, 1.45, 2.3), Vector3(2.2, 1.1, 12.0), Vector3(1.5, 0.95, 2.4)],
+		["view_south_wide.png", Vector3(-0.6, 1.4, 2.4), Vector3(4.0, 1.3, 9.0), Vector3(-0.6, 0.95, 2.4)],
+		["view_house_outside.png", Vector3(9.0, 2.2, 15.0), Vector3(0, 1.5, 0), Vector3(1.5, 0.95, 2.4)],
+		["view_aerial_lit.png", Vector3(11, 16, 62), Vector3(0, 13, 0), Vector3(1.5, 0.95, 2.4)],
+		["view_moon_window.png", Vector3(-3.0, 0.85, -1.2), Vector3(-3.3, 1.6, -2.7), Vector3(-2.1, 0.6, -0.6)],
+	]
+	for v in views:
+		player.global_position = v[3] * K
+		cam.position = v[1] * K
+		cam.look_at(v[2] * K)
+		cam.make_current()
+		await _wait(0.6)
+		await _shot(dir, v[0])
+		print("VIEW %s fps=%d draws=%d prims=%d" % [v[0], Engine.get_frames_per_second(),
+			Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)])
+	_roof().visible = true
+	town.set_all(false)
+	await _wait(1.5)
+	cam.position = Vector3(11, 16, 62) * K
+	cam.look_at(Vector3(0, 13, 0) * K)
+	await _wait(0.3)
+	await _shot(dir, "view_aerial_dark.png")
+	print("VIEWS lights=", town.light_count())
 
 func _cam_shot(dir: String, n: String, pos: Vector3, look: Vector3, ortho := 0.0) -> void:
 	var cam := Camera3D.new()
@@ -979,6 +1382,44 @@ func _autotest_tv(dir: String) -> Dictionary:
 	await _shot(dir, "room_s3_time_box.png")
 	return s3
 
+## Rides the toy train for 3 s: per-physics-frame steps of the carriage (should be even) and of the rider.
+func _train_smoothness() -> Dictionary:
+	var train: Node3D = $Stop1/Train
+	var out := {}
+	for mode in ["empty", "riding", "in_path"]:
+		var riding: bool = mode == "riding"
+		var pos := Vector3(-2.7 * K, 2.0, -2.5 * K)
+		if riding:
+			pos = train.global_position + Vector3(0, 0.6, 0)
+		elif mode == "in_path":  # standing on the track just ahead of the carriage
+			var a: float = train._a + 0.45
+			pos = train.center + Vector3(cos(a), 0, sin(a)) * train.radius + Vector3(0, 0.1, 0)
+		player.teleport(pos)
+		await _wait(0.6)
+		var steps := []
+		var rsteps := []
+		var last := train.global_position
+		var rlast := player.global_position
+		var f0 := Engine.get_physics_frames()
+		while steps.size() < 180:
+			await get_tree().physics_frame
+			if Engine.get_physics_frames() == f0:
+				continue
+			f0 = Engine.get_physics_frames()
+			steps.append((train.global_position - last).length())
+			rsteps.append((player.global_position - rlast).length())
+			last = train.global_position
+			rlast = player.global_position
+		var key: String = mode
+		out[key + "_train_step_min"] = snappedf(steps.min(), 0.0001)
+		out[key + "_train_step_max"] = snappedf(steps.max(), 0.0001)
+		out[key + "_rider_step_min"] = snappedf(rsteps.min(), 0.0001)
+		out[key + "_rider_step_max"] = snappedf(rsteps.max(), 0.0001)
+		out[key + "_on_train"] = player.is_on_floor() and player.global_position.y > 0.4
+		var mean: float = steps.reduce(func(acc, v): return acc + v, 0.0) / steps.size()
+		out[key + "_train_jitter"] = snappedf(steps.reduce(func(acc, v): return acc + absf(v - mean), 0.0) / steps.size(), 0.00001)
+	return out
+
 ## The kitchen's self test (part 1): reveal, climb, the gap, the microwave bridge, the toaster lift, hazards.
 func _autotest_kitchen(dir: String) -> Dictionary:
 	var s4 := {}
@@ -1192,12 +1633,159 @@ func _float_to(target: Vector3) -> void:
 		t += 1.0 / 60.0
 	_set_axis(0, 0)
 
+## The clothesline's self test: grab, ride (hop two pegs, miss one), the slow look, land by the breaker box.
+func _autotest_sill(dir: String) -> Dictionary:
+	var s5 := {}
+	kitchen_revealed = true  # (no kitchen intro cutscene running into the ride)
+	_skip_to_kitchen()
+	await _wait(0.6)
+	player.revive(0.35)
+	player.teleport(Vector3(4.35 * K, 0.9 * K + 0.05, 2.33 * K))
+	Game.set_checkpoint($Checkpoints/SinkSouth)
+	await _wait(0.6)
+	var zip: Zipline = $Stop5/Zipline
+	s5["grab_in_range"] = $Stop5/ZiplineGrab.player_in_range()
+	await _cam_shot(dir, "room_s5_overview.png", Vector3(1.8 * K, 1.9 * K, 0.4 * K), Vector3(2.0 * K, 1.1 * K, 2.6 * K))
+	_act("interact", true)
+	await _wait(0.1)
+	_act("interact", false)
+	await _wait(1.4)
+	s5["on_line"] = zip.riding and player.hanging
+	s5["first_person"] = _fp_cam != null and get_viewport().get_camera_3d() == _fp_cam and not player.visual.visible
+	await _shot(dir, "room_s5_ride_start.png")
+	var lights0 := town.lit_count()
+	var t0 := Time.get_ticks_msec()
+	var peg := 0
+	var shots := 0
+	var ax := 0.0
+	var got_in := false
+	var got_out := false
+	while not zip_done and Time.get_ticks_msec() - t0 < 90000:
+		# swing away from whatever hangs ahead (about 0.8 s ahead), otherwise let the pendulum settle
+		ax = 0.0
+		for hn in zip.hang_nodes:
+			var hu: float = hn.get_meta("u")
+			var secs_to: float = (hu - zip.u) * zip._len / maxf(zip.profile(zip.u), 0.1)
+			if secs_to > -0.05 and secs_to < 0.8:
+				ax = -float(hn.get_meta("side"))
+		_set_axis(ax, 0)
+		if peg < zip.pegs.size():
+			var secs_left: float = (zip.pegs[peg] - zip.u) * zip._len / maxf(zip.profile(zip.u) * zip._mult, 0.1)
+			if secs_left < 0.2:
+				if peg != 1:  # hop pegs 1 and 3, miss the middle one
+					_act("jump", true)
+					await get_tree().physics_frame
+					_act("jump", false)
+				peg += 1
+		if zip.u > 0.35 and shots == 0:
+			shots = 1
+			await _shot(dir, "room_s5_ride_fast.png")
+		if fp_phase == "out" and not got_out:
+			got_out = true
+			await _shot(dir, "room_s5_look_out.png")
+			s5["look_out_dir"] = str((-get_viewport().get_camera_3d().global_basis.z).snapped(Vector3.ONE * 0.01))
+			s5["look_out_at"] = str((get_viewport().get_camera_3d().global_position / K).snapped(Vector3.ONE * 0.01))
+		if fp_phase == "in" and not got_in:
+			got_in = true
+			await _shot(dir, "room_s5_look_in.png")
+			s5["look_in_dir"] = str((-get_viewport().get_camera_3d().global_basis.z).snapped(Vector3.ONE * 0.01))
+		await get_tree().process_frame
+	_set_axis(0, 0)
+	s5["ride_real_seconds"] = snappedf((Time.get_ticks_msec() - t0) / 1000.0, 0.1)
+	s5["ride_game_seconds"] = snappedf(zip.ride_seconds, 0.1)
+	s5["hops"] = zip.hops
+	s5["bumps"] = zip.bumps
+	s5["dodged"] = zip.hang_nodes.size() - zip.bumps
+	s5["clacks"] = zip.clacks
+	s5["slow_looks"] = slow_looks
+	s5["slow_look"] = slow_look_done and min_time_scale < 0.3 and got_in and got_out
+	s5["time_scale_back"] = is_equal_approx(Engine.time_scale, 1.0)
+	s5["town_lights_went_out"] = "%d of %d" % [lights0 - town.lit_count(), lights0]
+	await _wait(1.5)
+	s5["landed_on_shelf"] = zip_done and player.is_on_floor() and absf(player.global_position.y - 1.06 * K) < 0.15
+	s5["walk_to_box_respawns"] = await _walk_path([Vector2(-0.27, 2.28)])
+	s5["by_the_breaker_box"] = player.is_on_floor() and player.global_position.distance_to(Vector3(-0.27, 1.06, 2.28) * K) < 0.3
+	s5["checkpoint"] = Game.checkpoint.name
+	s5["charge_end"] = snappedf(player.charge, 0.01)
+	s5["control_back"] = not player.locked and get_viewport().get_camera_3d() == _player_cam() and player.visual.visible
+	await _shot(dir, "room_s5_landed.png")
+	return s5
+
+## The finale's self test: hold E at the breaker (charge -> 0, lever up), the lights, the ending's one take.
+func _autotest_finale(dir: String) -> Dictionary:
+	var s6 := {}
+	kitchen_revealed = true
+	_skip_to_kitchen()
+	await _wait(0.4)
+	town.set_all(false)  # (they went out while it rode the clothesline)
+	zip_done = true
+	player.revive(0.12)
+	player.teleport($FinaleStand.global_position + Vector3(0, 0.05, 0))
+	Game.set_checkpoint($Checkpoints/SillEnd)
+	await _wait(1.0)
+	s6["prompt_in_range"] = $Stop6/BreakerCharge.player_in_range()
+	await _shot(dir, "room_s6_before.png")
+	_act("interact", true)
+	await _wait(2.2)
+	s6["charge_mid"] = snappedf(player.charge, 0.01)
+	await _shot(dir, "room_s6_pouring.png")
+	await _wait(2.2)
+	_act("interact", false)
+	s6["breaker_on"] = finale_done
+	s6["charge_zero"] = player.charge <= 0.001
+	s6["robot_dark"] = player.powered_down
+	await _wait(3.4)
+	var lit := 0
+	for i in range(1, 11):
+		if get_node("HouseLight%d" % i).light_energy > 0.5:
+			lit += 1
+	s6["house_lights_on"] = "%d of 10" % lit
+	s6["grey_lifted"] = $PostFX.loss_cap < 0.05
+	await _shot(dir, "room_s6_lights_on.png")
+	var shots := {1: "room_s6_end_robot.png", 4: "room_s6_end_bedside.png", 6: "room_s6_end_window.png", 9: "room_s6_end_town.png", 99: "room_s6_end_title.png"}
+	var t0 := Time.get_ticks_msec()
+	var seen := {}
+	while not ending_done and Time.get_ticks_msec() - t0 < 60000:
+		if shots.has(ending_stage) and not seen.has(ending_stage):
+			seen[ending_stage] = true
+			await _wait(0.3 if ending_stage != 99 else 1.0)
+			await _shot(dir, shots[ending_stage])
+		await get_tree().process_frame
+	s6["ending_seconds"] = snappedf((Time.get_ticks_msec() - t0) / 1000.0, 0.1)
+	s6["ending_done"] = ending_done
+	s6["town_dark"] = town.lit_count() == 0
+	s6["town_lights"] = town.light_count()
+	await _cam_shot(dir, "room_s6_town_debug.png", Vector3(1.0, 9.0, 16.0) * K, Vector3(0.5, 0.5, 4.0) * K)
+	return s6
+
 func _autotest() -> void:
 	var dir := OS.get_user_data_dir()
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--shots="):
 			dir = a.substr(8)
 	var r := {}
+	if "--train-test" in OS.get_cmdline_user_args():  # debug: is the toy train smooth with the robot riding it?
+		r["train"] = await _train_smoothness()
+		print("ROOMTEST ", JSON.stringify(r))
+		get_tree().quit()
+		return
+	if "--from=views" in OS.get_cmdline_user_args():  # debug: the outside, as seen from the windows and the ending
+		await _wait(1.5)
+		await _views(dir)
+		get_tree().quit()
+		return
+	if "--from=finale" in OS.get_cmdline_user_args():  # only the breaker box and the ending
+		await _wait(1.0)
+		r["stop6"] = await _autotest_finale(dir)
+		print("ROOMTEST ", JSON.stringify(r))
+		get_tree().quit()
+		return
+	if "--from=sill" in OS.get_cmdline_user_args():  # only the clothesline
+		await _wait(1.0)
+		r["stop5"] = await _autotest_sill(dir)
+		print("ROOMTEST ", JSON.stringify(r))
+		get_tree().quit()
+		return
 	if "--from=kitchen" in OS.get_cmdline_user_args():  # only the kitchen
 		await _wait(1.0)
 		r["stop4"] = await _autotest_kitchen(dir)
@@ -1224,14 +1812,14 @@ func _autotest() -> void:
 	s0["pill_to_books(7.74)"] = await _hop(Vector3(-3.07, 0, -2.55), top + 0.8, PI / 2)
 	await _wait(1.6)
 	s0["reveal"] = revealed
-	player.teleport(Vector3(-3.05 * K, top + 0.05, -2.33 * K))
+	player.teleport($Stop0/FrameInteract.global_position + Vector3(0, .04, .45))
 	await _wait(0.4)
 	_act("interact", true)
 	await _wait(0.1)
 	_act("interact", false)
 	await _wait(1.0)
 	s0["frame_up"] = frame_up
-	player.teleport(Vector3(-3.0 * K, top + 0.05, -2.33 * K))
+	player.teleport($Stop0/LooseBook.global_position + Vector3(-.14 * K, .05, 0))
 	player.cam_pivot.rotation.y = -PI / 2
 	await _wait(0.4)
 	_act("move_fwd", true)
@@ -1248,10 +1836,11 @@ func _autotest() -> void:
 	await _shot(dir, "room_s1_landed.png")
 	# ---- stop 1
 	var s1 := {}
-	s1["plush_to_blockstack(1.8)"] = await _hop(Vector3(-2.72, 0, -2.40), 0.9, PI)
-	s1["blockstack_to_truck(1.26)"] = await _hop(Vector3(-2.71, 0, -2.27), 1.85, PI)
+	var box_offset_m: float = float(get_meta("toybox_offset_m", 0.0))
+	s1["plush_to_blockstack(1.8)"] = await _hop(Vector3(-2.72 + box_offset_m, 0, -2.40), 0.9, PI)
+	s1["blockstack_to_truck(1.26)"] = await _hop(Vector3(-2.71 + box_offset_m, 0, -2.27), 1.85, PI)
 	# box floor = the dark -> respawn
-	player.teleport(Vector3(-2.4 * K, 0.2, -2.4 * K))
+	player.teleport(Vector3((-2.4 + box_offset_m) * K, 0.2, -2.4 * K))
 	await _wait(1.6)
 	s1["dark_floor_respawns"] = player.global_position.distance_to($Checkpoints/ToyBox.global_position) < 1.0
 	# ride the train
@@ -1263,7 +1852,7 @@ func _autotest() -> void:
 	s1["train_carries"] = player.is_on_floor() and player.global_position.distance_to(p0) > 0.4 and player.global_position.y > 0.4
 	await _shot(dir, "room_s1_train.png")
 	# jack-in-the-box
-	player.teleport(Vector3(-2.28 * K, 0.95, -1.95 * K))
+	player.teleport(Vector3((-2.28 + box_offset_m) * K, 0.95, -1.95 * K))
 	await _wait(0.6)
 	await _shot(dir, "room_s1_jack.png")
 	await _wait(1.2)
@@ -1283,16 +1872,16 @@ func _autotest() -> void:
 	await _wait(0.3)
 	s1["big_block_pushed_m"] = snappedf((big.global_position.x - bx0) / K, 0.001)
 	# stairs (blocks set in their final places) -> the big robot's shoulder -> its head
-	big.global_position = Vector3(-1.995 * K, 0.301 * K, -2.47 * K)
-	$Stop1/PushBlockSmall.global_position = Vector3(-2.1035 * K, 0.301 * K, -2.47 * K)
+	big.global_position = Vector3((-1.995 + box_offset_m) * K, 0.301 * K, -2.47 * K)
+	$Stop1/PushBlockSmall.global_position = Vector3((-2.1035 + box_offset_m) * K, 0.301 * K, -2.47 * K)
 	await _wait(0.3)
-	s1["shelf_to_small(3.31)"] = await _hop(Vector3(-2.20, 0, -2.47), 2.75, -PI / 2, 0.3, 0.0)
-	s1["small_to_big(4.06)"] = await _hop(Vector3(-2.1035, 0, -2.47), 3.4, -PI / 2, 0.3, 0.0)
-	s1["big_to_shoulder(4.5)"] = await _hop(Vector3(-1.995, 0, -2.42), 4.12, -PI / 2, 0.3, 0.05)
-	s1["shoulder_to_head(5.22)"] = await _hop(Vector3(-1.80, 0, -2.40), 4.55, PI, 0.3, 0.05)
+	s1["shelf_to_small(3.31)"] = await _hop(Vector3(-2.20 + box_offset_m, 0, -2.47), 2.75, -PI / 2, 0.3, 0.0)
+	s1["small_to_big(4.06)"] = await _hop(Vector3(-2.1035 + box_offset_m, 0, -2.47), 3.4, -PI / 2, 0.3, 0.0)
+	s1["big_to_shoulder(4.5)"] = await _hop(Vector3(-1.995 + box_offset_m, 0, -2.42), 4.12, -PI / 2, 0.3, 0.05)
+	s1["shoulder_to_head(5.22)"] = await _hop(Vector3(-1.80 + box_offset_m, 0, -2.40), 4.55, PI, 0.3, 0.05)
 	await _shot(dir, "room_s1_head.png")
 	# the exit machine: charge the car on the head, drop onto the seesaw's cyan end, get launched
-	player.teleport(Vector3(-1.76 * K, 5.3, -2.15 * K))
+	player.teleport(Vector3((-1.76 + box_offset_m) * K, 5.3, -2.15 * K))
 	await _wait(0.4)
 	var c0: float = player.charge
 	_act("interact", true)
@@ -1300,7 +1889,7 @@ func _autotest() -> void:
 	_act("interact", false)
 	s1["car_charge_cost"] = snappedf(c0 - player.charge, 0.01)
 	s1["machine_running"] = machine_busy
-	player.teleport(Vector3(-2.26 * K, 0.75, -2.20 * K))
+	player.teleport(Vector3((-2.26 + box_offset_m) * K, 0.75, -2.20 * K))
 	await _wait(2.6)
 	await _shot(dir, "room_s1_launch.png")
 	await _wait(3.0)

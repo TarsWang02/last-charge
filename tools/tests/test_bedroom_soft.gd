@@ -53,7 +53,7 @@ func _run() -> void:
     results["installed"]=room.has_meta("bedroom_soft_art_installed")
     for key in ["Bedroom/Pillow","Bedroom/Blanket","People/OldManInBed","People/OldManHead","People/BoyAtDesk","People/BoyHead","Stop1/DollHeadA","Stop1/DollHeadB"]:
         results[key+"_replaced"]=_hidden_proxy(key)
-    results["no_visible_fallback_cushion"]=not room.get_node("Stop1/ImportedArt/LandingCushion").visible
+    results["no_visible_fallback_cushion"]=room.get_node_or_null("Stop1/ImportedArt/LandingCushion")==null
     var uncovered: Array[String]=[]
     for group in ["Bedroom","Stop0","Stop1","Stop2"]:
         for node in room.get_node(group).find_children("*","CSGShape3D",true,false):
@@ -74,7 +74,7 @@ func _run() -> void:
         var head_bounds:=_bounds(room.get_node("Stop1/"+entry[0]+"/Art_porcelain_doll_head"))
         results[entry[0]+"_height_m"]=head_bounds.end.y
         results[entry[0]+"_matches"]=absf(head_bounds.size.y-entry[1])<.001 and absf(head_bounds.end.y-entry[1])<.001
-    results["soft_cushion_top_matches"]=absf(_bounds(room.get_node("Stop1/ImportedArt/Art_soft_landing_cushion")).end.y-.12)<.001
+    results["soft_cushion_removed"]=room.get_node_or_null("Stop1/ImportedArt/Art_soft_landing_cushion")==null
     var count:=room.find_children("Art_*","Node3D",true,false).size()
     load("res://scripts/bedroom_soft_art.gd").install(room)
     results["idempotent"]=room.find_children("Art_*","Node3D",true,false).size()==count

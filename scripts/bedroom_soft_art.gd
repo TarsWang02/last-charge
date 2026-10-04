@@ -43,6 +43,4 @@ static func install(room: Node3D) -> void:
         var proxy: CSGShape3D = stop1.get_node(entry[0])
         _hide(proxy,invisible)
         _add(proxy,"porcelain_doll_head",Vector3(0,-entry[1],0),entry[3],entry[2])
-    stop1.get_node("ImportedArt/LandingCushion").visible = false
-    _add(stop1.get_node("ImportedArt"),"soft_landing_cushion",Vector3(-2.70,.09,-2.50))
     room.set_meta("bedroom_soft_art_installed",true)

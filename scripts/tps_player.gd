@@ -11,7 +11,7 @@ extends CharacterBody3D
 signal charge_changed(charge: float)
 signal died
 
-@export var model_path := "res://assets/models/robot_parts_v2.glb"
+@export var model_path := "res://assets/models/robot_parts_polished.glb"
 @export var robot_height := 0.9
 @export_group("Move")
 @export var speed := 2.8
@@ -59,6 +59,9 @@ var grabbing: Pushable = null
 var top_down := false  ## fixed overhead camera, no mouse look, no jumping (the desk maze)
 var magnet_enabled := false  ## the kitchen switches this on
 var updraft_top := -INF      ## set each physics frame by the level while the robot is in rising steam (units)
+var hanging := false         ## scripted hanging (the clothesline): claws up, like the magnet
+var head_look := NAN         ## scripted head turn (degrees, + = to the robot's left); NAN = normal
+var powered_down := false    ## the ending: it has given its last charge; eyes and cells go dark
 var clinging: Node3D = null  ## the steel piece the robot hangs under
 var magnet_seconds := 0.0    ## time spent hanging (for tuning / the self test)
 var _cling_y := 0.0
@@ -476,15 +479,19 @@ func _animate(delta: float, yaw_rate: float) -> void:
 	lean.scale = Vector3(1.0 / sqrt(sq), sq, 1.0 / sqrt(sq))
 	lean.position.y = sin(_t * 40.0) * 0.0025 * move if on_floor else 0.0  # motor vibration
 
-	rig.set_charge(charge, _t)
+	if powered_down:
+		rig.power_off()
+		_glow.light_energy = 0.0
+	else:
+		rig.set_charge(charge, _t)
 	if not rig.ok:
 		return
 	var turn := clampf(rad_to_deg(yaw_rate) * 0.25, -35.0, 35.0)  # head leads into turns
 	if not alive:
 		rig.set_targets(0.0, 8.0, 32.0, -18.0, -18.0, 8.0, 8.0)
-	elif clinging != null:  # hanging by both claws, body swinging a little as it moves
+	elif clinging != null or hanging:  # hanging by both claws, body swinging a little as it moves
 		var sway := sin(_t * 6.0) * 6.0 * move
-		rig.set_targets(turn, 0.0, -18.0, 8.0, 8.0, 160.0 + sway, 160.0 - sway)
+		rig.set_targets(turn if is_nan(head_look) else head_look, 0.0, -18.0 if is_nan(head_look) else -4.0, 8.0, 8.0, 160.0 + sway, 160.0 - sway)
 	elif grabbing != null:  # both claws forward on the block, head down with effort
 		var strain := sin(_t * 9.0) * 3.0 * move
 		rig.set_targets(0.0, strain, 14.0, 12.0, 12.0, 75.0, 75.0)

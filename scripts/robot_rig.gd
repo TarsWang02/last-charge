@@ -60,8 +60,8 @@ var eye_offset := Vector3(0.105, 0.155, 0.236)
 ## from the teal texture faces with tools/blender/measure_cells.py. The pack is slightly slanted.
 var cell_surfaces: Array[Vector3] = [Vector3(-0.1355, 0.4229, -0.1316), Vector3(-0.068, 0.4249, -0.1423),
 	Vector3(0.0006, 0.4266, -0.1572), Vector3(0.0757, 0.4233, -0.1778), Vector3(0.1492, 0.4229, -0.191)]
-var cell_radius := 0.031
-var cell_height := 0.118
+var cell_radius := 0.022
+var cell_height := 0.09
 var _belt_dist := {"L": 0.0, "R": 0.0}
 
 func _init(model: Node) -> void:
@@ -107,20 +107,20 @@ func _emissive(c: Color, energy: float) -> StandardMaterial3D:
 
 func _make_eyes() -> void:
 	var disc := CylinderMesh.new()
-	disc.top_radius = 0.04
-	disc.bottom_radius = 0.04
+	disc.top_radius = 0.032
+	disc.bottom_radius = 0.032
 	disc.height = 0.004
 	for sx in [-1, 1]:
 		var e := MeshInstance3D.new()
 		e.mesh = disc
-		e.material_override = _emissive(CYAN, 5.0)
+		e.material_override = _emissive(CYAN, 2.2)
 		e.position = Vector3(eye_offset.x * sx, eye_offset.y, eye_offset.z)
 		e.rotation_degrees.x = 90
 		head.add_child(e)
 		eyes.append(e)
 	eye_light = OmniLight3D.new()
 	eye_light.light_color = CYAN
-	eye_light.light_energy = 0.8
+	eye_light.light_energy = 0.25
 	eye_light.omni_range = 1.0
 	eye_light.position = Vector3(0, eye_offset.y, eye_offset.z + 0.12)
 	head.add_child(eye_light)
@@ -133,7 +133,7 @@ func _make_cells() -> void:
 	for i in CELL_COUNT:
 		var c := MeshInstance3D.new()
 		c.mesh = cyl
-		c.material_override = _emissive(CYAN, 3.0)
+		c.material_override = _emissive(CYAN, 1.15)
 		# axis sits one radius inside the measured surface, so the cylinder wraps the modelled cell
 		var p := cell_surfaces[i]
 		c.position = Vector3(p.x, p.y, p.z + cell_radius - 0.003)
@@ -157,8 +157,21 @@ func set_charge(charge: float, time: float) -> void:
 	var open := lerpf(0.35, 1.0, clampf(charge * 1.4, 0.0, 1.0))
 	for e in eyes:
 		e.scale = Vector3(1.0, 1.0, open)
-		(e.material_override as StandardMaterial3D).emission_energy_multiplier = 5.0 * open
-	eye_light.light_energy = 0.8 * open
+		(e.material_override as StandardMaterial3D).emission_energy_multiplier = 2.2 * open
+	eye_light.light_energy = 0.25 * open
+
+## Out of charge for good (the ending): every cell dark, eyes shut and unlit.
+func power_off() -> void:
+	if not ok:
+		return
+	for c in cells:
+		var m: StandardMaterial3D = c.material_override
+		m.albedo_color = Color(0.05, 0.06, 0.07)
+		m.emission_enabled = false
+	for e in eyes:
+		e.scale = Vector3(1.0, 1.0, 0.3)
+		(e.material_override as StandardMaterial3D).emission_energy_multiplier = 0.0
+	eye_light.light_energy = 0.0
 
 ## Set spring targets (degrees). Arms: lift = sideways, swing = forward(+)/back(-).
 func set_targets(yaw: float, tilt: float, nod: float, l_lift: float, r_lift: float, l_swing: float, r_swing: float) -> void:

@@ -79,6 +79,10 @@ static func install(room: Node3D) -> void:
  _hide(shoebox,invisible)
  _add(shoebox,"shoebox",Vector3(0,-.15,0))
  for key in ["BoxFloor","BoxWallW","BoxWallE","BoxWallN","BoxWallS","FlapN","FlapE","FlapWTorn"]:
-  _hide(stop1.get_node(key),invisible)
- _add(stop1,"moving_box",Vector3(-2.24,0,-2.20))
+  var proxy=stop1.get_node_or_null(key)
+  if proxy:_hide(proxy,invisible)
+ var box=_add(stop1,"moving_box",Vector3(-2.24,0,-2.20))
+ # Remove the tall east lid, which obscured the head-top mechanism.
+ var lid=box.find_child("FlapE",true,false)
+ if lid:lid.free()
  room.set_meta("tripo_structure_art_installed",true)

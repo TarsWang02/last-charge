@@ -11,7 +11,9 @@
 [ext_resource type="Script" path="res://scripts/desk_maze.gd" id="maze"]
 [ext_resource type="Script" path="res://scripts/tv_screen.gd" id="tv"]
 [ext_resource type="Script" path="res://scripts/components/hazard.gd" id="hazard"]
+[ext_resource type="Script" path="res://scripts/zipline.gd" id="zip"]
 [ext_resource type="PackedScene" path="res://scenes/post_fx.tscn" id="post"]
+[ext_resource type="Shader" path="res://shaders/night_sky.gdshader" id="nightsky"]
 
 [sub_resource type="StandardMaterial3D" id="m_floor"]
 albedo_color = Color(0.28, 0.2, 0.14, 1)
@@ -75,7 +77,7 @@ roughness = 0.9
 
 [sub_resource type="StandardMaterial3D" id="m_glass"]
 transparency = 1
-albedo_color = Color(0.7, 0.8, 0.9, 0.35)
+albedo_color = Color(0.7, 0.8, 0.9, 0.08)
 roughness = 0.1
 
 [sub_resource type="StandardMaterial3D" id="m_abyss"]
@@ -109,6 +111,24 @@ albedo_color = Color(0.2, 0.25, 0.4, 1)
 roughness = 1.0
 emission_enabled = true
 emission = Color(0.35, 0.45, 0.8, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="StandardMaterial3D" id="m_outside"]
+albedo_color = Color(0.09, 0.1, 0.13, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="m_sky"]
+albedo_color = Color(0.02, 0.03, 0.07, 1)
+roughness = 1.0
+emission_enabled = true
+emission = Color(0.03, 0.05, 0.12, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="StandardMaterial3D" id="m_moon"]
+albedo_color = Color(0.9, 0.92, 1.0, 1)
+roughness = 1.0
+emission_enabled = true
+emission = Color(0.85, 0.9, 1.0, 1)
 emission_energy_multiplier = 1.5
 
 [sub_resource type="StandardMaterial3D" id="m_tvscreen"]
@@ -180,9 +200,22 @@ size = Vector3(2.7, 0.63, 2.7)
 [sub_resource type="BoxShape3D" id="area_SteamPlume"]
 size = Vector3(3.78, 3.69, 8.1)
 
+[sub_resource type="PlaneMesh" id="bed_ceiling"]
+size = Vector2(39.15, 47.7)
+flip_faces = true
+
+[sub_resource type="ShaderMaterial" id="sky_mat"]
+shader = ExtResource("nightsky")
+
+[sub_resource type="Sky" id="sky"]
+sky_material = SubResource("sky_mat")
+radiance_size = 1
+
 [sub_resource type="Environment" id="env"]
-background_mode = 1
-background_color = Color(0.01, 0.012, 0.025, 1)
+background_mode = 2
+background_color = Color(0.025, 0.035, 0.08, 1)
+sky = SubResource("sky")
+fog_sky_affect = 0.0
 ambient_light_source = 2
 ambient_light_color = Color(0.35, 0.42, 0.65, 1)
 ambient_light_energy = 0.45
@@ -197,6 +230,9 @@ volumetric_fog_enabled = true
 volumetric_fog_density = 0.004
 
 [node name="Room" type="Node3D"]
+metadata/bedroom_prop_revision = 1
+metadata/bedroom_layout_version = 2
+metadata/toybox_offset_m = 0.293333333
 script = ExtResource("room")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
@@ -234,15 +270,69 @@ size = Vector3(85.5, 0.54, 47.7)
 material = SubResource("m_floor")
 
 [node name="WallN" type="CSGBox3D" parent="Shell"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0, 12.15, -24.12)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0, 4.5, -24.12)
 use_collision = true
-size = Vector3(86.58, 24.3, 0.54)
+size = Vector3(86.58, 9, 0.54)
+material = SubResource("m_wall")
+
+[node name="WallNHigh" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0, 21.15, -24.12)
+use_collision = true
+size = Vector3(86.58, 6.3, 0.54)
+material = SubResource("m_wall")
+
+[node name="WallNWest" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -37.17, 13.5, -24.12)
+use_collision = true
+size = Vector3(12.24, 9, 0.54)
+material = SubResource("m_wall")
+
+[node name="WallNEast" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 9.72, 13.5, -24.12)
+use_collision = true
+size = Vector3(67.14, 9, 0.54)
 material = SubResource("m_wall")
 
 [node name="WallS" type="CSGBox3D" parent="Shell"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0, 12.15, 24.12)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0, 4.5, 24.12)
 use_collision = true
-size = Vector3(86.58, 24.3, 0.54)
+size = Vector3(86.58, 9, 0.54)
+material = SubResource("m_wall")
+
+[node name="WallSHigh" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0, 22.05, 24.12)
+use_collision = true
+size = Vector3(86.58, 4.5, 0.54)
+material = SubResource("m_wall")
+
+[node name="WallSWest" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -38.74, 14.4, 24.12)
+use_collision = true
+size = Vector3(9.09, 10.8, 0.54)
+material = SubResource("m_wall")
+
+[node name="WallSBedLow" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -28.8, 9.45, 24.12)
+use_collision = true
+size = Vector3(10.8, 0.9, 0.54)
+material = SubResource("m_wall")
+
+[node name="WallSBedHigh" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -28.8, 18.9, 24.12)
+use_collision = true
+size = Vector3(10.8, 1.8, 0.54)
+material = SubResource("m_wall")
+
+[node name="WallSMid" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -17.1, 14.4, 24.12)
+use_collision = true
+size = Vector3(12.6, 10.8, 0.54)
+material = SubResource("m_wall")
+
+[node name="WallSEast" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 39.64, 14.4, 24.12)
+use_collision = true
+size = Vector3(7.29, 10.8, 0.54)
 material = SubResource("m_wall")
 
 [node name="WallW" type="CSGBox3D" parent="Shell"]
@@ -278,17 +368,52 @@ material = SubResource("m_wall")
 [node name="WindowBedroomN" type="CSGBox3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -27.45, 13.5, -23.78)
 size = Vector3(7.2, 9, 0.045)
-material = SubResource("m_window")
+material = SubResource("m_glass")
 
 [node name="WindowBedroomS" type="CSGBox3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -28.8, 13.95, 23.78)
 size = Vector3(10.8, 8.1, 0.045)
-material = SubResource("m_window")
+material = SubResource("m_glass")
 
 [node name="WindowLongS" type="CSGBox3D" parent="Shell"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 12.6, 14.4, 23.78)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 12.6, 14.4, 24.05)
 size = Vector3(46.8, 10.8, 0.045)
-material = SubResource("m_window")
+material = SubResource("m_glass")
+
+[node name="WindowMullion1" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -10.8, 14.4, 24.12)
+size = Vector3(0.45, 10.8, 0.54)
+material = SubResource("m_darkwood")
+
+[node name="WindowMullion2" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -1.17, 14.4, 24.12)
+size = Vector3(0.45, 10.8, 0.54)
+material = SubResource("m_darkwood")
+
+[node name="WindowMullion3" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 8.37, 14.4, 24.12)
+size = Vector3(0.45, 10.8, 0.54)
+material = SubResource("m_darkwood")
+
+[node name="WindowMullion4" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 18, 14.4, 24.12)
+size = Vector3(0.45, 10.8, 0.54)
+material = SubResource("m_darkwood")
+
+[node name="WindowMullion5" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 27.63, 14.4, 24.12)
+size = Vector3(0.45, 10.8, 0.54)
+material = SubResource("m_darkwood")
+
+[node name="WindowMullion6" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 36, 14.4, 24.12)
+size = Vector3(0.45, 10.8, 0.54)
+material = SubResource("m_darkwood")
+
+[node name="WindowTransom" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 12.6, 15.61, 24.12)
+size = Vector3(46.8, 0.27, 0.54)
+material = SubResource("m_darkwood")
 
 [node name="BedFrame" type="CSGBox3D" parent="Bedroom"]
 transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -36.45, 1.575, -14.85)
@@ -319,14 +444,14 @@ size = Vector3(11.34, 0.63, 12.6)
 material = SubResource("m_fabric")
 
 [node name="Nightstand" type="CSGBox3D" parent="Stop0"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -27.72, 3.24, -21.87)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -26.4, 3.24, -20.55)
 use_collision = true
-size = Vector3(3.96, 6.48, 3.96)
+size = Vector3(6.6, 6.48, 6.6)
 material = SubResource("m_wood")
 
 [node name="NightstandDrawer" type="CSGBox3D" parent="Stop0"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -27.72, 5.13, -19.89)
-size = Vector3(3.6, 1.26, 0.09)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -26.4, 5.13, -17.25)
+size = Vector3(6.24, 1.26, 0.09)
 material = SubResource("m_darkwood")
 
 [node name="OldBooks" type="CSGBox3D" parent="Stop0"]
@@ -344,7 +469,7 @@ sides = 24
 material = SubResource("m_toy_yellow")
 
 [node name="PillBottleB" type="CSGCylinder3D" parent="Stop0"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -26.73, 6.772, -22.05)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -25.47, 6.7725, -23.04)
 use_collision = true
 radius = 0.162
 height = 0.585
@@ -352,7 +477,7 @@ sides = 24
 material = SubResource("m_paper")
 
 [node name="WaterGlass" type="CSGCylinder3D" parent="Stop0"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -26.28, 6.975, -23.22)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -24.03, 6.975, -22.95)
 use_collision = true
 radius = 0.315
 height = 0.99
@@ -360,74 +485,68 @@ sides = 24
 material = SubResource("m_glass")
 
 [node name="ReadingGlasses" type="CSGBox3D" parent="Stop0"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -27, 6.561, -20.16)
+transform = Transform3D(0.920504853, 0, 0.390731128, 0, 1, 0, -0.390731128, 0, 0.920504853, -25.155, 6.561, -18.468)
 use_collision = true
 size = Vector3(1.08, 0.162, 0.27)
 material = SubResource("m_metal")
 
 [node name="CoinA" type="CSGCylinder3D" parent="Stop0"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -28.8, 6.493, -21.78)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -27.9, 6.4935, -18.72)
 radius = 0.108
 height = 0.027
 sides = 24
 material = SubResource("m_brass")
 
 [node name="CoinB" type="CSGCylinder3D" parent="Stop0"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -28.53, 6.493, -21.6)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -27.18, 6.4935, -18.54)
 radius = 0.108
 height = 0.027
 sides = 24
 material = SubResource("m_brass")
 
 [node name="BoxFloor" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.16, 0.036, -19.8)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -17.52, 0.036, -19.8)
 use_collision = true
 size = Vector3(10.8, 0.072, 8.1)
 material = SubResource("m_abyss")
 
 [node name="BoxWallW" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -25.51, 2.7, -19.8)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -22.87, 2.7, -19.8)
 use_collision = true
 size = Vector3(0.108, 5.4, 8.1)
 material = SubResource("m_cardboard")
 
 [node name="BoxWallE" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -14.81, 2.7, -19.8)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -12.17, 2.7, -19.8)
 use_collision = true
 size = Vector3(0.108, 5.4, 8.1)
 material = SubResource("m_cardboard")
 
 [node name="BoxWallN" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.16, 2.7, -23.8)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -17.52, 2.7, -23.8)
 use_collision = true
 size = Vector3(10.8, 5.4, 0.108)
 material = SubResource("m_cardboard")
 
 [node name="BoxWallS" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.16, 2.475, -15.8)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -17.52, 2.475, -15.8)
 use_collision = true
 size = Vector3(10.8, 4.95, 0.108)
 material = SubResource("m_cardboard")
 
 [node name="FlapN" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.16, 6.66, -23.89)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -17.52, 6.66, -23.89)
 use_collision = true
 size = Vector3(10.8, 2.52, 0.108)
 material = SubResource("m_cardboard")
 
-[node name="FlapE" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -14.81, 7.2, -19.8)
-use_collision = true
-size = Vector3(0.108, 3.6, 8.1)
-material = SubResource("m_cardboard")
-
 [node name="FlapWTorn" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -26.55, 4.635, -20.34)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -23.91, 4.635, -20.34)
 size = Vector3(1.98, 0.09, 5.58)
 material = SubResource("m_cardboard_dark")
 
 [node name="PlushHeap" type="CSGSphere3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -24.3, -0.27, -22.5)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -21.66, -0.27, -22.5)
 use_collision = true
 radius = 1.35
 radial_segments = 16
@@ -435,38 +554,38 @@ rings = 10
 material = SubResource("m_plush")
 
 [node name="PlushBunnyHead" type="CSGSphere3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -25.02, 0.99, -23.22)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -22.38, 0.99, -23.22)
 radius = 0.405
 radial_segments = 16
 rings = 10
 material = SubResource("m_plush")
 
 [node name="BlockStack" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -24.48, 0.9, -20.52)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -21.84, 0.9, -20.52)
 use_collision = true
 size = Vector3(0.72, 1.8, 0.72)
 material = SubResource("m_toy_blue")
 
 [node name="ToyTruck" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -24.66, 0.63, -18.72)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -22.02, 0.63, -18.72)
 use_collision = true
 size = Vector3(1.08, 1.26, 1.08)
 material = SubResource("m_toy_green")
 
 [node name="TruckCab" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -24.93, 1.485, -18.99)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -22.29, 1.485, -18.99)
 use_collision = true
 size = Vector3(0.54, 0.45, 0.54)
 material = SubResource("m_toy_green")
 
 [node name="JackBox" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.52, 0.45, -17.55)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -17.88, 0.45, -17.55)
 use_collision = true
 size = Vector3(0.9, 0.9, 0.9)
 material = SubResource("m_toy_red")
 
 [node name="DollHeadA" type="CSGSphere3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -24.93, 0.36, -17.1)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -22.29, 0.36, -17.1)
 use_collision = true
 radius = 0.36
 radial_segments = 16
@@ -474,7 +593,7 @@ rings = 10
 material = SubResource("m_paper")
 
 [node name="DollHeadB" type="CSGSphere3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -24.12, 0.27, -16.38)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -21.48, 0.27, -16.38)
 use_collision = true
 radius = 0.27
 radial_segments = 16
@@ -482,108 +601,108 @@ rings = 10
 material = SubResource("m_paper")
 
 [node name="WindUpMonkey" type="CSGCylinder3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -19.35, 0.405, -16.38)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.71, 0.405, -16.38)
 use_collision = true
-radius = 0.27
+radius = 0.54
 height = 0.81
 sides = 24
 material = SubResource("m_toy_yellow")
 
 [node name="Shoebox" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -19.8, 1.35, -22.59)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -17.16, 1.35, -22.59)
 use_collision = true
 size = Vector3(5.04, 2.7, 1.98)
 material = SubResource("m_cardboard_dark")
 
 [node name="BigBotSeat" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.13, 0.54, -19.8)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -13.49, 0.54, -19.8)
 use_collision = true
 size = Vector3(2.304, 1.08, 2.88)
 material = SubResource("m_metal")
 
 [node name="BigBotTorso" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.04, 2.52, -19.8)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -13.4, 2.52, -19.8)
 use_collision = true
 size = Vector3(2.124, 2.88, 2.52)
 material = SubResource("m_toy_yellow")
 
 [node name="BigBotHead" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.29, 4.59, -19.8)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -13.65, 4.59, -19.8)
 use_collision = true
 size = Vector3(2.52, 1.26, 2.52)
 material = SubResource("m_toy_yellow")
 
 [node name="BigBotShoulderN" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.2, 3.87, -21.6)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -13.56, 3.87, -21.6)
 use_collision = true
 size = Vector3(1.8, 1.26, 0.72)
 material = SubResource("m_metal")
 
 [node name="BigBotShoulderS" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.2, 3.87, -18)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -13.56, 3.87, -18)
 use_collision = true
 size = Vector3(1.8, 1.26, 0.72)
 material = SubResource("m_metal")
 
 [node name="BigBotArmN" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.47, 1.62, -21.78)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -13.83, 1.62, -21.78)
 use_collision = true
 size = Vector3(0.9, 3.24, 0.72)
 material = SubResource("m_metal")
 
 [node name="BigBotArmS" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.47, 1.62, -17.82)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -13.83, 1.62, -17.82)
 use_collision = true
 size = Vector3(0.9, 3.24, 0.72)
 material = SubResource("m_metal")
 
 [node name="BigBotLegN" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -18.99, 0.405, -20.88)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.35, 0.405, -20.88)
 use_collision = true
 size = Vector3(3.42, 0.81, 0.72)
 material = SubResource("m_toy_yellow")
 
 [node name="BigBotLegS" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -18.99, 0.405, -18.72)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.35, 0.405, -18.72)
 use_collision = true
 size = Vector3(3.42, 0.81, 0.72)
 material = SubResource("m_toy_yellow")
 
 [node name="BigBotFootN" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.97, 0.675, -20.88)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -18.33, 0.675, -20.88)
 use_collision = true
 size = Vector3(0.54, 1.35, 0.9)
 material = SubResource("m_metal")
 
 [node name="BigBotFootS" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.97, 0.675, -18.72)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -18.33, 0.675, -18.72)
 use_collision = true
 size = Vector3(0.54, 1.35, 0.9)
 material = SubResource("m_metal")
 
 [node name="CarTrack1" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -15.48, 5.233, -19.8)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -12.84, 5.233, -19.8)
 size = Vector3(0.18, 0.027, 1.98)
 material = SubResource("m_metal")
 
 [node name="CarTrack2" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -15.84, 5.233, -20.79)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -13.2, 5.233, -20.79)
 size = Vector3(0.9, 0.027, 0.18)
 material = SubResource("m_metal")
 
 [node name="CarTrack3" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.2, 5.233, -20.29)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -13.56, 5.233, -20.29)
 size = Vector3(0.18, 0.027, 0.99)
 material = SubResource("m_metal")
 
 [node name="SeesawFulcrum" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -19.08, 0.27, -19.8)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.44, 0.27, -19.8)
 use_collision = true
 size = Vector3(0.54, 0.54, 0.9)
 material = SubResource("m_wood")
 
 [node name="SeesawRest" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.43, 0.135, -19.8)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -17.79, 0.135, -19.8)
 use_collision = true
 size = Vector3(0.36, 0.27, 0.54)
 material = SubResource("m_wood")
@@ -1102,45 +1221,41 @@ size = Vector3(2.61, 1.53, 2.25)
 material = SubResource("m_darkwood")
 
 [node name="BreakerBox" type="CSGBox3D" parent="Stop6"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -3.24, 13.72, 19.57)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -3.24, 12.02, 19.57)
 use_collision = true
 size = Vector3(0.72, 4.05, 3.15)
 material = SubResource("m_metal")
 
 [node name="BreakerFault" type="CSGBox3D" parent="Stop6"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.857, 15.07, 19.21)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.857, 13.36, 19.21)
 size = Vector3(0.045, 0.27, 0.27)
 material = SubResource("m_fault")
 
-[node name="WireClip1" type="CSGBox3D" parent="Stop6"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.925, 9.113, 22.5)
+[node name="BreakerShelf" type="CSGBox3D" parent="Stop6"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.7, 9.405, 20.57)
 use_collision = true
-size = Vector3(1.35, 0.135, 1.26)
-material = SubResource("m_metal")
+size = Vector3(1.8, 0.27, 6.03)
+material = SubResource("m_wood")
 
-[node name="WireClip2" type="CSGBox3D" parent="Stop6"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.925, 10.37, 20.25)
-use_collision = true
-size = Vector3(1.35, 0.135, 1.26)
-material = SubResource("m_metal")
+[node name="ShelfBracket1" type="CSGBox3D" parent="Stop6"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -3.06, 8.91, 18)
+size = Vector3(1.08, 0.72, 0.18)
+material = SubResource("m_darkwood")
 
-[node name="WireClip3" type="CSGBox3D" parent="Stop6"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.925, 11.63, 22.5)
-use_collision = true
-size = Vector3(1.35, 0.135, 1.26)
-material = SubResource("m_metal")
+[node name="ShelfBracket2" type="CSGBox3D" parent="Stop6"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -3.06, 8.91, 22.95)
+size = Vector3(1.08, 0.72, 0.18)
+material = SubResource("m_darkwood")
 
-[node name="WireClip4" type="CSGBox3D" parent="Stop6"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.925, 12.89, 20.25)
-use_collision = true
-size = Vector3(1.35, 0.135, 1.26)
-material = SubResource("m_metal")
+[node name="WireDrop" type="CSGBox3D" parent="Stop6"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -3.546, 15.64, 19.51)
+size = Vector3(0.108, 3.195, 0.135)
+material = SubResource("m_person")
 
-[node name="WireClip5" type="CSGBox3D" parent="Stop6"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.925, 14.15, 22.5)
-use_collision = true
-size = Vector3(1.35, 0.135, 1.26)
-material = SubResource("m_metal")
+[node name="BreakerOk" type="CSGBox3D" parent="Stop6"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.857, 12.92, 19.21)
+size = Vector3(0.045, 0.27, 0.27)
+material = SubResource("m_cyanmark")
 
 [node name="WireAlongWall" type="CSGBox3D" parent="Stop6"]
 transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -3.546, 17.17, -2.7)
@@ -1202,7 +1317,7 @@ size = Vector3(1.5, 1.5, 1.5)
 show_light = false
 
 [node name="ToyBox" type="Area3D" parent="Checkpoints"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -24.3, 1.08, -22.5)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -21.66, 1.08, -22.5)
 script = ExtResource("cp")
 chapter_id = "childhood"
 recharge = 0.0
@@ -1212,7 +1327,7 @@ size = Vector3(1.5, 1.5, 1.5)
 show_light = false
 
 [node name="BoxShelf" type="Area3D" parent="Checkpoints"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.25, 2.7, -23.22)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -17.61, 2.7, -23.22)
 script = ExtResource("cp")
 chapter_id = "childhood"
 recharge = 0.05
@@ -1301,6 +1416,16 @@ fail_below_y = -100
 size = Vector3(1.5, 1.5, 1.5)
 show_light = false
 
+[node name="SillEnd" type="Area3D" parent="Checkpoints"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.43, 9.54, 21.78)
+script = ExtResource("cp")
+chapter_id = "old"
+recharge = 0.0
+respawn_charge = 0.2
+fail_below_y = -100
+size = Vector3(1.5, 1.5, 1.5)
+show_light = false
+
 [node name="DeskLampGlow" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -5.04, 9.18, 4.95)
 light_color = Color(1.0, 0.7, 0.4, 1)
@@ -1330,10 +1455,10 @@ omni_range = 23.4
 shadow_enabled = true
 
 [node name="BreakerFaultLight" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.7, 15.12, 19.17)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.7, 13.32, 19.17)
 light_color = Color(1.0, 0.1, 0.05, 1)
-light_energy = 0.8
-omni_range = 5.4
+light_energy = 1.8
+omni_range = 8.1
 shadow_enabled = true
 
 [node name="MoonShaft" type="SpotLight3D" parent="."]
@@ -1354,7 +1479,7 @@ omni_range = 19.8
 omni_attenuation = 0.6
 
 [node name="LooseBook" type="Node3D" parent="Stop0"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -25.74, 6.48, -20.97)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -23.1, 6.48, -20.97)
 
 [node name="Book" type="CSGBox3D" parent="Stop0/LooseBook"]
 transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -0.27, 0.1575, 0)
@@ -1368,7 +1493,7 @@ size = Vector3(2.07, 0.243, 1.458)
 material = SubResource("m_paper")
 
 [node name="PhotoFrame" type="Node3D" parent="Stop0"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -28.08, 6.48, -22.41)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -26.64, 6.48, -21.87)
 
 [node name="Frame" type="CSGBox3D" parent="Stop0/PhotoFrame"]
 transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0.585, 0.054, 0.81)
@@ -1382,14 +1507,14 @@ size = Vector3(0.99, 0.009, 1.44)
 material = SubResource("m_lampshade")
 
 [node name="FrameInteract" type="Area3D" parent="Stop0"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -27.5, 6.66, -21.6)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -26.055, 6.66, -21.06)
 script = ExtResource("ia")
 cost = 0.0
 radius = 1.3
 prompt_offset = Vector3(0, 1.2, 0)
 
 [node name="TrackRing" type="CSGTorus3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -22.68, 0.081, -17.46)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.04, 0.081, -17.46)
 inner_radius = 0.792
 outer_radius = 1.008
 sides = 48
@@ -1398,32 +1523,32 @@ material = SubResource("m_metal")
 
 [node name="Train" type="AnimatableBody3D" parent="Stop1"]
 script = ExtResource("train")
-center = Vector3(-22.68, 0.072, -17.46)
+center = Vector3(-20.04, 0.072, -17.46)
 radius = 0.9
 speed = 0.5
 size = Vector3(0.9, 0.54, 0.45)
 
 [node name="JackHead" type="CSGSphere3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.52, 0.63, -17.55)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -17.88, 0.63, -17.55)
 radius = 0.36
 material = SubResource("m_paper")
 
 [node name="BigBotEye1" type="CSGCylinder3D" parent="Stop1"]
-transform = Transform3D(6.12323e-17, -1, 0, 1, 6.12323e-17, -0, 0, 0, 1, -17.57, 4.68, -20.25)
+transform = Transform3D(6.12323e-17, -1, 0, 1, 6.12323e-17, -0, 0, 0, 1, -14.93, 4.68, -20.25)
 radius = 0.198
 height = 0.036
 sides = 20
 material = SubResource("m_amber_eye")
 
 [node name="BigBotEye2" type="CSGCylinder3D" parent="Stop1"]
-transform = Transform3D(6.12323e-17, -1, 0, 1, 6.12323e-17, -0, 0, 0, 1, -17.57, 4.68, -19.35)
+transform = Transform3D(6.12323e-17, -1, 0, 1, 6.12323e-17, -0, 0, 0, 1, -14.93, 4.68, -19.35)
 radius = 0.198
 height = 0.036
 sides = 20
 material = SubResource("m_amber_eye")
 
 [node name="BigBotEyeLight" type="SpotLight3D" parent="Stop1"]
-transform = Transform3D(6.12323e-17, -0.615661, 0.788011, 0, 0.788011, 0.615661, -1, -3.76984e-17, 4.82517e-17, -17.73, 4.68, -19.8)
+transform = Transform3D(6.12323e-17, -0.615661, 0.788011, 0, 0.788011, 0.615661, -1, -3.76984e-17, 4.82517e-17, -15.09, 4.68, -19.8)
 light_color = Color(1, 0.72, 0.35, 1)
 light_energy = 6.0
 shadow_enabled = true
@@ -1432,7 +1557,7 @@ spot_angle = 32.0
 spot_attenuation = 0.5
 
 [node name="Seesaw" type="Node3D" parent="Stop1"]
-transform = Transform3D(0.994522, -0.104528, 0, 0.104528, 0.994522, -0, 0, 0, 1, -19.08, 0.54, -19.8)
+transform = Transform3D(0.994522, -0.104528, 0, 0.104528, 0.994522, -0, 0, 0, 1, -16.44, 0.54, -19.8)
 
 [node name="Plank" type="CSGBox3D" parent="Stop1/Seesaw"]
 transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0, 0.063, 0)
@@ -1446,10 +1571,10 @@ size = Vector3(0.675, 0.018, 0.702)
 material = SubResource("m_cyanmark")
 
 [node name="Drum" type="CSGCylinder3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -17.01, 5.625, -19.8)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -14.37, 5.949, -19.8)
 use_collision = true
 radius = 0.54
-height = 0.81
+height = 1.458
 sides = 24
 material = SubResource("m_toy_red")
 
@@ -1461,13 +1586,13 @@ sides = 24
 material = SubResource("m_paper")
 
 [node name="ElectricCar" type="CSGBox3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -15.48, 5.355, -18.81)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -12.84, 5.355, -18.81)
 use_collision = true
 size = Vector3(0.45, 0.27, 0.72)
 material = SubResource("m_toy_green")
 
 [node name="CarCharge" type="Area3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -15.48, 5.4, -18.81)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -12.84, 5.4, -18.81)
 script = ExtResource("ia")
 cost = 0.08
 hold_time = 1.5
@@ -1476,25 +1601,25 @@ radius = 1.4
 prompt_offset = Vector3(0, 1.0, 0)
 
 [node name="PushBlockLarge" type="CharacterBody3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -19.62, 2.709, -22.23)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.98, 2.709, -22.23)
 script = ExtResource("push")
 size = Vector3(1.35, 1.35, 1.35)
 color = Color(0.75, 0.3, 0.2, 1)
 letter = "A"
 
 [node name="PushBlockSmall" type="CharacterBody3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -21.42, 2.709, -22.23)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -18.78, 2.709, -22.23)
 script = ExtResource("push")
 size = Vector3(0.603, 0.603, 0.603)
 color = Color(0.2, 0.45, 0.7, 1)
 letter = "B"
 
 [node name="Battery1" type="Area3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -24.66, 1.35, -18.54)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -22.02, 1.35, -18.54)
 script = ExtResource("bat")
 
 [node name="Battery2" type="Area3D" parent="Stop1"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -21.6, 2.79, -23.22)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -18.96, 2.79, -23.22)
 script = ExtResource("bat")
 
 [node name="DeskMaze" type="Node3D" parent="Stop2"]
@@ -1687,10 +1812,127 @@ kind = "fire"
 enabled = false
 size = Vector3(1.8, 3.96, 3.6)
 
+[node name="Zipline" type="Node3D" parent="Stop5"]
+script = ExtResource("zip")
+points = PackedVector3Array(39.15, 14.58, 22.5, 18, 14.04, -3.6, 8.1, 13.32, 22.05, -2.7, 12.42, 22.05)
+sags = PackedFloat32Array(1.26, 1.08, 0.45)
+ceiling = 24.3
+
+[node name="ZiplineGrab" type="Area3D" parent="Stop5"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 39.15, 8.28, 22.05)
+script = ExtResource("ia")
+cost = 0.0
+radius = 1.1
+prompt_offset = Vector3(0, 1.0, 0)
+
+[node name="BreakerLever" type="Node3D" parent="Stop6"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.835, 11.7, 20.16)
+
+[node name="Handle" type="CSGBox3D" parent="Stop6/BreakerLever"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 0.18, -0.36, 0)
+size = Vector3(0.27, 0.81, 0.27)
+material = SubResource("m_toy_red")
+
+[node name="BreakerCharge" type="Area3D" parent="Stop6"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.43, 9.72, 20.25)
+script = ExtResource("ia")
+cost = 0.0
+hold_time = 4.0
+radius = 0.9
+prompt_offset = Vector3(0, 1.2, 0)
+
+[node name="HouseLight1" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -0.9, 21.6, 18)
+light_color = Color(1, 0.78, 0.5, 1)
+light_energy = 0.0
+omni_range = 28.8
+omni_attenuation = 1.2
+
+[node name="HouseLight2" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 8.1, 21.6, 10.8)
+light_color = Color(1, 0.78, 0.5, 1)
+light_energy = 0.0
+omni_range = 28.8
+omni_attenuation = 1.2
+
+[node name="HouseLight3" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 9, 21.6, -11.7)
+light_color = Color(1, 0.78, 0.5, 1)
+light_energy = 0.0
+omni_range = 28.8
+omni_attenuation = 1.2
+
+[node name="HouseLight4" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 25.2, 21.6, 0)
+light_color = Color(1, 0.78, 0.5, 1)
+light_energy = 0.0
+omni_range = 28.8
+omni_attenuation = 1.2
+
+[node name="HouseLight5" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 34.2, 21.6, -14.4)
+light_color = Color(1, 0.78, 0.5, 1)
+light_energy = 0.0
+omni_range = 28.8
+omni_attenuation = 1.2
+
+[node name="HouseLight6" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 38.7, 21.6, 9)
+light_color = Color(1, 0.78, 0.5, 1)
+light_energy = 0.0
+omni_range = 28.8
+omni_attenuation = 1.2
+
+[node name="HouseLight7" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -12.6, 21.6, 14.4)
+light_color = Color(1, 0.78, 0.5, 1)
+light_energy = 0.0
+omni_range = 28.8
+omni_attenuation = 1.2
+
+[node name="HouseLight8" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.2, 21.6, -5.4)
+light_color = Color(1, 0.78, 0.5, 1)
+light_energy = 0.0
+omni_range = 28.8
+omni_attenuation = 1.2
+
+[node name="HouseLight9" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -30.6, 21.6, -14.4)
+light_color = Color(1, 0.78, 0.5, 1)
+light_energy = 0.0
+omni_range = 28.8
+omni_attenuation = 1.2
+
+[node name="HouseLight10" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -28.8, 21.6, 14.4)
+light_color = Color(1, 0.78, 0.5, 1)
+light_energy = 0.0
+omni_range = 28.8
+omni_attenuation = 1.2
+
+[node name="WindowSpill1" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 13.5, 14.4, 30.6)
+light_color = Color(1, 0.75, 0.45, 1)
+light_energy = 0.0
+omni_range = 23.4
+
+[node name="WindowSpill2" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -28.8, 14.4, 28.8)
+light_color = Color(1, 0.75, 0.45, 1)
+light_energy = 0.0
+omni_range = 23.4
+
+[node name="WindowSpill3" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -27.45, 13.5, -28.8)
+light_color = Color(1, 0.75, 0.45, 1)
+light_energy = 0.0
+omni_range = 23.4
+
 [node name="Areas" type="Node3D" parent="."]
 
 [node name="BookTip" type="Area3D" parent="Areas"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -25.34, 7.065, -20.97)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -22.695, 7.065, -20.97)
 
 [node name="Shape" type="CollisionShape3D" parent="Areas/BookTip"]
 shape = SubResource("area_BookTip")
@@ -1702,13 +1944,13 @@ transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -28.66, 7.92, -22.91)
 shape = SubResource("area_BooksTop")
 
 [node name="JackTop" type="Area3D" parent="Areas"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.52, 1.17, -17.55)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -17.88, 1.17, -17.55)
 
 [node name="Shape" type="CollisionShape3D" parent="Areas/JackTop"]
 shape = SubResource("area_JackTop")
 
 [node name="SeesawEnd" type="Area3D" parent="Areas"]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.34, 0.72, -19.8)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -17.7, 0.72, -19.8)
 
 [node name="Shape" type="CollisionShape3D" parent="Areas/SeesawEnd"]
 shape = SubResource("area_SeesawEnd")
@@ -1735,13 +1977,13 @@ shape = SubResource("area_SteamPlume")
 transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -28.98, 6.48, -20.52)
 
 [node name="FallLanding" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -24.3, 1.098, -22.5)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -21.66, 1.098, -22.5)
 
 [node name="MachineLook" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -17.55, 3.15, -19.8)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -14.91, 3.15, -19.8)
 
 [node name="BookLanding" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -22.5, 0.18, -20.7)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -19.86, 0.18, -20.7)
 
 [node name="DeskLampTarget" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -4.86, 9.9, 4.95)
@@ -1753,7 +1995,10 @@ transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -4.05, 7.65, 8.55)
 transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -0.9, 0.018, 11.7)
 
 [node name="BreakerLook" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -3.24, 13.5, 19.53)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -3.24, 11.97, 19.53)
+
+[node name="FinaleStand" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -2.43, 9.558, 20.43)
 
 [node name="TvLook" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 9, 6.75, -19.62)
@@ -1786,24 +2031,36 @@ transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 31.95, 12.15, 3.15)
 transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 33.3, 12.78, -16.02)
 
 [node name="ShelfTarget" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -20.25, 2.718, -23.22)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -17.61, 2.718, -23.22)
 
 [node name="DeskLanding" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -9.885, 6.768, -4.425)
 
 [node name="DrumLanding" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -18, 1.08, -19.8)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -15.36, 1.08, -19.8)
 
 [node name="CarWay1" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -15.48, 5.355, -20.79)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -12.84, 5.355, -20.79)
 
 [node name="CarWay2" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.2, 5.355, -20.79)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -13.56, 5.355, -20.79)
 
 [node name="CarWay3" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.2, 5.355, -19.8)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -13.56, 5.355, -19.8)
 
 [node name="CarWay4" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -16.29, 5.355, -19.8)
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -13.65, 5.355, -19.8)
+
+[node name="Ceiling" type="CSGBox3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, 19.57, 24.57, 0)
+size = Vector3(46.35, 0.54, 47.7)
+cast_shadow = 0
+material = SubResource("m_wall")
+
+[node name="BedroomCeiling" type="MeshInstance3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, -0, 0, 0, 1, -23.18, 24.3, 0)
+mesh = SubResource("bed_ceiling")
+cast_shadow = 0
+surface_material_override/0 = SubResource("m_wall")
 
 [node name="PostFX" parent="." instance=ExtResource("post")]

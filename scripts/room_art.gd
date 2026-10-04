@@ -63,25 +63,14 @@ static func install(room: Node3D) -> void:
 	# Keep the tested landing collider; replace its bulky visual with a soft cushion.
 	_hide_visual(stop.get_node("PlushHeap"), invisible)
 	_hide_visual(stop.get_node("PlushBunnyHead"), invisible)
-	var cloth := StandardMaterial3D.new()
-	cloth.albedo_color = Color(0.30, 0.20, 0.12)
-	cloth.roughness = 0.98
-	var cushion := MeshInstance3D.new()
-	cushion.name = "LandingCushion"
-	var cushion_mesh := SphereMesh.new()
-	cushion_mesh.radius = 0.085 * K
-	cushion_mesh.height = 0.03 * K
-	cushion.mesh = cushion_mesh
-	cushion.material_override = cloth
-	art.add_child(cushion)
-	cushion.position = Vector3(-2.70, 0.105, -2.50) * K
-	cushion.scale.z = 0.75
-	_attach(art, "rabbit", Vector3(-2.775, 0.018, -2.54), deg_to_rad(-25))
-	_attach(art, "bear", Vector3(-2.635, 0.025, -2.49), deg_to_rad(35))
+	# The larger bear supplies the landing visual; retain the tested invisible landing collider.
+	_attach(art, "rabbit", Vector3(-2.74, 0.0, -1.88), 0.0)
+	var bear := _attach(art, "bear", Vector3(-2.70, 0.0, -2.50))
+	bear.scale *= Vector3(1.65, 1.19343, 1.65)
 
 	var monkey: CSGShape3D = stop.get_node("WindUpMonkey")
 	_hide_visual(monkey, invisible)
-	_attach(monkey, "monkey", Vector3(0, -0.045, 0), deg_to_rad(-20))
+	_attach(monkey, "drum")
 	var clown: CSGShape3D = stop.get_node("JackHead")
 	_hide_visual(clown, invisible)
 	# Model origin is the spring base. Offset under the lid, then inherit the existing pop tween.
@@ -89,11 +78,12 @@ static func install(room: Node3D) -> void:
 
 	var car: CSGShape3D = stop.get_node("ElectricCar")
 	_hide_visual(car, invisible)
-	_attach(car, "car", Vector3(0, -0.015, 0), PI / 2)
+	_attach(car, "car", Vector3(0, -0.015, 0), PI)
 	var drum: CSGShape3D = stop.get_node("Drum")
 	_hide_visual(drum, invisible)
 	_hide_visual(drum.get_node("DrumSkin"), invisible)
-	_attach(drum, "drum")
+	var head_monkey := _attach(drum, "monkey", Vector3(0, -.081, 0), -PI / 2)
+	head_monkey.scale *= 1.8
 	var saw: Node3D = stop.get_node("Seesaw")
 	_hide_visual(saw.get_node("Plank"), invisible)
 	_attach(saw, "ruler")
@@ -102,4 +92,12 @@ static func install(room: Node3D) -> void:
 		_hide_visual(proxy, invisible)
 		_attach(proxy, entry[1], Vector3(0, entry[2], 0))
 	STRUCTURE_ART.install(room)
+	load("res://scripts/tv_livingroom_art.gd").install(room)
+	load("res://scripts/bedroom_layout_art.gd").install(room)
 	room.set_meta("room_art_installed", true)
+	if not "--bedroom-look-before" in OS.get_cmdline_user_args():
+		var look := Node.new()
+		look.name = "BedroomLook"
+		look.set_script(load("res://scripts/bedroom_look.gd"))
+		room.add_child(look)
+

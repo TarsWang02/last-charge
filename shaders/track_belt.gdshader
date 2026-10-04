@@ -1,4 +1,5 @@
 shader_type spatial;
+render_mode diffuse_toon, specular_disabled;
 // Moves a rigid tank-track belt around its loop. The belt mesh's local origin is the centre of
 // the loop; the loop is a "stadium": straight runs along Z (from -half_len to +half_len) joined by
 // half circles. Every vertex keeps its distance from the loop core and slides `offset` metres along it,
@@ -64,8 +65,7 @@ void vertex() {
 
 void fragment() {
 	ALBEDO = texture(albedo_tex, UV).rgb;
-	vec4 rm = texture(rm_tex, UV);
-	ROUGHNESS = rm.g;
-	METALLIC = rm.b;
-	NORMAL_MAP = texture(normal_tex, UV).rgb;
+	ROUGHNESS = 0.88;
+	METALLIC = 0.03;
+	// Rubber tread detail comes from the mesh; avoid generated normal-map glitter.
 }

@@ -69,10 +69,12 @@ func _run() -> void:
 		results[label + "_visual_matches"] = absf(top - expected) < 0.001
 		if label == "HeadPlatform":
 			results["head_visual_footprint_matches"] = absf(bounds.size.x / 9.0 - 0.28) < 0.001 and absf(bounds.size.z / 9.0 - 0.28) < 0.001
+	var box_dx: float = float(room.get_meta("toybox_offset_m", 0.0))
 	var space := room.get_world_3d().direct_space_state
 	var rays := {"head": [Vector3(-1.85, 0.59, -2.13), 0.58], "shoulder": [Vector3(-1.80, 0.51, -2.40), 0.50], "plush": [Vector3(-2.70, 0.14, -2.50), 0.12], "nightstand": [Vector3(-3.28, 0.74, -2.23), 0.72], "books": [Vector3(-3.18, 0.89, -2.54), 0.86], "loose_book": [Vector3(-2.88, 0.77, -2.33), 0.755], "block_stack": [Vector3(-2.72, 0.22, -2.28), 0.20], "jack_box": [Vector3(-2.29, 0.12, -1.96), 0.10]}
 	for label in rays:
 		var start: Vector3 = rays[label][0] * 9
+		if label in ["head","shoulder","plush","loose_book","block_stack","jack_box"]:start.x+=box_dx*9
 		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(start, start - Vector3(0, 1, 0)))
 		results[label + "_collision_y_m"] = hit.position.y / 9 if not hit.is_empty() else -1.0
 		results[label + "_collision_matches"] = not hit.is_empty() and absf(hit.position.y / 9 - rays[label][1]) < 0.001
@@ -86,7 +88,7 @@ func _run() -> void:
 	await _snapshot("nightstand", Vector3(-2.57, 1.08, -1.87), Vector3(-3.07, 0.76, -2.43))
 	room._stand_frame_up()
 	await _wait(0.85)
-	results["frame_hinge_rotates"] = absf(room.get_node("Stop0/PhotoFrame").rotation_degrees.x + 78.0) < 0.05
+	results["frame_hinge_rotates"] = absf(room.get_node("Stop0/PhotoFrame").rotation_degrees.x + 102.0) < 0.05
 	await _snapshot("family_frame", Vector3(-3.02, 0.96, -2.11), Vector3(-3.055, 0.80, -2.42))
 	var train: Node3D = room.get_node("Stop1/Train")
 	var train_cs := train.get_child(0) as CollisionShape3D
@@ -108,14 +110,14 @@ func _run() -> void:
 	await _wait(2.2)
 	results["book_fall_reaches_toybox"] = room.fell and game.checkpoint.name == "ToyBox"
 	# Short mechanics regression: clown and exit launch still run on their original nodes.
-	room.player.teleport(Vector3(-2.28, 0.105, -1.95) * 9)
+	room.player.teleport(Vector3(-2.28+box_dx, 0.105, -1.95) * 9)
 	await _wait(0.42)
 	results["jack_lid_opens"] = room.get_node("Stop1/JackBox/Art_jackbox_lid").rotation.x < -1.0
 	await _snapshot("clown_and_monkey", Vector3(-2.42, 0.46, -2.07), Vector3(-2.24, 0.20, -1.92))
 	await _wait(1.7)
 	results["jack_checkpoint"] = str(game.checkpoint.name)
 	results["jack_reaches_shelf"] = game.checkpoint.name == "BoxShelf"
-	room.player.teleport(Vector3(-2.26, 0.085, -2.20) * 9)
+	room.player.teleport(Vector3(-2.26+box_dx, 0.085, -2.20) * 9)
 	room._run_machine()
 	await _wait(7.0)
 	results["exit_launch"] = room.launched
