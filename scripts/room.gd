@@ -1172,11 +1172,26 @@ func _open_door() -> void:
 	await _wait(0.5)
 	# up at the breaker box on the wall: that's what's gone
 	var box: Vector3 = $BreakerLook.global_position / K
-	var tw := create_tween()
-	tw.tween_property(cam, "global_transform", Transform3D(Basis.IDENTITY, (drop + Vector3(0.3, 0.16, -0.12)) * K).looking_at(box * K), 1.6) \
+	var fault: OmniLight3D = $BreakerFaultLight
+	var f0 := [fault.light_energy, fault.omni_range]
+	fault.omni_range = 1.4 * K
+	create_tween().tween_property(fault, "light_energy", 3.0, 1.0)   # the red fault light, bright enough to read
+	var box_fill := OmniLight3D.new()   # a little cold moonlight on the box so its shape reads in the dark
+	box_fill.light_color = Color(0.6, 0.7, 1.0)
+	box_fill.omni_range = 0.7 * K
+	add_child(box_fill)
+	box_fill.global_position = Vector3(BW_M + 0.4, 1.5, 2.3) * K
+	create_tween().tween_property(box_fill, "light_energy", 1.4, 1.0)
+	var tw := create_tween()   # across the room to the spot that frames the box (the finale's own camera)
+	tw.tween_property(cam, "global_transform", Transform3D(Basis.IDENTITY, Vector3(BW_M + 0.62, 1.32, 2.62) * K).looking_at(Vector3(BW_M + 0.05, 1.25, 2.2) * K), 2.0) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	await _wait(1.0)
+	await _wait(1.8)
 	await Game.captions.say("2-13")
+	create_tween().tween_property(fault, "light_energy", f0[0], 1.5)
+	fault.omni_range = f0[1]
+	var fade_fill := create_tween()
+	fade_fill.tween_property(box_fill, "light_energy", 0.0, 1.5)
+	fade_fill.tween_callback(box_fill.queue_free)
 	# ...and over to the blue light of the TV: go there first
 	player._face_yaw = atan2($TvLook.global_position.x - player.global_position.x, $TvLook.global_position.z - player.global_position.z)
 	var tv: Vector3 = $TvLook.global_position / K
@@ -2726,7 +2741,17 @@ func _autotest() -> void:
 		add_child(cam)
 		cam.fov = 58.0
 		var drop: Vector3 = $OpenPlanDrop.global_position / K
-		var views := [[Vector3(drop.x + 0.55, 0.32, drop.z - 0.25), Vector3(-0.42, 0.62, 1.32)],
+		var bl: Vector3 = $BreakerLook.global_position / K
+		_power_cut()
+		$BreakerFaultLight.light_energy = 2.6
+		$BreakerFaultLight.omni_range = 1.4 * K
+		var fill := OmniLight3D.new()
+		fill.light_color = Color(0.6, 0.7, 1.0)
+		fill.omni_range = 0.7 * K
+		fill.light_energy = 1.4
+		add_child(fill)
+		fill.global_position = Vector3(BW_M + 0.4, 1.5, 2.3) * K
+		var views := [[Vector3(BW_M + 0.62, 1.32, 2.62), Vector3(BW_M + 0.05, 1.25, 2.2)], [Vector3(0.2, 0.7, 1.85), bl], [Vector3(0.3, 0.45, 1.75), bl],
 			[Vector3(drop.x + 0.5, 0.26, drop.z - 0.2), drop + Vector3(0, 0.05, 0)],
 			[Vector3(drop.x + 0.2, 0.08, drop.z + 0.3), Vector3(-0.42, 0.02, 1.2)]]
 		for i in views.size():
