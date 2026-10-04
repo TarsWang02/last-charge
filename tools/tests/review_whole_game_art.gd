@@ -25,6 +25,7 @@ func run():
  ["09_zipline",Vector3(3.65,1.13,2.10),Vector3(.0,1.26,2.02),Vector3(3.7,1,2.4),73],
  ["10_breaker",Vector3(.26,1.35,2.59),Vector3(-.31,1.30,2.17),Vector3(-.25,1.07,2.3),48]]
  for row in views:
+  if "--review-tail" in OS.get_cmdline_user_args():break
   room.player.global_position=row[3]*9
   camera.position=row[1]*9;camera.look_at(row[2]*9);camera.fov=row[4];camera.make_current()
   await create_timer(.45).timeout;await RenderingServer.frame_post_draw
@@ -35,6 +36,8 @@ func run():
  room.get_node("WorldEnvironment").environment.ambient_light_energy=.07
  room.get_node("Moonlight").light_energy=.04
  for n in ["WallLampShade","WallLampArm"]:room.get_node("Stop2/"+n).visible=false
+ room.player.velocity=Vector3.ZERO
+ room.maze.lights[0]._on_activated()
  camera.position=Vector3(-.78,2.10,.15)*9;camera.look_at(Vector3(-.78,.75,.15)*9,Vector3(0,0,-1));camera.fov=58
  await create_timer(.65).timeout;await RenderingServer.frame_post_draw
  root.get_texture().get_image().save_png(output+"/11_maze.png")

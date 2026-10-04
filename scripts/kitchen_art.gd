@@ -77,9 +77,9 @@ void fragment(){
  float ripple=sin(world_pos.x*8.0+TIME*.55)*sin(world_pos.z*9.0-TIME*.4);
  ALBEDO=vec3(.07,.13,.20)+ripple*.006;
  ALPHA=.43;
- ROUGHNESS=.16;
- METALLIC=.28;
- SPECULAR=.7;
+ ROUGHNESS=.38;
+ METALLIC=.04;
+ SPECULAR=.22;
  NORMAL=normalize(NORMAL+vec3(cos(world_pos.x*8.0+TIME*.55)*.035,0.0,sin(world_pos.z*9.0-TIME*.4)*.035));
 }"""
  var water:=ShaderMaterial.new();water.shader=shader

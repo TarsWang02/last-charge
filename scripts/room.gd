@@ -241,8 +241,17 @@ func _process(_d: float) -> void:
 				for a in [14.0, -10.0, 6.0, -3.0, 0.0]:
 					tw.tween_property(u, "rotation_degrees:x", a, 0.22).set_trans(Tween.TRANS_SINE)
 				tw.tween_callback(func(): u.remove_meta("swinging"))
-	if in_desk and not note_found and player.global_position.distance_to(maze.note.global_position) < 1.0:
-		note_found = true
+	if in_desk and _note_use == null and maze.note:   # E  Read on Mum's note
+		_note_use = Area3D.new()
+		_note_use.set_script(preload("res://scripts/components/interactable.gd"))
+		_note_use.cost = 0.0
+		_note_use.radius = 1.0
+		_note_use.prompt_text = "E  Read"
+		_note_use.prompt_offset = Vector3(0, 0.6, 0)
+		add_child(_note_use)
+		_note_use.global_position = maze.note.global_position
+		_note_use.activated.connect(_read_note)
+	if false:
 		var m := StandardMaterial3D.new()
 		m.albedo_color = Color(1, 0.9, 0.7)
 		m.emission_enabled = true
@@ -251,6 +260,74 @@ func _process(_d: float) -> void:
 		maze.note.material_override = m
 		create_tween().tween_property(m, "emission_energy_multiplier", 2.5, 0.8)
 		Game.restore_memory("mom_note")
+
+var _note_use: Area3D
+
+## Mum's note, opened on screen: yellowed paper, her handwriting; the game holds still until E again.
+func _read_note() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 60
+	layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(layer)
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.65)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(dim)
+	var paper := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.92, 0.86, 0.69)
+	sb.set_corner_radius_all(4)
+	sb.content_margin_left = 48
+	sb.content_margin_right = 48
+	sb.content_margin_top = 40
+	sb.content_margin_bottom = 40
+	sb.shadow_color = Color(0, 0, 0, 0.5)
+	sb.shadow_size = 18
+	paper.add_theme_stylebox_override("panel", sb)
+	paper.set_anchors_preset(Control.PRESET_CENTER)
+	paper.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	paper.grow_vertical = Control.GROW_DIRECTION_BOTH
+	paper.custom_minimum_size = Vector2(560, 0)
+	paper.rotation_degrees = -1.5
+	layer.add_child(paper)
+	var ink := Label.new()
+	ink.text = StoryText.MUM_NOTE
+	ink.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var hand := FontVariation.new()
+	hand.base_font = ThemeDB.fallback_font
+	hand.variation_transform = Transform2D(Vector2(1, 0), Vector2(0.25, 1), Vector2.ZERO)
+	ink.add_theme_font_override("font", hand)
+	ink.add_theme_font_size_override("font_size", 27)
+	ink.add_theme_color_override("font_color", Color(0.14, 0.16, 0.32))
+	paper.add_child(ink)
+	var hint := Label.new()
+	hint.text = "E  close"
+	hint.add_theme_font_size_override("font_size", 16)
+	hint.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
+	hint.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	hint.offset_top = -50
+	layer.add_child(hint)
+	layer.get_children().map(func(c): c.modulate.a = 0.0)
+	for c in layer.get_children():
+		create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS).tween_property(c, "modulate:a", 1.0, 0.35)
+	get_tree().paused = true
+	await get_tree().process_frame
+	await get_tree().process_frame
+	while not Input.is_action_just_pressed("interact") and not "--autotest" in OS.get_cmdline_user_args():
+		await get_tree().process_frame
+	if "--autotest" in OS.get_cmdline_user_args():
+		await get_tree().create_timer(1.0, true).timeout
+	get_tree().paused = false
+	layer.queue_free()
+	note_found = true
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color(1, 0.9, 0.7)
+	m.emission_enabled = true
+	m.emission = Color(1, 0.7, 0.35)
+	m.emission_energy_multiplier = 0.0
+	maze.note.material_override = m
+	create_tween().tween_property(m, "emission_energy_multiplier", 2.5, 0.8)
+	Game.restore_memory("mom_note")
 
 ## Debug: F9 skips to the living room (by the bedroom door), for testing the TV stop.
 func _unhandled_input(event: InputEvent) -> void:
@@ -345,8 +422,6 @@ func _physics_process(_d: float) -> void:
 			var c := player.get_slide_collision(i).get_collider()
 			if c is Node and c.name in ["GameBoxes", "MagStack"]:
 				_say_once("3-3")
-	if tv_done and not _said.has("3-15") and player.global_position.distance_to($Stop3/TimeBoxOpen.global_position) < 0.4 * K:
-		_say_once("3-15")
 	# monologue: the first fall into the dark of the toy box, the first ride on the train
 	if fell and not launched and Game.is_respawning():
 		_say_once("1-2")
@@ -941,6 +1016,9 @@ func _open_time_box() -> void:
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	create_tween().tween_property($Stop3/TimeBoxGlow, "light_energy", 2.0, 1.2)
 	Game.restore_memory("time_box")
+	await _wait(0.8)
+	await Game.captions.say_all(["3-16", "3-17"])
+	_after_tv_looks()   # ...and then the kitchen
 
 ## Out of the game: the robot pops out of the glass and lands on the floor on the kitchen
 ## side; the camera pulls back out to the robot's own camera, which then turns to the stove.
@@ -971,7 +1049,8 @@ func _exit_tv() -> void:
 	$PostFX.enabled = true
 	Game.set_checkpoint($Checkpoints/TvExit)
 	player.locked = false
-	_after_tv_looks()
+	_look_at($Stop3/TimeBoxGlow.global_position, -20.0, 1.2)   # first: the old time box beside the cabinet
+	_say_once("3-15")
 
 # ------------------------------------------------------------------ stop 4
 ## Burner i (0 = west, 1 = east): ["warn" | "on" | "off", seconds into that state]. They alternate.
@@ -2179,6 +2258,14 @@ func _autotest() -> void:
 	if "--train-test" in OS.get_cmdline_user_args():  # debug: is the toy train smooth with the robot riding it?
 		r["train"] = await _train_smoothness()
 		print("ROOMTEST ", JSON.stringify(r))
+		get_tree().quit()
+		return
+	if "--note-test" in OS.get_cmdline_user_args():  # debug: Mum's note, opened
+		_read_note()
+		await get_tree().create_timer(0.6, true).timeout
+		await _shot(dir, "note.png")
+		await get_tree().create_timer(1.0, true).timeout
+		print("ROOMTEST ", JSON.stringify({"note_found": note_found, "unpaused": not get_tree().paused}))
 		get_tree().quit()
 		return
 	if "--opening-test" in OS.get_cmdline_user_args():  # the opening cutscene, the desk reveal, the photo

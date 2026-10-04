@@ -46,7 +46,12 @@ const MONOLOGUE := {
 	"3-13": "Got there in the end. Only took me sixty years.",
 	"3-14": "...And there goes the telly.",
 	"3-15": "My old time box.",
+	"3-16": "My drawing. Me and the robot, beating the dragon.",
+	"3-17": "Thought I'd be a hero. Ended up a farmer. Not a bad trade.",
 }
+
+## Mum's note on the desk, read with E (handwritten, on yellowed paper).
+const MUM_NOTE := "Love —\n\nGone to help Mrs Kelly with the calving. Back soon.\n\nTea's in the oven. Finish your maths.\n\nP.S. Your robot's on the windowsill.\nStop leaving him out in the rain.\n\n— Mum x"
 
 ## Game.restore_memory(id) -> {title, body}. Title = the object, body = one or two quiet lines.
 const MEMORIES := {
@@ -60,7 +65,7 @@ const MEMORIES := {
 	},
 	"time_box": {
 		"title": "My time box",
-		"body": "My drawing. Me and the robot, beating the dragon.\nThought I'd be a hero. Ended up a farmer. Not a bad trade.",
+		"body": "",   # said aloud instead (3-16, 3-17)
 	},
 	"daughter_mug": {
 		"title": "Lucy's mug",
