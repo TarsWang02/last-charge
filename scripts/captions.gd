@@ -47,6 +47,8 @@ func _ready() -> void:
 	_controls.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_controls.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	_controls.offset_bottom = -24
+	_controls.offset_left = -640  # autowrap needs a width, or it wraps every letter
+	_controls.offset_right = 640
 	_controls.modulate.a = 0.0
 	add_child(_controls)
 
@@ -80,6 +82,7 @@ func _drain_queue() -> void:
 		var m: Dictionary = _queue.pop_front()
 		_memory_title.text = m.title
 		_memory_body.text = m.body
+		await _hold(0.6)  # let the object's own reaction (the frame standing up, the glow) land first
 		await _fade(_memory_box, 1.0, 0.8)
 		await _hold(4.0 + m.body.length() * 0.03)
 		await _fade(_memory_box, 0.0, 1.2)
