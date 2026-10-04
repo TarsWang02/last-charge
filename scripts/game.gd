@@ -14,6 +14,7 @@ var checkpoint: Node = null
 var memories: Array[String] = []
 var settings := {"master": 0.8, "music": 0.8, "sfx": 0.8, "shadows": 1, "render_scale": 1.0, "mouse_sens": 1.0}
 
+var captions: Node  ## story captions (scripts/captions.gd); text in scripts/story_text.gd
 var _fade: ColorRect
 var _pause_root: Control
 var _respawning := false
@@ -39,6 +40,8 @@ func _ready() -> void:
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_fade.modulate.a = 0.0
 	layer.add_child(_fade)
+	captions = preload("res://scripts/captions.gd").new()
+	add_child(captions)
 	load_settings()
 
 # ------------------------------------------------------------------ flow
@@ -62,6 +65,8 @@ func change_scene(path: String) -> void:
 func start_game() -> void:
 	memories.clear()
 	await change_scene(GAME_SCENE)
+	if not "--autotest" in OS.get_cmdline_user_args():
+		captions.play_opening()
 
 func to_title() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
