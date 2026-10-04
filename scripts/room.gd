@@ -385,6 +385,8 @@ func _read_note() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if _photo_cam and _photo_since > 0.6 and event is InputEventMouseMotion and event.relative.length() > 3.0:
 		_photo_release()  # turning the camera ends the photo's close shot
+	if not OS.is_debug_build():   # the F9-F12 skips are for us, not for players
+		return
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F9:
 		_skip_to_living_room()
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F10:

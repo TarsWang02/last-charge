@@ -296,7 +296,7 @@ func _physics_process(delta: float) -> void:
 	_acc_fwd = lerpf(_acc_fwd, (hv - _prev_hv).dot(fwd) / delta, 0.25)
 	_prev_hv = hv
 
-	if alive:
+	if alive and not in_cutscene():   # cutscenes are free: the battery only runs down while you play
 		add_charge(-drain_per_sec * delta)
 		if charge <= 0.0:
 			alive = false
@@ -343,6 +343,11 @@ func _stop_cling() -> void:
 		create_tween().tween_property(_glow, "light_energy", 0.0, 0.4)
 
 ## Returns true while hanging (the normal walk/jump physics is skipped).
+## A scripted camera (a cutscene, a reveal, a close-up) has the view, not the robot's own camera.
+func in_cutscene() -> bool:
+	var cam := get_viewport().get_camera_3d()
+	return cam != null and cam != $CamPivot/SpringArm3D/Camera3D and not top_down
+
 func _magnet_physics(delta: float) -> bool:
 	if not magnet_enabled:
 		_magnet_hint.visible = false
