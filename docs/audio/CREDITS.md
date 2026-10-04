@@ -28,6 +28,8 @@ All music and almost all sound effects were generated procedurally with code wri
 - **Wind-up monkey / drum falling onto the seesaw**: "23.wav" by adcbicycle — https://freesound.org/people/adcbicycle/sounds/13832/ — CC0.
 - **Robot jump**: "Jump_C_04" by cabled_mess — https://freesound.org/people/cabled_mess/sounds/350906/ — CC0.
 - **Desk maze music (top-down)**: "Scary Ambient Horror Music Long" by Audio_Dread — https://freesound.org/people/Audio_Dread/sounds/528880/ — licensed under **CC BY-NC 4.0** (attribution, non-commercial). Edited: first 235 s, crossfaded into a loop, quieter. **Non-commercial only: replace this music if the game is ever sold.**
+- **Stove burner flaring up**: "Flamethrower" by pugaeme — https://freesound.org/people/pugaeme/sounds/396890/ — licensed under **CC BY 3.0** (attribution required; commercial use allowed). Edited: five short cuts.
+- **Sliding along the utensil rail / knocking into cutlery**: "fran_lamp_metallic_clinks.wav" by Fran Freesound — https://freesound.org/s/648171/ — CC0.
 - Tools: FluidSynth, ffmpeg, pretty_midi, pyloudnorm.
 
 AI tools used for audio: Claude (code for music, SFX and voice processing), Piper (text-to-speech).
