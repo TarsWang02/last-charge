@@ -1,6 +1,6 @@
 class_name RobotRig
 extends RefCounted
-## Drives the rigid parts of robot_parts_v2.glb and adds the procedural glowing eyes + battery cells.
+## Drives the rigid parts of robot_parts_polished.glb and adds the procedural glowing eyes + battery cells.
 ## Every joint follows its target through a damped spring, so poses blend, overshoot slightly and
 ## settle (follow-through) instead of snapping. kick_*() adds an impulse for secondary motion.
 ## Tracks: wheels spin and the belt crawls round its loop (shaders/track_belt.gdshader).
