@@ -1020,7 +1020,15 @@ func _ending_frame(t: float) -> void:
 
 ## A plain pitched roof over the whole house, only for the ending's shots from outside (the bedroom has no
 ## ceiling, and the overhead debug shots look into it).
-func _roof() -> MeshInstance3D:
+func _roof() -> Node3D:
+	var art := "res://assets/models/props/prop_farmhouse_roof.glb"   # docs/art_brief_livingroom_finale.md
+	if ResourceLoader.exists(art):  # origin: the middle of the house at eave height
+		var model: Node3D = load(art).instantiate()
+		add_child(model)
+		model.scale = Vector3.ONE * K
+		model.global_position = Vector3(0, 2.76, 0) * K
+		model.visible = false
+		return model
 	var mi := MeshInstance3D.new()
 	var pm := PrismMesh.new()
 	pm.size = Vector3(5.75, 1.1, 9.75) * K   # across x after the turn below: the ridge runs east-west

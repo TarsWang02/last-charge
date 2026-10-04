@@ -27,6 +27,8 @@ signal clacked              ## caught on a peg or bumped into something
 @export var ceiling := 24.3                     ## ceiling height (units), where hanging things hang from
 
 const ROBOT_HANG := 0.92                       ## bar -> the robot's feet
+const ART := "res://assets/models/props/zip_%s.glb"   ## art for the line's things, used when the file exists
+                                                      ## (docs/art_brief_livingroom_finale.md); boxes otherwise
 var u := 0.0
 var riding := false
 var rider: CharacterBody3D
@@ -96,10 +98,20 @@ func _ready() -> void:
 		a = b
 	for i in range(1, points.size() - 1):  # corner hooks: a little pulley hanging from the ceiling
 		_seg(self, points[i], Vector3(points[i].x, ceiling, points[i].z), 0.03, cord)
-		var wheel := _box(Vector3(0.08, 0.3, 0.3), points[i] + Vector3(0, 0.1, 0), Color(0.5, 0.5, 0.52))
-		wheel.look_at(wheel.global_position + direction(_cum[i] / _len), Vector3.UP)
+		var pulley := _art("pulley", self)
+		if pulley:  # origin where the line runs through it; its cord to the ceiling stays a box
+			pulley.global_position = points[i]
+			pulley.look_at(points[i] + direction(_cum[i] / _len), Vector3.UP)
+		else:
+			var wheel := _box(Vector3(0.08, 0.3, 0.3), points[i] + Vector3(0, 0.1, 0), Color(0.5, 0.5, 0.52))
+			wheel.look_at(wheel.global_position + direction(_cum[i] / _len), Vector3.UP)
 	for t in pegs:
-		_box(Vector3(0.12, 0.35, 0.1), point(t) + Vector3(0, -0.05, 0), Color(0.75, 0.55, 0.3))
+		var peg := _art("peg", self)
+		if peg:  # origin on the line, along the line
+			peg.global_position = point(t)
+			peg.look_at(point(t) + direction(t), Vector3.UP)
+		else:
+			_box(Vector3(0.12, 0.35, 0.1), point(t) + Vector3(0, -0.05, 0), Color(0.75, 0.55, 0.3))
 	_build_garments()
 	_build_hanging()
 	# the hanger: hook on the line, two slanted wires, the bar the robot holds (built across local X)
@@ -122,6 +134,9 @@ func _build_garments() -> void:
 		add_child(g)
 		g.global_position = point(garments[i])
 		g.look_at(g.global_position + direction(garments[i]), Vector3.UP)
+		if _art("garment_" + "abcde"[i % 5], g):  # origin top centre, where it is pegged to the line
+			_garments.append(g)
+			continue
 		var c: Array = cols[i % cols.size()]
 		var w := 2.2 + (i % 3) * 0.4
 		var cloth := _box(Vector3(w, 2.6, 0.06), Vector3.ZERO, c[0], g)
@@ -142,39 +157,47 @@ func _build_hanging() -> void:
 		var bottom_y := point(t).y - hanger_drop - ROBOT_HANG + 0.1
 		var cord_len := ceiling - bottom_y - 1.0
 		_seg(n, Vector3.ZERO, Vector3(0, -cord_len, 0), 0.03, _mat(Color(0.25, 0.25, 0.28)))
-		var rose := _box(Vector3(0.5, 0.12, 0.5), Vector3.ZERO, Color(0.7, 0.68, 0.62), n)  # where it hangs from the ceiling
-		rose.position = Vector3(0, -0.06, 0)
+		if not _art("rose", n):  # where it hangs from the ceiling (art origin: its top, flush with the ceiling)
+			var rose := _box(Vector3(0.5, 0.12, 0.5), Vector3.ZERO, Color(0.7, 0.68, 0.62), n)
+			rose.position = Vector3(0, -0.06, 0)
 		var top := Vector3(0, -cord_len, 0)
-		match h[2]:
-			"lamp":  # a dead pendant lamp: a shade and a bulb that doesn't light
-				var bx1 := _box(Vector3(1.3, 0.5, 1.3), Vector3.ZERO, Color(0.55, 0.45, 0.32), n)
-				bx1.position = top + Vector3(0, -0.35, 0)
-				var bx2 := _box(Vector3(0.35, 0.4, 0.35), Vector3.ZERO, Color(0.75, 0.75, 0.7), n)
-				bx2.position = top + Vector3(0, -0.75, 0)
-			"plant":  # a hanging planter spilling leaves
-				var bx3 := _box(Vector3(1.0, 0.6, 1.0), Vector3.ZERO, Color(0.6, 0.35, 0.25), n)
-				bx3.position = top + Vector3(0, -0.4, 0)
-				for k in 4:
-					var leaf := _box(Vector3(0.25, 0.9, 0.12), Vector3.ZERO, Color(0.25, 0.45, 0.25), n)
-					leaf.position = top + Vector3((k - 1.5) * 0.3, -0.9, 0.4 * (k % 2) - 0.2)
-					leaf.rotation.z = (k - 1.5) * 0.4
-			"chime":  # a wind chime: a ring and dangling tubes
-				var bx4 := _box(Vector3(1.0, 0.08, 1.0), Vector3.ZERO, Color(0.6, 0.55, 0.45), n)
-				bx4.position = top + Vector3(0, -0.1, 0)
-				for k in 5:
-					var tube := _box(Vector3(0.1, 0.7 + k * 0.08, 0.1), Vector3.ZERO, Color(0.72, 0.74, 0.78), n)
-					tube.position = top + Vector3(cos(k * 1.26) * 0.4, -0.5 - k * 0.04, sin(k * 1.26) * 0.4)
-			"cage":  # an empty birdcage
-				var bx5 := _box(Vector3(1.2, 0.08, 1.2), Vector3.ZERO, Color(0.55, 0.5, 0.35), n)
-				bx5.position = top + Vector3(0, -1.0, 0)
-				for k in 6:
-					var bar := _box(Vector3(0.05, 1.0, 0.05), Vector3.ZERO, Color(0.7, 0.62, 0.4), n)
-					bar.position = top + Vector3(cos(k * 1.05) * 0.55, -0.5, sin(k * 1.05) * 0.55)
-				var bx6 := _box(Vector3(0.9, 0.15, 0.9), Vector3.ZERO, Color(0.7, 0.62, 0.4), n)
-				bx6.position = top + Vector3(0, -0.02, 0)
+		var thing := _art(h[2], n)
+		if thing:  # art origin: the top, where the cord ties on
+			thing.position = top
+		else:
+			_hanging_boxes(n, h[2], top)
 		n.set_meta("u", t)
 		n.set_meta("side", side)
 		hang_nodes.append(n)
+
+func _hanging_boxes(n: Node3D, kind: String, top: Vector3) -> void:
+	match kind:
+		"lamp":  # a dead pendant lamp: a shade and a bulb that doesn't light
+			var bx1 := _box(Vector3(1.3, 0.5, 1.3), Vector3.ZERO, Color(0.55, 0.45, 0.32), n)
+			bx1.position = top + Vector3(0, -0.35, 0)
+			var bx2 := _box(Vector3(0.35, 0.4, 0.35), Vector3.ZERO, Color(0.75, 0.75, 0.7), n)
+			bx2.position = top + Vector3(0, -0.75, 0)
+		"plant":  # a hanging planter spilling leaves
+			var bx3 := _box(Vector3(1.0, 0.6, 1.0), Vector3.ZERO, Color(0.6, 0.35, 0.25), n)
+			bx3.position = top + Vector3(0, -0.4, 0)
+			for k in 4:
+				var leaf := _box(Vector3(0.25, 0.9, 0.12), Vector3.ZERO, Color(0.25, 0.45, 0.25), n)
+				leaf.position = top + Vector3((k - 1.5) * 0.3, -0.9, 0.4 * (k % 2) - 0.2)
+				leaf.rotation.z = (k - 1.5) * 0.4
+		"chime":  # a wind chime: a ring and dangling tubes
+			var bx4 := _box(Vector3(1.0, 0.08, 1.0), Vector3.ZERO, Color(0.6, 0.55, 0.45), n)
+			bx4.position = top + Vector3(0, -0.1, 0)
+			for k in 5:
+				var tube := _box(Vector3(0.1, 0.7 + k * 0.08, 0.1), Vector3.ZERO, Color(0.72, 0.74, 0.78), n)
+				tube.position = top + Vector3(cos(k * 1.26) * 0.4, -0.5 - k * 0.04, sin(k * 1.26) * 0.4)
+		"cage":  # an empty birdcage
+			var bx5 := _box(Vector3(1.2, 0.08, 1.2), Vector3.ZERO, Color(0.55, 0.5, 0.35), n)
+			bx5.position = top + Vector3(0, -1.0, 0)
+			for k in 6:
+				var bar := _box(Vector3(0.05, 1.0, 0.05), Vector3.ZERO, Color(0.7, 0.62, 0.4), n)
+				bar.position = top + Vector3(cos(k * 1.05) * 0.55, -0.5, sin(k * 1.05) * 0.55)
+			var bx6 := _box(Vector3(0.9, 0.15, 0.9), Vector3.ZERO, Color(0.7, 0.62, 0.4), n)
+			bx6.position = top + Vector3(0, -0.02, 0)
 
 # ------------------------------------------------------------------ ride
 ## Where the robot hangs (its feet): below the bar, swung sideways about the line.
@@ -271,6 +294,17 @@ func _process(delta: float) -> void:
 		n.global_basis = Basis(axis, a)
 
 # ------------------------------------------------------------------ helpers
+## The art model for one of the line's things, if it has been made: a child of `parent`, metres -> units.
+func _art(kind: String, parent: Node3D) -> Node3D:
+	var path := ART % kind
+	if not ResourceLoader.exists(path):
+		return null
+	var m: Node3D = load(path).instantiate()
+	m.name = "Art_zip_" + kind
+	m.scale = Vector3.ONE * 9.0
+	parent.add_child(m)
+	return m
+
 func _mat(c: Color) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.albedo_color = c
