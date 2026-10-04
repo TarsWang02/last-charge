@@ -66,7 +66,7 @@ var powered_down := false    ## the ending: it has given its last charge; eyes a
 var clinging: Node3D = null  ## the steel piece the robot hangs under
 var magnet_seconds := 0.0    ## time spent hanging (for tuning / the self test)
 var _cling_y := 0.0
-var _magnet_hint: Label3D
+var _magnet_hint: Node3D
 var _td_yaw := 0.0
 var _arm_len := 3.8
 var _focus := Vector3.INF      ## top-down: a lit area the camera should also frame
@@ -112,15 +112,7 @@ func _ready() -> void:
 	_glow.omni_range = glow_range
 	_glow.position = Vector3(0, 0.8, 0)
 	visual.add_child(_glow)
-	_magnet_hint = Label3D.new()  # "you can grab the steel above you"
-	_magnet_hint.text = "RMB"
-	_magnet_hint.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_magnet_hint.no_depth_test = true
-	_magnet_hint.fixed_size = true
-	_magnet_hint.pixel_size = 0.0012
-	_magnet_hint.font_size = 30
-	_magnet_hint.outline_size = 10
-	_magnet_hint.modulate = Color(0.5, 1.0, 0.95)
+	_magnet_hint = UiKit.make_prompt("RMB", "Magnet")  # "you can grab the steel above you"
 	_magnet_hint.position = Vector3(0, 1.35, 0)
 	_magnet_hint.visible = false
 	visual.add_child(_magnet_hint)

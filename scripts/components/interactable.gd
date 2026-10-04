@@ -1,6 +1,7 @@
 class_name Interactable
 extends Area3D
-## Anything the robot powers with E. Shows a small key prompt when in range.
+## Anything the robot powers with E. Shows a key-cap prompt (UiKit.make_prompt) when in range;
+## prompt_text = "E" or "E  Read" (key, then the action shown beside the cap).
 ## hold_time = 0 -> tap; > 0 -> hold E, battery drains while holding (e.g. the breaker finale).
 ## Connect `activated` to drive the object's behaviour.
 
@@ -16,7 +17,7 @@ signal hold_progress(fraction: float)
 
 var done := false
 var _held := 0.0
-var _prompt: Label3D
+var _prompt: Node3D
 
 func _ready() -> void:
 	if not get_children().any(func(c): return c is CollisionShape3D):
@@ -25,15 +26,9 @@ func _ready() -> void:
 		sh.radius = radius
 		cs.shape = sh
 		add_child(cs)
-	_prompt = Label3D.new()
-	_prompt.text = prompt_text
-	_prompt.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_prompt.no_depth_test = true
-	_prompt.fixed_size = true
-	_prompt.pixel_size = 0.0012
-	_prompt.font_size = 36
-	_prompt.outline_size = 10
-	_prompt.modulate = Color(1, 0.88, 0.6)
+	var parts := prompt_text.split(" ", false)
+	var action := " ".join(parts.slice(1)) if parts.size() > 1 else ("Hold" if hold_time > 0.0 else "")
+	_prompt = UiKit.make_prompt(parts[0] if parts.size() > 0 else "E", action)
 	_prompt.position = prompt_offset
 	_prompt.visible = false
 	add_child(_prompt)
@@ -55,14 +50,14 @@ func _process(delta: float) -> void:
 		_held += delta
 		Game.player.add_charge(-cost * delta / hold_time)
 		hold_progress.emit(clampf(_held / hold_time, 0.0, 1.0))
-		_prompt.text = "%s  %d%%" % [prompt_text, int(clampf(_held / hold_time, 0.0, 1.0) * 100)]
+		UiKit.set_prompt_progress(_prompt, clampf(_held / hold_time, 0.0, 1.0))
 		if _held >= hold_time:
 			_activate()
 	else:
-		_prompt.text = prompt_text
+		UiKit.set_prompt_progress(_prompt, 0.0)
 
 func _activate() -> void:
 	done = true
 	_held = 0.0
-	_prompt.text = prompt_text
+	UiKit.set_prompt_progress(_prompt, 0.0)
 	activated.emit()
