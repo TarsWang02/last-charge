@@ -92,6 +92,15 @@ var ending_done := false
 var _finale_c0 := 0.0
 var _spark: OmniLight3D
 var opening_done := false
+var _jack_home := Vector3.ZERO
+var _jack_t := 0.0
+var seesaw_tipped := false
+var _dbg_on_end := []
+var _box_lines_done := false
+var _box_pos := Vector3.ZERO
+var _box_hint_t := 0.0
+var audio: Node                  ## scripts/audio_director.gd
+var _was_respawning := false
 var tv_pulling := false
 var _fp_desk: Camera3D
 var _op_skip := false
@@ -133,6 +142,12 @@ func _ready() -> void:
 	player._face_yaw = PI / 2
 	player.visual.rotation.y = PI / 2
 	$PostFX.player_path = player.get_path()
+	audio = preload("res://scripts/audio_director.gd").new()
+	audio.name = "Audio"
+	add_child(audio)
+	audio.player = player
+	audio.ambience("环境声/阶段混音1_童年少年_窗外_循环.ogg")
+	Game.memory_restored.connect(func(_id): audio.sfx("音效/全程_回忆点亮.ogg", -8.0))
 	Game.register_player(player)
 	Game.set_checkpoint($Checkpoints/Opening)
 	$Areas/BookTip.body_entered.connect(func(b): if b == player and fall_armed: _fall())
@@ -150,10 +165,12 @@ func _ready() -> void:
 	$Stop3/TvEnter.done = true   # no E prompt: walking up to the screen is enough (see _process)
 	maze.visible = false         # until the lamp goes out it is just a desk
 	if maze.hole_fill:
-		maze.hole_fill.filled.connect(func(_b): _say_once("2-9"))
+		maze.hole_fill.filled.connect(func(_b):
+			_say_once("2-9")
+			audio.sfx("音效/第2站_橡皮填洞.ogg", -4.0))
 	$Stop3/TvScreen.game.rescued.connect(_tv_finale)
 	$Stop3/TimeBoxOpen.activated.connect(_open_time_box)
-	$Areas/KitchenReveal.body_entered.connect(func(b): if b == player and not kitchen_revealed: _kitchen_reveal())
+	$Areas/KitchenReveal.body_entered.connect(func(b): if b == player and not kitchen_revealed and _box_lines_done: _after_tv_looks())
 	$Stop4/MicrowaveUse.activated.connect(_microwave)
 	$Stop4/ToasterUse.activated.connect(_toaster)
 	$Stop4/KettleUse.activated.connect(_kettle)
@@ -179,6 +196,9 @@ func _ready() -> void:
 		_block_home[n] = get_node("Stop1/" + n).global_position
 	for n in ["ElectricCar", "Drum", "Seesaw"]:
 		_machine_home[n] = get_node("Stop1/" + n).transform
+	_jack_home = $Stop1/JackHead.position
+	for n in ["BigBotShoulderN", "BigBotShoulderS", "BigBotTorso", "BigBotHead"]:   # up there only by the blocks
+		get_node("Stop1/" + n).set_meta("no_mantle", true)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	if "--autotest" in OS.get_cmdline_user_args():
 		_autotest()
@@ -325,6 +345,11 @@ func _read_note() -> void:
 	maze.note.material_override = m
 	create_tween().tween_property(m, "emission_energy_multiplier", 2.5, 0.8)
 	Game.restore_memory("mom_note")
+	audio.phrase("音乐/旋律片段2_妈妈的纸条.ogg", -8.0)
+	await _wait(0.6)
+	Game.captions.voice("2-11")
+	await _wait(preload("res://scripts/captions.gd").line_time("2-11"))
+	Game.captions.voice("2-12")
 
 ## Debug: F9 skips to the living room (by the bedroom door), for testing the TV stop.
 func _unhandled_input(event: InputEvent) -> void:
@@ -402,6 +427,94 @@ func _physics_process(_d: float) -> void:
 	if not tv_pulling and not in_tv and not tv_done and not player.locked \
 			and player.global_position.distance_to($Stop3/TvEnter.global_position) < 0.14 * K:
 		_tv_approach()
+	# the clothesline: the first swing past something, peg, washing, bump; the town going dark; the shelf
+	if _fp_cam != null:
+		var zp: Zipline = $Stop5/Zipline
+		if zp.riding and zp.hang_nodes.size() > 0 and float(zp.hang_nodes[0].get_meta("u")) - zp.u < 0.04:
+			_say_once("5-5")
+		if zp.clacks > 0:
+			_say_once("5-6")
+		if zp.bumps > 0:
+			_say_once("5-8")
+		for g in zp._garments:
+			if g.has_meta("hit"):
+				_say_once("5-7")
+				break
+		if town.lit_count() < town.light_count() * 0.6:
+			_say_once("5-11")
+	if zip_done and not finale_started and player.is_on_floor() \
+			and player.global_position.distance_to($FinaleStand.global_position) < 0.15 * K:
+		_say_once("6-1")
+	var resp := Game.is_respawning()
+	if resp and not _was_respawning:
+		audio.sfx("音效/机器人_掉落重来.ogg", -6.0)
+	_was_respawning = resp
+	# the jack-in-the-box: springs up and sinks back on its own, so it gets noticed (standing on it = launch)
+	if fell and not launched and not jack_busy:
+		_jack_t += _d
+		var head: Node3D = $Stop1/JackHead
+		var c := fmod(_jack_t, 3.2)
+		var up := 0.0
+		if c < 0.12:
+			up = c / 0.12
+		elif c < 0.9:
+			up = 1.0
+		elif c < 1.4:
+			up = 1.0 - (c - 0.9) / 0.5
+		if c < _d:
+			audio.sfx("音效/第1站_玩偶匣弹出.ogg", -16.0, 0.08)
+		head.position = _jack_home + Vector3(0, 0.16 * K * up, 0)
+		head.scale = Vector3.ONE * lerpf(1.0, 1.4, up)
+	# the seesaw: its west end starts up; the first time the robot steps on it, down it goes - it's a seesaw
+	var saw_p: Vector3 = $Stop1/Seesaw.global_position
+	var on_saw := absf(player.global_position.x - saw_p.x) < 0.19 * K and absf(player.global_position.z - saw_p.z) < 0.05 * K 			and player.global_position.y < saw_p.y + 0.06 * K
+	if fell and not seesaw_tipped and on_saw:
+		for _once in 1:
+				seesaw_tipped = true
+				var saw: Node3D = $Stop1/Seesaw
+				var tw := create_tween()
+				tw.tween_property(saw, "rotation_degrees:z", 6.0, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+				tw.tween_callback(func(): _machine_home["Seesaw"] = saw.transform)
+				audio.sfx("音效/第1站_积木摩擦短_01.ogg", -6.0)
+				break
+	# out of the TV: the time box first (it pulses, warm, until opened); a few steps after it, the kitchen
+	if tv_done and not time_box_open:
+		_box_hint_t += _d
+		$Stop3/TimeBoxGlow.light_energy = 0.6 + 0.9 * (0.5 + 0.5 * sin(_box_hint_t * 3.0))
+		if _box_hint_t > 9.0 and fmod(_box_hint_t, 9.0) < _d and not player.locked:
+			_look_at($Stop3/TimeBoxGlow.global_position, -20.0, 1.0)   # nudge the camera back to it now and then
+	if _box_lines_done and not kitchen_revealed and not player.locked 			and Vector2(player.global_position.x - _box_pos.x, player.global_position.z - _box_pos.z).length() > 0.08 * K:
+		_after_tv_looks()
+	# monologue, once each: the pixel game
+	if in_tv:
+		var tg: TvGame = $Stop3/TvScreen.game
+		if tg.active:
+			_say_once("3-6")
+			if tg.bot.position.x > 200.0:
+				_say_once("3-7")
+			if tg.hits_taken > 0 or tg.continues > 0:
+				_say_once("3-8")
+			if tg.batteries > 0:
+				_say_once("3-9")
+			if tg.screen_reached >= 2 and tg.bot.position.x > 900.0:
+				_say_once("3-10")
+			if tg.boss_started:
+				_say_once("3-11")
+			if tg.dragon and tg.dragon.phase2:
+				_say_once("3-12")
+	# ...the kitchen
+	if kitchen_revealed and not sink_done:
+		if Game.is_respawning():
+			_say_once("4-6")
+		if player.clinging != null:
+			_say_once("4-12")
+		if player.updraft_top > -INF:
+			_say_once("4-14")
+		if player.is_on_floor():
+			for i in player.get_slide_collision_count():
+				var c := player.get_slide_collision(i).get_collider()
+				if c is Node and c.name in ["CannedGoods", "RiceBag", "StepStool"]:
+					_say_once("4-7")
 	# monologue, once each: the desk (first old light, first crack, the eraser), the TV stop
 	if in_desk:
 		if Game.is_respawning():
@@ -494,6 +607,8 @@ func _stand_frame_up() -> void:
 	_photo_tw.chain().tween_property(_photo_cam, "global_transform", to.translated(-d * 0.03 * K), 7.0)  # a slow creep in
 	await _wait(0.5)
 	create_tween().tween_property($Stop0/PhotoFrame, "rotation_degrees:x", -102.0, 0.7) 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	audio.sfx("音效/开场_推起相框.ogg", -6.0)
+	audio.phrase("音乐/旋律片段1_童年照片.ogg", -8.0)
 	var glow := OmniLight3D.new()   # warm amber: a memory
 	glow.light_color = Color(1, 0.72, 0.38)
 	glow.omni_range = 0.35 * K
@@ -501,6 +616,7 @@ func _stand_frame_up() -> void:
 	glow.global_position = (f + Vector3(0, 0.1, 0.08)) * K
 	create_tween().tween_property(glow, "light_energy", 1.2, 1.2)
 	Game.restore_memory("family_photo")
+	get_tree().create_timer(0.6).timeout.connect(func(): Game.captions.voice("0-6"))
 	_shot_if(_op_dir, "op_photo.png", 2.2)
 	await _wait(6.6)
 	Game.captions.say("0-7")
@@ -533,6 +649,7 @@ func _fall() -> void:
 	fall_armed = false
 	player.locked = true
 	Game.captions.say("0-8", 1.4)
+	audio.sfx("音效/开场_书本晃动翻倒.ogg", -6.0)
 	var book: Node3D = $Stop0/LooseBook
 	var wob := create_tween()  # the book creaks: two small dips, then it tips over the edge
 	for a in [-5.0, -1.5, -9.0]:
@@ -553,6 +670,8 @@ func _fall() -> void:
 	player.velocity = Vector3(0, -2.0, 0)
 	player.locked = false
 	fell = true
+	audio.sfx("音效/第1站_掉进毛绒堆_中.ogg", -6.0)
+	audio.loop("音效/第1站_玩具火车_循环.ogg", true, -20.0)
 	Game.set_checkpoint($Checkpoints/ToyBox)
 	_look_at($MachineLook.global_position, -14.0)  # show the goal: the big robot, the drum, the seesaw
 	await Game.captions.say("1-1")
@@ -615,8 +734,10 @@ func _opening() -> void:
 	spark.global_position = Vector3(-0.28, 1.36, 2.24) * K
 	_op_track(create_tween()).tween_property(spark, "light_energy", 0.0, 0.35).from(7.0)
 	_op_track(create_tween()).tween_property($Stop6/BreakerLever, "rotation_degrees:z", 0.0, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	audio.sfx("音效/开场_配电箱跳闸.ogg", -2.0)
 	await _op_wait(0.12)
 	_power_cut()
+	audio.sfx("音效/开场_灯灭_01.ogg", -6.0)
 	await _op_wait(1.5, "op_3_breaker_tripped.png")
 	# 3. back in the bedroom: the night light dies, moonlight only
 	_op_cam.fov = 50.0
@@ -625,6 +746,7 @@ func _opening() -> void:
 	var fl := _op_track(create_tween())
 	for e in [0.2, 1.1, 0.05, 0.7, 0.0]:
 		fl.tween_property(_night_light, "light_energy", e, 0.07)
+	audio.sfx("音效/开场_灯灭_02.ogg", -8.0)
 	_op_track(create_tween()).tween_property($PostFX, "loss_cap", 1.0, 2.0)
 	await _op_wait(2.0, "op_4_dark.png")
 	# 4. push in on the tin robot, slumped on the nightstand
@@ -635,6 +757,7 @@ func _opening() -> void:
 		player.powered_down = not player.powered_down
 		await _op_wait(t)
 	player.powered_down = false
+	audio.sfx("音效/机器人_启动.ogg", -4.0)
 	_op_track(create_tween()).tween_method(_op_charge, 0.0, 1.0, 2.2)
 	_op_move(Vector3(-3.04, 0.82, -2.235), robot, 3.0)
 	await _op_wait(1.2)
@@ -664,7 +787,7 @@ func _op_say(id: String, shot := "") -> void:
 	var text: String = StoryText.MONOLOGUE[id]
 	Game.captions.say(id)
 	await _op_wait(0.9, shot)
-	await _op_wait(preload("res://scripts/captions.gd").read_time(text) + 0.4)
+	await _op_wait(preload("res://scripts/captions.gd").line_time(id) + 0.4)
 
 func _op_charge(c: float) -> void:
 	player.charge = c
@@ -694,6 +817,7 @@ func _end_opening(pcam: Camera3D) -> void:
 	pcam.make_current()
 	_op_cam.queue_free()
 	player.locked = false
+	audio.music("音乐/主旋律_探索_循环.ogg", 4.0, -12.0)
 	Game.captions.show_controls()
 
 func _power_cut() -> void:
@@ -751,12 +875,13 @@ func _jack() -> void:
 	jack_busy = true
 	player.locked = true
 	var head: Node3D = $Stop1/JackHead
-	var h0 := head.position
+	var h0 := _jack_home
 	await get_tree().create_timer(0.25).timeout
 	var pop := create_tween().set_parallel()
 	pop.tween_property(head, "position", h0 + Vector3(0, 0.22 * K, 0), 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	pop.tween_property(head, "scale", Vector3.ONE * 1.6, 0.12)
 	_say_once("1-3")
+	audio.sfx("音效/第1站_玩偶匣弹出.ogg", -4.0)
 	player.launch_squash()
 	await _arc(player.global_position, $ShelfTarget.global_position, 2.2, 0.9)
 	player.velocity = Vector3.ZERO
@@ -776,29 +901,38 @@ func _run_machine() -> void:
 		return
 	machine_busy = true
 	_say_once("1-5")
+	audio.loop("音效/第1站_电动小车_循环.ogg", true, -10.0)
 	var car: Node3D = $Stop1/ElectricCar
 	var drum: Node3D = $Stop1/Drum
 	var saw: Node3D = $Stop1/Seesaw
 	var drive := create_tween()
 	var from := car.position
+	var car_yaw := car.rotation.y
 	for w in [$CarWay1, $CarWay2, $CarWay3, $CarWay4]:
 		var to: Vector3 = w.position
 		var dir := to - from
-		drive.tween_property(car, "rotation:y", atan2(-dir.x, -dir.z), 0.15)  # turn at the corner
+		var yaw := atan2(-dir.x, -dir.z)
+		car_yaw += wrapf(yaw - car_yaw, -PI, PI)   # the short way round
+		drive.tween_property(car, "rotation:y", car_yaw, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)  # turn at the corner
 		drive.tween_property(car, "position", to, dir.length() / (0.15 * K)).set_trans(Tween.TRANS_LINEAR)
 		from = to
 	await drive.finished
+	audio.loop("音效/第1站_电动小车_循环.ogg", false)
 	var fall := create_tween().set_parallel()  # the drum tips west off the robot's head onto the raised end
 	fall.tween_property(drum, "position", $DrumLanding.position, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	fall.tween_property(drum, "rotation_degrees:z", 85.0, 0.45)
 	await fall.finished
+	audio.sfx("音效/第1站_鼓砸跷跷板.ogg", -4.0)
 	var on_end: bool = $Areas/SeesawEnd.overlaps_body(player)
+	_dbg_on_end = [on_end, player.global_position / K]
 	if on_end:
 		player.locked = true
 	create_tween().tween_property(saw, "rotation_degrees:z", -12.0, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	if on_end:
 		player.launch_squash()
 		Game.captions.say("1-6", 1.4)
+		audio.sfx("音效/第1站_跷跷板弹射.ogg", -4.0)
+		audio.loop("音效/第1站_玩具火车_循环.ogg", false)
 		await _arc(player.global_position, $DeskLanding.global_position, 5.0, 1.7)
 		player.velocity = Vector3.ZERO
 		player.locked = false
@@ -832,6 +966,8 @@ func _enter_desk() -> void:
 	_fp_desk.global_transform = Transform3D(Basis.IDENTITY, eye).looking_at(page)
 	_fp_desk.make_current()
 	player.visual.visible = false   # we're inside its head
+	audio.loop("音效/第2站_台灯嗡鸣_循环.ogg", true, -16.0)
+	audio.loop("音效/第2站_笔尖写字_循环.ogg", true, -18.0)
 	# it looks up from the desk to his face
 	await _fp_turn(eye, boy, 1.6)
 	await _wait(0.3)
@@ -843,6 +979,9 @@ func _enter_desk() -> void:
 	await _fp_turn(eye, door, 1.2)
 	await _wait(1.0)
 	var g: OmniLight3D = $DeskLampGlow
+	audio.loop("音效/第2站_台灯嗡鸣_循环.ogg", false)
+	audio.loop("音效/第2站_笔尖写字_循环.ogg", false)
+	audio.sfx("音效/第2站_台灯开关.ogg", -4.0)
 	for e in [0.3, 2.2, 0.15, 1.6, 0.05, 0.9, 0.0]:
 		g.light_energy = e
 		await get_tree().create_timer(0.09).timeout
@@ -885,6 +1024,8 @@ func _open_door() -> void:
 	var handle: Node3D = $Stop2/DoorPivot/Handle
 	var lever_end: Vector3 = handle.global_position + Vector3(0, 0.15, -0.12 * K)
 	await _arc(player.global_position, lever_end, 0.6, 0.45)
+	audio.sfx("音效/门_扭把手加开门_完整.ogg", -4.0)
+	audio.ambience("环境声/阶段混音2_青年_窗外_循环.ogg")
 	create_tween().tween_property(handle, "rotation_degrees:x", -35.0, 0.2).set_trans(Tween.TRANS_BACK)
 	player.launch_squash()
 	await get_tree().create_timer(0.3).timeout
@@ -1017,7 +1158,8 @@ func _open_time_box() -> void:
 	Game.restore_memory("time_box")
 	await _wait(0.8)
 	await Game.captions.say_all(["3-16", "3-17"])
-	_after_tv_looks()   # ...and then the kitchen
+	_box_pos = player.global_position
+	_box_lines_done = true   # a few steps on, the kitchen (see _process)
 
 ## Out of the game: the robot pops out of the glass and lands on the floor on the kitchen
 ## side; the camera pulls back out to the robot's own camera, which then turns to the stove.
@@ -1063,8 +1205,15 @@ func flare_state(i: int) -> Array:
 
 ## Out of the TV: the orange glow of the stove, then the kitchen reveal (from here the view is open).
 func _after_tv_looks() -> void:
+	audio.ambience("环境声/阶段混音3_中年_窗外_循环.ogg")
+	player.locked = true
 	_look_at($StoveLook.global_position, -8.0, 1.5)
-	await _wait(1.9)
+	await _wait(1.0)
+	await Game.captions.say("4-1")
+	_look_at($FatherHead.global_position, -4.0, 1.4)
+	await _wait(0.8)
+	await Game.captions.say_all(["4-2", "4-3"])
+	player.locked = false
 	if not kitchen_revealed:
 		_kitchen_reveal()
 
@@ -1073,8 +1222,8 @@ func _after_tv_looks() -> void:
 func _kitchen_reveal() -> void:
 	kitchen_revealed = true
 	await _cinematic([
-		[Vector3(2.9, 1.55, -0.9), $SinkLook.global_position / K + Vector3(0, -0.15, 0), 1.4, 1.3],  # the sink, the flood
-		[Vector3(2.4, 1.6, -1.2), $SillLook.global_position / K, 1.3, 1.1],                         # the way home
+		[Vector3(2.9, 1.55, -0.9), $SinkLook.global_position / K + Vector3(0, -0.15, 0), 1.4, 0.2, "4-4"],  # the sink, the flood
+		[Vector3(2.4, 1.6, -1.2), $SillLook.global_position / K, 1.3, 0.2, "4-5"],                         # the way home
 	])
 
 ## A short camera move: poses = [position (m), look-at (m), move seconds, hold seconds]. Starts and ends on
@@ -1090,6 +1239,8 @@ func _cinematic(poses: Array) -> void:
 	for p in poses:
 		var to := Transform3D(Basis.IDENTITY, p[0] * K).looking_at(p[1] * K)
 		await create_tween().tween_property(cam, "global_transform", to, p[2]).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).finished
+		if p.size() > 4:   # [.., line id]: hold for as long as the line takes
+			await Game.captions.say(p[4])
 		await _wait(p[3])
 	var from := cam.global_transform
 	await create_tween().tween_method(func(t: float): cam.global_transform = from.interpolate_with(pcam.global_transform, t), 0.0, 1.0, 1.0) 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).finished
@@ -1099,6 +1250,7 @@ func _cinematic(poses: Array) -> void:
 
 ## Powered microwave: beep, the door pops open and shoves the cutting board across the gap.
 func _microwave() -> void:
+	Game.captions.say("4-8")
 	board_pushed = true
 	var door: Node3D = $Stop4/MicrowaveDoor
 	await create_tween().tween_property(door, "rotation_degrees:y", 100.0, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).finished
@@ -1111,6 +1263,7 @@ func _toaster() -> void:
 		return
 	toaster_busy = true
 	player.locked = true
+	Game.captions.say("4-9")
 	await _arc(player.global_position, $ToasterSlot.global_position, 0.25, 0.3)
 	var m := StandardMaterial3D.new()
 	m.albedo_color = Color(0.2, 0.08, 0.05)
@@ -1120,11 +1273,13 @@ func _toaster() -> void:
 	$Stop4/ToasterCoils.material = m
 	await create_tween().tween_property(m, "emission_energy_multiplier", 4.0, 1.6).finished
 	player.launch_squash()
+	Game.captions.say("4-10")
 	await _arc(player.global_position, $SpiceShelfLanding.global_position, 1.4, 0.7)
 	player.velocity = Vector3.ZERO
 	player.locked = false
 	on_spice_shelf = true
 	player.magnet_enabled = true  # the steel hood is right there: the claws can become an electromagnet
+	get_tree().create_timer(2.2).timeout.connect(func(): _say_once("4-11"))
 	Game.set_checkpoint($Checkpoints/SpiceShelf)
 	create_tween().tween_property(m, "emission_energy_multiplier", 0.0, 2.0)
 	toaster_busy = false
@@ -1136,6 +1291,7 @@ func _kettle_look(b: Node) -> void:
 
 ## The kettle: E powers it, the switch light comes on, it rumbles, then steam for a few seconds (whistling).
 func _kettle() -> void:
+	Game.captions.say("4-13")
 	if kettle_busy:
 		return
 	kettle_busy = true
@@ -1164,6 +1320,7 @@ func _glow_mat(c: Color, e: float) -> StandardMaterial3D:
 ## and faster (all clatter). The robot rides the lid off onto the counter, the plug pops, the flood
 ## drains away; the last lid spins in the basin, slower, and stops. Then quiet.
 func _sink_collapse() -> void:
+	get_tree().create_timer(2.5).timeout.connect(func(): Game.captions.say("4-15"))
 	sink_done = true
 	player.locked = true
 	var cam := Camera3D.new()
@@ -1217,6 +1374,7 @@ func _sink_collapse() -> void:
 
 ## The flood goes: the water on the floor, in the gap, on the counter and in the basin sinks away.
 func _drain_flood() -> void:
+	Game.captions.say("4-16")
 	for n in ["WaterFloor", "WaterGap", "WaterCounter"]:
 		get_node("Stop4/" + n).enabled = false
 	for n in ["FloodFloor", "FloodGap", "CounterWater", "SinkWater"]:
@@ -1237,7 +1395,25 @@ func _ring_mug() -> void:
 	tw.tween_property(g, "light_energy", 3.0, 0.08)
 	tw.tween_property(g, "light_energy", 0.8, 2.5)
 	Game.restore_memory("daughter_mug")
+	player.locked = true
+	await Game.captions.say("4-17")
 	_look_at($FatherHead.global_position, -2.0, 1.6)
+	await _wait(0.6)
+	await Game.captions.say("4-18")
+	await _zipline_reveal()
+	player.locked = false
+
+## Up at the window: the clothesline. The camera runs along it - across the room, back to the window,
+## along the window - to the breaker box at the far end. That's the way.
+func _zipline_reveal() -> void:
+	var zp: Zipline = $Stop5/Zipline
+	var box: Vector3 = $Stop6/BreakerBox.global_position / K
+	await _cinematic([
+		[Vector3(4.0, 1.75, 1.6), zp.point(0.0) / K, 1.4, 0.2],                       # the coat hanger on the line
+		[Vector3(3.2, 2.2, 1.4), zp.point(0.3) / K, 1.8, 0.2, "5-1"],                 # the line, across the room
+		[Vector3(1.6, 2.1, 0.6), zp.point(0.75) / K, 2.0, 0.2],                       # back to the window
+		[Vector3(0.8, 1.75, 1.7), box, 2.0, 0.4, "5-2"],                              # the breaker box at the end
+	])
 
 # ------------------------------------------------------------------ stop 5
 ## The town outside (scripts/town.gd): cheap MultiMeshes; its lights go out as the robot rides past.
@@ -1280,6 +1456,8 @@ func _zipline_grab() -> void:
 		w.visible = false
 	zip.clacked.connect(func(): _fp_shake = 1.0)
 	zip.ride(player)
+	audio.ambience("环境声/阶段混音4_老年_窗外_循环.ogg")
+	Game.captions.say_all(["5-3", "5-4"])
 
 ## The robot's eyes on the line: facing the way it travels, a touch down; head turn, sway, shake.
 func _fp_eye() -> Transform3D:
@@ -1298,6 +1476,7 @@ func _fp_eye() -> Transform3D:
 ## where it has lived all its life. Then time runs on.
 func _slow_look(kind: String) -> void:
 	slow_looks += 1
+	Game.captions.say_all(["5-9", "5-10"] if kind == "in" else ["5-12", "5-13"])
 	slow_look_done = slow_looks >= 2
 	create_tween().set_ignore_time_scale(true).tween_property(Engine, "time_scale", 0.2, 0.6).set_trans(Tween.TRANS_SINE)
 	# one last clear look: the grey low-power veil lifts while it looks around, and comes back after
@@ -1326,6 +1505,7 @@ func _slow_look(kind: String) -> void:
 ## The end of the line, by the bedroom door: back to third person, let go onto the sill, last cell left.
 func _zipline_end() -> void:
 	player.visual.visible = true
+	get_tree().create_timer(1.6).timeout.connect(func(): Game.captions.say_all(["5-14", "5-15", "5-16"]))
 	if _speed_fx:
 		_speed_fx.get_parent().queue_free()
 		_speed_fx = null
@@ -1353,6 +1533,12 @@ func _zipline_end() -> void:
 # ------------------------------------------------------------------ stop 6: the finale and the ending
 ## Holding E at the breaker: the last charge flows out of the robot into the box; the lever creeps up.
 func _breaker_progress(f: float) -> void:
+	if f >= 0.02:
+		_say_once("6-2")
+	if f >= 0.5:
+		_say_once("6-3")
+	if f >= 0.85:
+		_say_once("6-4")
 	if not finale_started:
 		finale_started = true
 		player.locked = true  # no way back now
@@ -1382,6 +1568,7 @@ func _breaker_progress(f: float) -> void:
 ## the robot's eyes go dark. Then the ending.
 func _breaker_done() -> void:
 	finale_done = true
+	get_tree().create_timer(0.8).timeout.connect(func(): Game.captions.say("6-5"))
 	var lever := create_tween()
 	lever.tween_property($Stop6/BreakerLever, "rotation_degrees:z", 180.0, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	$Stop6/BreakerFault.visible = false
@@ -1420,6 +1607,7 @@ func _lights_on() -> void:
 	for n in ["WindowSpill1", "WindowSpill2", "WindowSpill3"]:
 		create_tween().tween_property(get_node(n), "light_energy", 4.0, 1.5)
 	# the old things the robot found on its way glow warm
+	get_tree().create_timer(1.0).timeout.connect(func(): Game.captions.say("6-6"))
 	create_tween().tween_property($Stop3/TimeBoxGlow, "light_energy", 1.6, 1.5)
 	create_tween().tween_property($Stop4/MugGlow, "light_energy", 1.4, 1.5)
 	create_tween().tween_property($DeskLampGlow, "light_energy", 1.8, 1.5)
@@ -1455,6 +1643,10 @@ func _ending_camera() -> void:
 		curve.add_point(pts[i] * K, -tan, tan)
 	var roof := _roof()
 	for i in secs.size():
+		if i == 4:
+			get_tree().create_timer(secs[i] + 0.2).timeout.connect(func(): Game.captions.say("6-7"))   # at the bedside
+		if i == 8:
+			get_tree().create_timer(1.5).timeout.connect(func(): Game.captions.say("6-8"))   # over the dark town
 		if i == 5:
 			roof.visible = true  # from here on we see the house from outside
 			var env: Environment = $WorldEnvironment.environment
@@ -2259,6 +2451,24 @@ func _autotest() -> void:
 		print("ROOMTEST ", JSON.stringify(r))
 		get_tree().quit()
 		return
+	if "--shortcut-test" in OS.get_cmdline_user_args():  # debug: shoebox -> big robot's shoulder without the blocks?
+		var off: float = get_meta("toybox_offset_m", 0.0)
+		var best := 0.0
+		for zz in [-2.42, -2.45, -2.5]:
+			player.teleport(Vector3((-1.97 + off) * K, 0.31 * K, zz * K))
+			player.cam_pivot.rotation.y = -PI / 2
+			await _wait(0.5)
+			_act("move_fwd", true)
+			for k in 3:
+				_act("jump", true)
+				await _wait(0.35)
+				_act("jump", false)
+				await _wait(0.6)
+				best = maxf(best, player.global_position.y / K)
+			_act("move_fwd", false)
+		print("ROOMTEST ", JSON.stringify({"highest_m": best, "reached_shoulder": best > 0.49}))
+		get_tree().quit()
+		return
 	if "--note-test" in OS.get_cmdline_user_args():  # debug: Mum's note, opened
 		_read_note()
 		await get_tree().create_timer(0.6, true).timeout
@@ -2390,7 +2600,7 @@ func _autotest() -> void:
 	# push the big block east to the shoebox's east edge (the top step of the stairs)
 	var big: Node3D = $Stop1/PushBlockLarge
 	var bx0 := big.global_position.x
-	player.teleport(Vector3(big.global_position.x - 0.675 - 0.36, 2.75, big.global_position.z))
+	player.teleport(Vector3(big.global_position.x - big.size.x * 0.5 - 0.36, 2.75, big.global_position.z))
 	player.cam_pivot.rotation.y = -PI / 2
 	await _wait(0.4)
 	_act("interact", true)
@@ -2403,10 +2613,10 @@ func _autotest() -> void:
 	s1["big_block_pushed_m"] = snappedf((big.global_position.x - bx0) / K, 0.001)
 	# stairs (blocks set in their final places) -> the big robot's shoulder -> its head
 	big.global_position = Vector3((-1.995 + box_offset_m) * K, 0.301 * K, -2.47 * K)
-	$Stop1/PushBlockSmall.global_position = Vector3((-2.1035 + box_offset_m) * K, 0.301 * K, -2.47 * K)
+	$Stop1/PushBlockSmall.global_position = Vector3((-2.09 + box_offset_m) * K, 0.301 * K, -2.47 * K)
 	await _wait(0.3)
 	s1["shelf_to_small(3.31)"] = await _hop(Vector3(-2.20 + box_offset_m, 0, -2.47), 2.75, -PI / 2, 0.3, 0.0)
-	s1["small_to_big(4.06)"] = await _hop(Vector3(-2.1035 + box_offset_m, 0, -2.47), 3.4, -PI / 2, 0.3, 0.0)
+	s1["small_to_big(4.06)"] = await _hop(Vector3(-2.09 + box_offset_m, 0, -2.47), 3.4, -PI / 2, 0.3, 0.0)
 	s1["big_to_shoulder(4.5)"] = await _hop(Vector3(-1.995 + box_offset_m, 0, -2.42), 4.12, -PI / 2, 0.3, 0.05)
 	s1["shoulder_to_head(5.22)"] = await _hop(Vector3(-1.80 + box_offset_m, 0, -2.40), 4.55, PI, 0.3, 0.05)
 	await _shot(dir, "room_s1_head.png")
@@ -2422,7 +2632,9 @@ func _autotest() -> void:
 	player.teleport(Vector3((-2.26 + box_offset_m) * K, 0.75, -2.20 * K))
 	await _wait(2.6)
 	await _shot(dir, "room_s1_launch.png")
-	await _wait(3.0)
+	await _wait(4.5)   # (the car turns its corners more gently now)
+	s1["seesaw_tipped"] = seesaw_tipped
+	s1["on_end_at_drop"] = str(_dbg_on_end) + " launched=" + str(launched) + " at " + str(player.global_position / K)
 	s1["launched_onto_desk"] = launched and player.is_on_floor() and absf(player.global_position.y - 0.75 * K) < 0.2
 	s1["checkpoint"] = Game.checkpoint.name
 	await _shot(dir, "room_s1_on_desk.png")

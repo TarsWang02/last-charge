@@ -11,6 +11,15 @@ var _center: Label
 var _controls: Label
 var _sub: Label             ## the old man's inner voice: bottom, white italic
 var _sub_token := 0
+var _vo: AudioStreamPlayer
+
+## "2-11" -> res://assets/audio/vo/vo_s2_11.ogg ("1-2b" -> vo_s1_02b.ogg)
+static func vo_path(id: String) -> String:
+	var p := id.split("-")
+	if p.size() != 2:
+		return ""
+	var b := "b" if p[1].ends_with("b") else ""
+	return "res://assets/audio/vo/vo_s%s_%02d%s.ogg" % [p[0], int(p[1].trim_suffix("b")), b]
 var _queue: Array = []
 var _busy := false
 
@@ -68,6 +77,9 @@ func _ready() -> void:
 	_sub.modulate.a = 0.0
 	add_child(_sub)
 
+	_vo = AudioStreamPlayer.new()
+	_vo.bus = "SFX" if AudioServer.get_bus_index("SFX") >= 0 else "Master"
+	add_child(_vo)
 	Game.memory_restored.connect(show_memory)
 
 
@@ -123,7 +135,8 @@ func show_line(text: String, seconds: float) -> void:
 func say(id_or_text: String, seconds := -1.0) -> void:
 	var text: String = StoryText.MONOLOGUE.get(id_or_text, id_or_text)
 	if seconds < 0.0:
-		seconds = read_time(text)
+		seconds = line_time(id_or_text)
+	voice(id_or_text)
 	_sub_token += 1
 	var token := _sub_token
 	_sub.text = text
@@ -139,6 +152,24 @@ static func read_time(text: String) -> float:
 	var words := text.split(" ", false).size()
 	var pauses := text.count("...") + text.count("—") + text.count(". ") + text.count("? ") + text.count("! ")
 	return maxf(1.8, 0.9 + words / 2.6 + pauses * 0.35)
+
+
+## Seconds a line stays up: its voice-over's length (+ a beat), never shorter than its reading time.
+static func line_time(id: String) -> float:
+	var text: String = StoryText.MONOLOGUE.get(id, id)
+	var t := read_time(text)
+	var vo := vo_path(id)
+	if vo != "" and ResourceLoader.exists(vo):
+		t = maxf(t * 0.8, (load(vo) as AudioStream).get_length() + 0.35)
+	return t
+
+
+## Just the voice of a line (for lines shown another way, e.g. a memory card).
+func voice(id: String) -> void:
+	var vo := vo_path(id)
+	if vo != "" and ResourceLoader.exists(vo):
+		_vo.stream = load(vo)
+		_vo.play()
 
 
 ## Several lines one after another (each waits for the last to fade).
@@ -165,8 +196,8 @@ func play_opening() -> void:
 
 
 func _fade(c: CanvasItem, to: float, t: float) -> void:
-	await create_tween().tween_property(c, "modulate:a", to, t).finished
+	await create_tween().set_ignore_time_scale(true).tween_property(c, "modulate:a", to, t).finished
 
 
 func _hold(s: float) -> void:
-	await get_tree().create_timer(s, true).timeout
+	await get_tree().create_timer(s, true, false, true).timeout

@@ -172,8 +172,8 @@ box("BigBotTorso", -1.90, -1.664, 0.12, 0.44, -2.34, -2.06, "toy_yellow", group=
 box("BigBotHead", -1.95, -1.67, 0.44, 0.58, -2.34, -2.06, "toy_yellow", group="Stop1")      # 5.22 u: the car platform
 box("BigBotShoulderN", -1.90, -1.70, 0.36, 0.50, -2.44, -2.36, "metal", group="Stop1")      # 4.5 u
 box("BigBotShoulderS", -1.90, -1.70, 0.36, 0.50, -2.04, -1.96, "metal", group="Stop1")
-box("BigBotArmN", -1.88, -1.78, 0, 0.36, -2.46, -2.38, "metal", group="Stop1")
-box("BigBotArmS", -1.88, -1.78, 0, 0.36, -2.02, -1.94, "metal", group="Stop1")
+box("BigBotArmN", -1.88, -1.78, 0, 0.24, -2.46, -2.38, "metal", group="Stop1")   # (below the shoebox top: no step up)
+box("BigBotArmS", -1.88, -1.78, 0, 0.24, -2.02, -1.94, "metal", group="Stop1")
 box("BigBotLegN", -2.30, -1.92, 0, 0.09, -2.36, -2.28, "toy_yellow", group="Stop1")         # legs spread west
 box("BigBotLegS", -2.30, -1.92, 0, 0.09, -2.12, -2.04, "toy_yellow", group="Stop1")
 box("BigBotFootN", -2.36, -2.30, 0, 0.15, -2.37, -2.27, "metal", group="Stop1")
@@ -366,7 +366,7 @@ MARKERS = {
     "CarWay1": (-1.72, 0.595, -2.31),
     "CarWay2": (-1.80, 0.595, -2.31),
     "CarWay3": (-1.80, 0.595, -2.20),
-    "CarWay4": (-1.81, 0.595, -2.20),
+    "CarWay4": (-1.835, 0.595, -2.20),
 }
 AREAS = {  # trigger boxes: name -> (centre m, size m)
     "BookTip": ((NS[1] + BOOK_OVER / 2, NT + BOOK[1] + 0.03, BOOK_EDGE[2]), (BOOK_OVER, 0.05, BOOK[2])),
@@ -508,7 +508,7 @@ L += ['[node name="BigBotEyeLight" type="SpotLight3D" parent="Stop1"]', f'transf
       'light_color = Color(1, 0.72, 0.35, 1)', 'light_energy = 6.0', 'shadow_enabled = true',
       f'spot_range = {0.8 * K:.4g}', 'spot_angle = 32.0', 'spot_attenuation = 0.5', '']
 # the seesaw: a 34 cm ruler between the legs, pivot at the fulcrum; west end (cyan, "stand here") rests low
-L += ['[node name="Seesaw" type="Node3D" parent="Stop1"]', f'transform = {tr((-2.12, 0.06, -2.20), (0, 0, 6))}', '',
+L += ['[node name="Seesaw" type="Node3D" parent="Stop1"]', f'transform = {tr((-2.12, 0.06, -2.20), (0, 0, -6))}', '',
       '[node name="Plank" type="CSGBox3D" parent="Stop1/Seesaw"]', f'transform = {tr((0, 0.007, 0))}', 'use_collision = true',
       f'size = Vector3({0.36 * K:.4g}, {0.014 * K:.4g}, {0.08 * K:.4g})', 'material = SubResource("m_ruler")', '',
       '[node name="StandHere" type="CSGBox3D" parent="Stop1/Seesaw/Plank"]', f'transform = {tr((-0.14, 0.0075, 0))}',
@@ -522,8 +522,9 @@ L += ['[node name="Drum" type="CSGCylinder3D" parent="Stop1"]', f'transform = {t
       f'size = Vector3({0.05 * K:.4g}, {0.03 * K:.4g}, {0.08 * K:.4g})', 'material = SubResource("m_toy_green")', '',
       '[node name="CarCharge" type="Area3D" parent="Stop1"]', f'transform = {tr((-1.72, 0.60, -2.09))}', 'script = ExtResource("ia")',
       'cost = 0.08', 'hold_time = 1.5', 'once = false', 'radius = 1.4', 'prompt_offset = Vector3(0, 1.0, 0)', '']
-for name, sz, pos, col in [("PushBlockLarge", 0.15, (-2.18, 0.301, -2.47), "Color(0.75, 0.3, 0.2, 1)"),
-                           ("PushBlockSmall", 0.067, (-2.38, 0.301, -2.47), "Color(0.2, 0.45, 0.7, 1)")]:
+# both blocks start at the west end of the shoebox, well away from the shoulder: they have to be pushed east
+for name, sz, pos, col in [("PushBlockLarge", 0.13, (-2.25, 0.301, -2.47), "Color(0.75, 0.3, 0.2, 1)"),
+                           ("PushBlockSmall", 0.06, (-2.44, 0.301, -2.47), "Color(0.2, 0.45, 0.7, 1)")]:
     L += [f'[node name="{name}" type="CharacterBody3D" parent="Stop1"]', f'transform = {tr(pos)}', 'script = ExtResource("push")',
           f'size = Vector3({sz * K:.4g}, {sz * K:.4g}, {sz * K:.4g})', f'color = {col}', f'letter = "{"A" if "Large" in name else "B"}"', '']
 for i, pos in enumerate([(-2.74, 0.15, -2.06), (-2.40, 0.31, -2.58)]):

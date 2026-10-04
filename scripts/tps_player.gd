@@ -73,6 +73,7 @@ var _focus := Vector3.INF      ## top-down: a lit area the camera should also fr
 var _focus_extra := 0.0
 var _pivot_pos := Vector3.ZERO
 var _glow: OmniLight3D
+var _carry: OmniLight3D
 var _grab_axis := Vector3.ZERO
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _coyote := 0.0
@@ -112,6 +113,14 @@ func _ready() -> void:
 	_glow.omni_range = glow_range
 	_glow.position = Vector3(0, 0.8, 0)
 	visual.add_child(_glow)
+	_carry = OmniLight3D.new()  # the light it always carries: a soft pool round its feet, dimmer as it runs down
+	_carry.light_color = Color(0.6, 0.95, 1.0)
+	_carry.light_energy = 0.0
+	_carry.omni_range = 3.4
+	_carry.omni_attenuation = 1.3
+	_carry.position = Vector3(0, 0.75, 0.25)
+	_carry.light_specular = 0.1
+	visual.add_child(_carry)
 	_magnet_hint = Label3D.new()  # "you can grab the steel above you"
 	_magnet_hint.text = "RMB"
 	_magnet_hint.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -393,6 +402,10 @@ func _try_mantle(dir: Vector3) -> void:
 	var n := get_wall_normal()
 	if Vector3(dir.x, 0, dir.z).normalized().dot(-n) < 0.5:
 		return
+	for i in get_slide_collision_count():   # some ledges have to be reached the proper way
+		var c := get_slide_collision(i).get_collider()
+		if c is Node and c.has_meta("no_mantle"):
+			return
 	for h in [0.25, 0.45, mantle_height]:
 		var up := global_transform.translated(Vector3.UP * h)
 		if not test_move(global_transform, Vector3.UP * h) and not test_move(up, -n * 0.35):
@@ -480,6 +493,7 @@ func _animate(delta: float, yaw_rate: float) -> void:
 	lean.scale = Vector3(1.0 / sqrt(sq), sq, 1.0 / sqrt(sq))
 	lean.position.y = sin(_t * 40.0) * 0.0025 * move if on_floor else 0.0  # motor vibration
 
+	_carry.light_energy = 0.0 if powered_down else lerpf(0.35, 0.9, clampf(charge * 1.5, 0.0, 1.0))
 	if powered_down:
 		rig.power_off()
 		_glow.light_energy = 0.0

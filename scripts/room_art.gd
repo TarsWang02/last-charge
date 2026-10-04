@@ -96,6 +96,7 @@ static func install(room: Node3D) -> void:
 	load("res://scripts/kitchen_art.gd").install(room)
 	load("res://scripts/bedroom_layout_art.gd").install(room)
 	load("res://scripts/livingroom_finale_art.gd").install(room)
+	load("res://scripts/desk_normal_art.gd").install(room)
 	room.set_meta("room_art_installed", true)
 	if not "--bedroom-look-before" in OS.get_cmdline_user_args():
 		var look := Node.new()

@@ -132,14 +132,15 @@ static func install(room: Node3D) -> void:
     lid.set_process(true)
     _add(jack, "jackbox_crank", Vector3(0.052, 0.005, 0))
     _add(stop1.get_node("JackHead"), "clown_spring", Vector3(0, -0.092, 0))
-    for entry in [["PushBlockLarge", "letter_block_a"], ["PushBlockSmall", "letter_block_b"]]:
+    for entry in [["PushBlockLarge", "letter_block_a", 0.15], ["PushBlockSmall", "letter_block_b", 0.067]]:
         var block: Node3D = stop1.get_node(entry[0])
         for child in block.get_children():
             if child is MeshInstance3D:
                 child.visible = false
             elif child is Label3D and child.text == block.letter:
                 child.visible = false
-        _add(block, entry[1])
+        var art := _add(block, entry[1])
+        art.scale *= block.size.x / (entry[2] * K)   # the models were made for the old, bigger blocks
     for key in ["Battery1", "Battery2"]:
         var pickup := stop1.get_node(key)
         var mesh: MeshInstance3D = pickup.get("_mesh")
