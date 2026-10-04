@@ -266,7 +266,7 @@ var _note_use: Area3D
 ## Mum's note, opened on screen: yellowed paper, her handwriting; the game holds still until E again.
 func _read_note() -> void:
 	var layer := CanvasLayer.new()
-	layer.layer = 60
+	layer.layer = 110   # above everything, the fade and the colour grade included
 	layer.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(layer)
 	var dim := ColorRect.new()
@@ -275,14 +275,14 @@ func _read_note() -> void:
 	layer.add_child(dim)
 	var paper := PanelContainer.new()
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.92, 0.86, 0.69)
+	sb.bg_color = Color(0.98, 0.93, 0.78)
 	sb.set_corner_radius_all(4)
 	sb.content_margin_left = 48
 	sb.content_margin_right = 48
 	sb.content_margin_top = 40
 	sb.content_margin_bottom = 40
-	sb.shadow_color = Color(0, 0, 0, 0.5)
-	sb.shadow_size = 18
+	sb.shadow_color = Color(1.0, 0.78, 0.4, 0.35)   # a faint warm glow around the paper: a memory
+	sb.shadow_size = 28
 	paper.add_theme_stylebox_override("panel", sb)
 	paper.set_anchors_preset(Control.PRESET_CENTER)
 	paper.grow_horizontal = Control.GROW_DIRECTION_BOTH
@@ -307,9 +307,6 @@ func _read_note() -> void:
 	hint.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	hint.offset_top = -50
 	layer.add_child(hint)
-	layer.get_children().map(func(c): c.modulate.a = 0.0)
-	for c in layer.get_children():
-		create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS).tween_property(c, "modulate:a", 1.0, 0.35)
 	get_tree().paused = true
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -855,6 +852,8 @@ func _enter_desk() -> void:
 	dark.tween_property(env, "ambient_light_energy", 0.07, 1.2)
 	dark.tween_property($Moonlight, "light_energy", 0.04, 1.2)
 	maze.visible = true   # in the dark, the desk becomes the maze
+	if has_node("Stop2/DeskNormal"):   # (its tidy "before" dressing, if the art is in: docs/art_brief_desk_normal.md)
+		$Stop2/DeskNormal.visible = false
 	await Game.captions.say("2-3")
 	for n in ["WallLampShade", "WallLampArm"]:  # it would sit between the overhead camera and the desk
 		get_node("Stop2/" + n).visible = false
