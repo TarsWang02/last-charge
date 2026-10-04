@@ -9,7 +9,9 @@ var _memory_title: Label
 var _memory_body: Label
 var _center: Label
 var _controls: Label
-var _sub: Label             ## the old man's inner voice: bottom, white italic
+var _sub: Label             ## the old man's inner voice (on _sub_plate)
+var _sub_plate: PanelContainer
+var _controls_plate: PanelContainer
 var _sub_token := 0
 var _queue: Array = []
 var _busy := false
@@ -44,31 +46,48 @@ func _ready() -> void:
 	_center.modulate.a = 0.0
 	add_child(_center)
 
-	_controls = _label(16, Color(1, 1, 1, 0.55))
-	_controls.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	_controls.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_controls.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_controls.offset_bottom = -24
-	_controls.offset_left = -640  # autowrap needs a width, or it wraps every letter
-	_controls.offset_right = 640
-	_controls.modulate.a = 0.0
-	add_child(_controls)
+	# the controls card: a small dark pill at the bottom (UiKit look)
+	_controls_plate = _plate(UiKit.paper(12, 0.92), -28)
+	_controls = _label(18, UiKit.INK)
+	_controls.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_controls.add_theme_constant_override("outline_size", 0)
+	_controls_plate.add_child(_controls)
 
-	_sub = _label(26, Color(1, 1, 1))
-	var italic := FontVariation.new()
-	italic.base_font = ThemeDB.fallback_font
-	italic.variation_transform = Transform2D(Vector2(1, 0), Vector2(0.2, 1), Vector2.ZERO)
-	_sub.add_theme_font_override("font", italic)
-	_sub.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	_sub.anchor_top = 0.74
-	_sub.anchor_bottom = 0.84
-	_sub.offset_top = 0
-	_sub.offset_bottom = 0
-	_sub.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_sub.modulate.a = 0.0
-	add_child(_sub)
+	# the old man's inner voice: Nunito on a soft rounded plate, bottom centre (It Takes Two-style subtitles)
+	_sub_plate = _plate(UiKit.paper(0, 0.94), -110)
+	var sb: StyleBoxFlat = _sub_plate.get_theme_stylebox("panel")
+	sb.content_margin_left = 30
+	sb.content_margin_right = 30
+	sb.content_margin_top = 12
+	sb.content_margin_bottom = 14
+	_sub_plate.rotation_degrees = -0.7   # a slip of paper, not quite straight
+	_sub_plate.resized.connect(func(): _sub_plate.pivot_offset = _sub_plate.size / 2.0)
+	_sub = _label(28, UiKit.INK)
+	_sub.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_sub.add_theme_font_override("font", UiKit.body(700))
+	_sub.add_theme_constant_override("outline_size", 0)
+	_sub_plate.add_child(_sub)
 
+	for c in get_children():   # a CanvasLayer stops the window's theme: hand it to each top Control
+		if c is Control:
+			c.theme = UiKit.theme()
 	Game.memory_restored.connect(show_memory)
+
+
+## A rounded plate anchored bottom-centre that grows to fit its text; `y` = its bottom edge from the
+## screen bottom. Starts hidden (faded out).
+func _plate(style: StyleBoxFlat, y: float) -> PanelContainer:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", style)
+	p.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	p.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	p.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	p.offset_bottom = y
+	p.offset_top = y
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	p.modulate.a = 0.0
+	add_child(p)
+	return p
 
 
 func _label(size: int, col: Color) -> Label:
@@ -127,10 +146,10 @@ func say(id_or_text: String, seconds := -1.0) -> void:
 	_sub_token += 1
 	var token := _sub_token
 	_sub.text = text
-	await _fade(_sub, 1.0, 0.35)
+	await _fade(_sub_plate, 1.0, 0.35)
 	await _hold(seconds)
 	if token == _sub_token:
-		await _fade(_sub, 0.0, 0.6)
+		await _fade(_sub_plate, 0.0, 0.6)
 
 
 ## How long a line stays up: a calm reading pace (~2.6 words a second) plus a beat, a little longer for
@@ -150,18 +169,18 @@ func say_all(ids: Array) -> void:
 ## The controls card, once, when the player first gets control.
 func show_controls() -> void:
 	_controls.text = StoryText.CONTROLS
-	await _fade(_controls, 1.0, 0.8)
+	await _fade(_controls_plate, 1.0, 0.8)
 	await _hold(8.0)
-	await _fade(_controls, 0.0, 1.5)
+	await _fade(_controls_plate, 0.0, 1.5)
 
 
 ## Opening of a new game: the two lines, then the controls card for a while.
 func play_opening() -> void:
 	await play_lines(StoryText.OPENING)
 	_controls.text = StoryText.CONTROLS
-	await _fade(_controls, 1.0, 0.8)
+	await _fade(_controls_plate, 1.0, 0.8)
 	await _hold(8.0)
-	await _fade(_controls, 0.0, 1.5)
+	await _fade(_controls_plate, 0.0, 1.5)
 
 
 func _fade(c: CanvasItem, to: float, t: float) -> void:

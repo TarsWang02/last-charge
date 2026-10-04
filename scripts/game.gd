@@ -22,6 +22,7 @@ var _respawning := false
 # ------------------------------------------------------------------ setup
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	get_tree().root.theme = UiKit.theme()   # one look for every menu, label and caption
 	for bus in ["Music", "SFX"]:
 		if AudioServer.get_bus_index(bus) == -1:
 			AudioServer.add_bus()
@@ -132,20 +133,30 @@ func set_paused(p: bool) -> void:
 func _build_pause_menu() -> Control:
 	var root := Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.theme = UiKit.theme()   # a CanvasLayer stops the window's theme from reaching us
 	var dim := ColorRect.new()
-	dim.color = Color(0, 0, 0, 0.55)
+	dim.color = Color(0.03, 0.025, 0.05, 0.7)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(dim)
+	# one rounded card: the title and the buttons on the left, the settings on the right
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_child(center)
+	var cardp := PanelContainer.new()
+	cardp.add_theme_stylebox_override("panel", UiKit.paper(40))
+	cardp.theme = UiKit.paper_theme()
+	cardp.rotation_degrees = -0.8
+	cardp.resized.connect(func(): cardp.pivot_offset = cardp.size / 2.0)
+	center.add_child(cardp)
+	var cols := HBoxContainer.new()
+	cols.add_theme_constant_override("separation", 48)
+	cardp.add_child(cols)
 	var box := VBoxContainer.new()
-	box.set_anchors_preset(Control.PRESET_CENTER)
-	box.custom_minimum_size = Vector2(320, 0)
-	box.position = Vector2(-160, -180)
-	box.add_theme_constant_override("separation", 10)
-	root.add_child(box)
-	var title := Label.new()
-	title.text = "PAUSED"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 32)
+	box.custom_minimum_size = Vector2(340, 0)
+	box.add_theme_constant_override("separation", 16)
+	cols.add_child(box)
+	var title := UiKit.title_label("Paused", 60, UiKit.MUSTARD)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	box.add_child(title)
 	for b in [["Resume", func(): set_paused(false)], ["Restart checkpoint", func(): set_paused(false); respawn(false)],
 			["Quit to title", func(): to_title()]]:
@@ -153,27 +164,42 @@ func _build_pause_menu() -> Control:
 		btn.text = b[0]
 		btn.pressed.connect(b[1])
 		box.add_child(btn)
-	box.add_child(make_settings_panel())
+	cols.add_child(make_settings_panel())
+	UiKit.juice_all(root)
 	return root
 
 # ------------------------------------------------------------------ settings
 func make_settings_panel() -> Control:
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 4)
+	v.custom_minimum_size = Vector2(440, 0)
+	v.add_theme_constant_override("separation", 14)
+	var head := Label.new()
+	head.text = "Settings"
+	head.add_theme_font_override("font", UiKit.display(600))
+	head.add_theme_font_size_override("font_size", 30)
+	head.add_theme_color_override("font_color", UiKit.BRICK)
+	v.add_child(head)
 	for s in [["Master volume", "master", 0.0, 1.0, 0.05], ["Music", "music", 0.0, 1.0, 0.05],
 			["Sound effects", "sfx", 0.0, 1.0, 0.05], ["Render scale", "render_scale", 0.5, 1.0, 0.05],
 			["Mouse sensitivity", "mouse_sens", 0.3, 2.0, 0.05]]:
+		var row := HBoxContainer.new()   # label left, slider right
+		row.add_theme_constant_override("separation", 18)
+		v.add_child(row)
 		var l := Label.new()
 		l.text = s[0]
-		v.add_child(l)
+		l.custom_minimum_size = Vector2(190, 0)
+		l.add_theme_font_size_override("font_size", 20)
+		row.add_child(l)
 		var sl := HSlider.new()
+		sl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		sl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		sl.min_value = s[2]
 		sl.max_value = s[3]
 		sl.step = s[4]
 		sl.value = settings[s[1]]
 		var key: String = s[1]
 		sl.value_changed.connect(func(val): settings[key] = val; apply_settings(); save_settings())
-		v.add_child(sl)
+		row.add_child(sl)
 	var opt := OptionButton.new()
 	for n in ["Shadows: Low", "Shadows: Medium", "Shadows: High"]:
 		opt.add_item(n)
