@@ -1,6 +1,27 @@
 # Last Charge
 
+<p align="center"><img src="docs/cover.png" width="360" alt="Last Charge 封面"></p>
+
+<p align="center">
+<b>在线试玩 / 下载：</b><a href="https://tarswang02.itch.io/last-charge">tarswang02.itch.io/last-charge</a>（网页版 · Windows · macOS）<br>
+<b>发表于：</b><a href="https://itch.io/jam/cssa-game-jam-2026">ANU CSSA Game Jam 2026</a> · <a href="https://itch.io/jam/cssa-game-jam-2026/results">评选结果</a>
+</p>
+
 ANU CSSA Game Jam 2026（主题：Losing Power）。一只 10 cm 的铁皮机器人，在停电的农舍里绕全屋走一圈，回到配电箱。
+
+> *A 10 cm tin robot crosses a dark Australian farmhouse on its last charge.* A 3D puzzle-platformer made in Godot 4 for ANU CSSA Game Jam 2026.
+
+## 比赛
+
+| 项目 | 信息 |
+|---|---|
+| 比赛 | [ANU CSSA Game Jam 2026](https://itch.io/jam/cssa-game-jam-2026)（主办：ANU CSSA） |
+| 主题 | Losing Power |
+| 时间 | 2026 年 10 月 2 日 – 10 月 4 日 |
+| 参赛作品 | 14 部，评审维度：Gameplay · Use of Theme · Originality · Graphics/Art · Music/SFX |
+| 评选结果 | [itch.io 结果页](https://itch.io/jam/cssa-game-jam-2026/results) |
+| 发布平台 | [itch.io](https://tarswang02.itch.io/last-charge)：网页版、Windows、macOS |
+| 引擎 | Godot 4.7.2（Forward+） |
 
 ## 开始
 
